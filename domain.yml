@@ -12,6 +12,8 @@ intents:
 responses:
   utter_greet:
   - text: "Hey! How are you?"
+  #- text: "Hey, {name}! How is your day going?"
+  #can add more alternative responses (one will be selected randomly).
 
   utter_cheer_up:
   - text: "Here is something to cheer you up:"
