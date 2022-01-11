@@ -1,4 +1,5 @@
 models/notes.txt
+logs/db_interactions.log
 __pycache__
 actions/__pycache__
 telegram_bot/__pycache__
