@@ -46,6 +46,7 @@ def delete_prod(conn, cursor, utts):
 def get_prodinfo(conn, utts):
     #vars:
     params = [utts['nameprod']]
+    resp = {}
 
     #composable query:
     if 'description' in utts.keys():
@@ -65,18 +66,21 @@ def get_prodinfo(conn, utts):
 
     #extract info:
     Prodotto = pd.read_sql(query, conn, params=params)
-    idprod = str(Prodotto['IDProdotto'].iloc[0])
-    azienda = Prodotto['Azienda'].iloc[0]
+    if Prodotto.empty == False:
+        resp['idprod'] = str(Prodotto['IDProdotto'].iloc[0])
+        resp['azienda'] = Prodotto['Azienda'].iloc[0]
 
-    return idprod, azienda
+    return resp
 
 
 #MAIN:
 if __name__ == '__main__':
     conn, cursor = db_connect()
-    utts = {'idprod': 12345, 'nameprod': 'FluFast', 'azienda': 'BiosLine', 'quantity': 2}
+    utts = {'idprod': 12345, 'nameprod': 'flufast', 'azienda': 'biosline', 'quantity': 2}
     add_prod(conn, cursor, utts)
-    nameprod = 'FluFast'
+    utts = {'idprod': 12346, 'nameprod': 'pappa reale', 'azienda': 'aboca', 'quantity': 3}
+    add_prod(conn, cursor, utts)
+    utts = {'nameprod': 'pappa reale'}
     print(get_prodinfo(conn, utts))
     #delete_prod(conn, cursor, utts)
     conn.close()

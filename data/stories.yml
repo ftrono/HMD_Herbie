@@ -6,6 +6,10 @@ stories:
   steps:
   - intent: greet
   - action: utter_greet
+  - intent: ask_azienda
+  - action: action_get_azienda
+  - intent: say_thanks
+  - action: utter_welcome
   - intent: mood_great
   - action: utter_happy
 
@@ -13,8 +17,9 @@ stories:
   steps:
   - intent: greet
   - action: utter_greet
+  - intent: ask_azienda
+  - action: action_get_azienda
   - intent: mood_unhappy
-  - action: utter_cheer_up
   - action: utter_did_that_help
   - intent: affirm
   - action: utter_happy
@@ -23,8 +28,9 @@ stories:
   steps:
   - intent: greet
   - action: utter_greet
+  - intent: ask_azienda
+  - action: action_get_azienda
   - intent: mood_unhappy
-  - action: utter_cheer_up
   - action: utter_did_that_help
   - intent: deny
   - action: utter_goodbye

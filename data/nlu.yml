@@ -3,90 +3,81 @@ version: "2.0"
 nlu:
 - intent: greet
   examples: |
+    - ciao
+    - buongiorno
     - hey
-    - hello
-    - hi
-    - hello there
-    - good morning
-    - good evening
-    - moin
-    - hey there
-    - let's go
-    - hey dude
-    - goodmorning
-    - goodevening
-    - good afternoon
+    - herbert
+    - ciao herbert
+    - hey herbert
 
 - intent: goodbye
   examples: |
-    - good afternoon
-    - cu
-    - good by
-    - cee you later
-    - good night
-    - bye
-    - goodbye
-    - have a nice day
-    - see you around
-    - bye bye
-    - see you later
+    - ciao ciao
+    - a presto
+    - buona giornata
+
+- intent: say_thanks
+  examples: |
+    - grazie
+    - grazie mille
+    - ti ringrazio
+    - ottimo grazie
+    - fatto grazie
 
 - intent: affirm
   examples: |
-    - yes
-    - y
-    - indeed
-    - of course
-    - that sounds good
-    - correct
+    - sì
+    - sìsì
+    - certo
+    - sì grazie
+    - corretto
+    - esatto
+    - certamente
+    - giusto
 
 - intent: deny
   examples: |
     - no
-    - n
-    - never
-    - I don't think so
-    - don't like that
-    - no way
-    - not really
+    - nono
+    - sbagliato
+    - non hai capito
+    - no scusa
+    - no niente
 
 - intent: mood_great
   examples: |
-    - perfect
-    - great
-    - amazing
-    - feeling like a king
-    - wonderful
-    - I am feeling very good
-    - I am great
-    - I am amazing
-    - I am going to save the world
-    - super stoked
-    - extremely good
-    - so so perfect
-    - so good
-    - so perfect
+    - perfetto
+    - ottimo
+    - top
+    - perfetto grazie
+    - ottimo grazie
+    - benissimo
+    - ottimo lavoro
 
 - intent: mood_unhappy
   examples: |
-    - my day was horrible
-    - I am sad
-    - I don't feel very well
-    - I am disappointed
-    - super sad
-    - I'm so sad
-    - sad
-    - very sad
-    - unhappy
-    - not good
-    - not very good
-    - extremly sad
-    - so saad
-    - so sad
+    - non ci siamo
+    - male
 
 - intent: bot_challenge
   examples: |
-    - are you a bot?
-    - are you a human?
-    - am I talking to a bot?
-    - am I talking to a human?
+    - chi sei?
+    - sei un umano?
+    - sei digitale?
+    - sei un bot?
+
+- intent: ask_azienda
+  examples: |
+    - mi dici di quale azienda è il prodotto [echinepid](nameprod)?
+    - di che azienda è [flufast](nameprod)?
+    - di chi è [pappa reale](nameprod)?
+    - di quale società è [pappa reale](nameprod)
+
+# - lookup: nameprod
+#   examples: |
+#     - echinepid
+#     - flufast
+#     - grintus
+
+  #   - I want to fly from [Berlin]{"entity": "city", "role": "departure"} to [San Francisco]{"entity": "city", "role": "destination"}.
+  #   - Give me a [small]{"entity": "size", "group": "1"} pizza with [mushrooms]{"entity": "topping", "group": "1"} and a [large]{"entity": "size", "group": "2"} [pepperoni]{"entity": "topping", "group": "2"}

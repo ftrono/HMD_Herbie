@@ -8,28 +8,39 @@ intents:
   - mood_great
   - mood_unhappy
   - bot_challenge
+  - say_thanks
+  - ask_azienda
+
+entities:
+  - nameprod
+
+#slots:
 
 responses:
   utter_greet:
-  - text: "Hey! How are you?"
+  - text: "Ciao!"
   #- text: "Hey, {name}! How is your day going?"
   #can add more alternative responses (one will be selected randomly).
 
-  utter_cheer_up:
-  - text: "Here is something to cheer you up:"
-    image: "https://i.imgur.com/nGF1K8f.jpg"
-
   utter_did_that_help:
-  - text: "Did that help you?"
+  - text: "Ti sono stato utile?"
 
   utter_happy:
-  - text: "Great, carry on!"
+  - text: "Ottimo! Buon lavoro."
 
   utter_goodbye:
-  - text: "Bye"
+  - text: "Ciao e a presto!"
+
+  utter_welcome:
+  - text: "Di nulla!"
+  - text: "Nulla! Se ti serve altro mi trovi qui."
 
   utter_iamabot:
-  - text: "I am a bot, powered by Rasa."
+  - text: "Sono Herbert, il tuo shop manager digitale."
+
+#custom actions:
+actions:
+  - action_get_azienda
 
 session_config:
   session_expiration_time: 60
