@@ -39,13 +39,14 @@ class GetAzienda(Action):
             dispatcher.utter_message(text=message)
             return []
         else:
-            utts['nameprod'] = nameprod.lower()
+            utts['p_name'] = nameprod.lower()
 
         #db extraction:
-        conn, cursor = db_connect()
+        conn, cursor = db_connect()        
 
         try:
             resp = get_prodinfo(conn, utts)
+            print(resp)
             if resp == {}:
                 nomatch = True
         except:
@@ -59,7 +60,7 @@ class GetAzienda(Action):
             return []
 
         #utter:
-        message = f"{nameprod} è un prodotto di {resp['azienda']}."
+        message = f"{nameprod} è un prodotto di {resp['supplier']}."
         dispatcher.utter_message(text=message)
         conn.close()
         return []

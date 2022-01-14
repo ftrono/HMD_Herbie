@@ -29,16 +29,59 @@ def create_tables(conn=None, cursor=None):
     #dict of queries:
     queries = {
         'Prodotti': '''CREATE TABLE Prodotti (
-            IDProdotto TEXT PRIMARY KEY, 
-            Azienda TEXT NOT NULL, 
-            NomeProdotto TEXT NOT NULL, 
-            Descrizione TEXT)''',
+            CodiceProd INTEGER PRIMARY KEY, 
+            Produttore TEXT NOT NULL,
+            Linea TEXT,
+            Nome TEXT NOT NULL, 
+            Descrizione TEXT,
+            Categoria TEXT NOT NULL,
+            Quantità INTEGER NOT NULL DEFAULT 0,
+            Prezzo REAL NOT NULL DEFAULT 0,
+            ScontoMedio REAL NOT NULL DEFAULT 0,
+            Aliquota REAL NOT NULL DEFAULT 0.22,
+            Scaffale TEXT,
+            DispMedico INTEGER NOT NULL DEFAULT 0,
+            EtàMinima INTEGER NOT NULL DEFAULT 18,
+            Bio INTEGER NOT NULL DEFAULT 0,
+            Vegano INTEGER NOT NULL DEFAULT 0,
+            SenzaGlutine INTEGER NOT NULL DEFAULT 0,
+            SenzaLattosio INTEGER NOT NULL DEFAULT 0,
+            SenzaZucchero INTEGER NOT NULL DEFAULT 0
+            )''',
+        
+        'StoricoOrdini': '''CREATE TABLE StoricoOrdini (
+            CodiceOrd INTEGER PRIMARY KEY, 
+            DataCreazione NUMERIC NOT NULL,
+            Produttore TEXT NOT NULL,
+            Riferimento TEXT,
+            DataInoltro NUMERIC,
+            DataRicezione NUMERIC,
+            FOREIGN KEY (Produttore) REFERENCES Prodotti (Produttore) ON DELETE NO ACTION ON UPDATE NO ACTION
+            )''',
             
-        'Magazzino': '''CREATE TABLE Magazzino (
-            IDProdotto TEXT PRIMARY KEY, 
-            Quantità INTEGER NOT NULL DEFAULT 0, 
-            Scaffale INTEGER,
-            FOREIGN KEY (IDProdotto) REFERENCES Prodotti (IDProdotto) ON DELETE CASCADE ON UPDATE CASCADE)'''
+        'ListeOrdini': '''CREATE TABLE ListeOrdini (
+            ID INTEGER PRIMARY KEY,
+            CodiceOrd INTEGER NOT NULL, 
+            CodiceProd INTEGER NOT NULL, 
+            Quantità INTEGER NOT NULL DEFAULT 1,
+            FOREIGN KEY (CodiceOrd) REFERENCES StoricoOrdini (CodiceOrd) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (CodiceProd) REFERENCES Prodotti (CodiceProd) ON DELETE NO ACTION ON UPDATE NO ACTION
+            )''',
+
+        'ComponentiAmbiti': '''CREATE TABLE ComponentiAmbiti (
+            ID INTEGER PRIMARY KEY,
+            Componente TEXT NOT NULL,
+            AmbitoUtilizzo TEXT NOT NULL,
+            DettaglioAmbito TEXT
+            )''',
+
+        'ComponentiProdotto': '''CREATE TABLE ComponentiProdotto (
+            ID INTEGER PRIMARY KEY,
+            CodiceProd INTEGER NOT NULL, 
+            Componente TEXT NOT NULL,
+            FOREIGN KEY (CodiceProd) REFERENCES Prodotti (CodiceProd) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (Componente) REFERENCES ComponentiAmbiti (Componente) ON DELETE CASCADE ON UPDATE CASCADE
+            )''',
     }
 
     #execute:
@@ -64,7 +107,7 @@ def drop_all(conn=True, cursor=True):
         connect = False
 
     #ordered list of tables:
-    tables = ['Magazzino', 'Prodotti']
+    tables = ['ComponentiProdotto', 'ComponentiAmbiti', 'ListeOrdini', 'StoricoOrdini', 'Prodotti']
 
     #execute:
     for t in tables:
