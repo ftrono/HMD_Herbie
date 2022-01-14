@@ -50,43 +50,31 @@ def get_prodinfo(conn, utts):
 
     #composable query:
     if 'p_code' in utts.keys():
-        str_init = "CodiceProd = ?"
+        comp_str = "CodiceProd = ?"
         params.append(utts['p_code'])
 
     elif 'p_name' in utts.keys():
-        str_init = "Nome = ?"
+        comp_str = "Nome = ?"
         params.append(utts['p_name'])
 
         #additional pieces:
-        if 'descr' in utts.keys():
-            str_ds = " AND Descrizione = ?"
-            params.append(utts['descr'])
-        else:
-            str_ds = ""
-
         if 'supplier' in utts.keys():
-            str_az = " AND Produttore = ?"
+            comp_str = comp_str + " AND Produttore = ?"
             params.append(utts['supplier'])
-        else:
-            str_az = ""
 
         if 'line' in utts.keys():
-            str_ln = " AND Linea = ?"
+            comp_str = comp_str + " AND Linea = ?"
             params.append(utts['line'])
-        else:
-            str_ln = ""
 
         if 'category' in utts.keys():
-            str_ct = " AND Categoria = ?"
+            comp_str = comp_str + " AND Categoria = ?"
             params.append(utts['category'])
-        else:
-            str_ct = ""
     else:
         msg = 'noinfo'
         return msg
 
     #composed:
-    query = "SELECT CodiceProd, Produttore, Linea, Nome, Descrizione, Categoria FROM Prodotti WHERE " + str_init + str_ds + str_az + str_ln + str_ct
+    query = "SELECT CodiceProd, Produttore, Linea, Nome, Categoria FROM Prodotti WHERE " + comp_str
 
     #extract info:
     print(params)
@@ -96,7 +84,6 @@ def get_prodinfo(conn, utts):
         resp['supplier'] = Prodotto['Produttore'].iloc[0]
         resp['line'] = Prodotto['Linea'].iloc[0]
         resp['p_name'] = Prodotto['Nome'].iloc[0]
-        resp['descr'] = Prodotto['Descrizione'].iloc[0]
         resp['category'] = Prodotto['Categoria'].iloc[0]
 
     return resp

@@ -1,6 +1,6 @@
 version: "2.0"
-
 nlu:
+
 - intent: greet
   examples: |
     - ciao
@@ -10,19 +10,16 @@ nlu:
     - ciao herbert
     - hey herbert
 
-- intent: goodbye
-  examples: |
-    - ciao ciao
-    - a presto
-    - buona giornata
-
-- intent: say_thanks
+- intent: thanks
   examples: |
     - grazie
     - grazie mille
     - ti ringrazio
     - ottimo grazie
     - fatto grazie
+    - ottimo
+    - perfetto
+    - benissimo
 
 - intent: affirm
   examples: |
@@ -44,21 +41,6 @@ nlu:
     - no scusa
     - no niente
 
-- intent: mood_great
-  examples: |
-    - perfetto
-    - ottimo
-    - top
-    - perfetto grazie
-    - ottimo grazie
-    - benissimo
-    - ottimo lavoro
-
-- intent: mood_unhappy
-  examples: |
-    - non ci siamo
-    - male
-
 - intent: bot_challenge
   examples: |
     - chi sei?
@@ -68,16 +50,56 @@ nlu:
 
 - intent: ask_azienda
   examples: |
-    - mi dici di quale azienda è il prodotto [echinepid](nameprod)?
-    - di che azienda è [flufast](nameprod)?
-    - di chi è [pappa reale](nameprod)?
-    - di quale società è [pappa reale](nameprod)
+    - mi dici di quale azienda è il prodotto [echinepid](p_name)?
+    - di che azienda è [flufast](p_name)?
+    - di chi è [pappa reale](p_name)?
+    - di quale società è [pappa reale](p_name)
 
-# - lookup: nameprod
-#   examples: |
-#     - echinepid
-#     - flufast
-#     - grintus
+- intent: ask_add_wh
+  examples: |
+    - devo aggiornare i dati al magazzino
+    - aggiorna magazzino
+    - puoi aggiornarmi i dati al magazzino?
+    - mi aggiorneresti i dati al magazzino?
 
-  #   - I want to fly from [Berlin]{"entity": "city", "role": "departure"} to [San Francisco]{"entity": "city", "role": "destination"}.
-  #   - Give me a [small]{"entity": "size", "group": "1"} pizza with [mushrooms]{"entity": "topping", "group": "1"} and a [large]{"entity": "size", "group": "2"} [pepperoni]{"entity": "topping", "group": "2"}
+- intent: inform_prod
+  examples: |
+    - prodotto codice [123456789143680](p_code)
+    - codice [123456789143680](p_code)
+    - prodotto [nomeuno](p_name) di [azienda](supplier)
+    - prodotto [nomeuno nomedue 12345 nometre](p_name) di [aziendanomeuno aziendanomedue](supplier)
+    - [nomeuno nomedue 12345 nomequattro](p_name) di [azienda](supplier)
+
+- intent: inform_quantity
+  examples: |
+    - aggiungi [10](quantity) pezzi
+    - aggiungimi [2](quantity) pezzi
+    - quantità più [12](quantity) pezzi
+    - più [6](quantity) pezzi
+    - più [5](quantity)
+
+- intent: inform_price
+  examples: |
+    - [20](price) euro
+    - [20.45](price) euro
+    - prezzo [25](price) euro
+    - prezzo [3.56](price) euro
+    - prezzo al pubblico [156.5](price) euro
+
+- intent: inform_discount
+  examples: |
+    - sconto [30](discount) per cento
+    - [30](discount) per cento di sconto
+    - [30](discount) di sconto
+
+- intent: inform_vat
+  examples: |
+    - aliquota [22](vat) per cento
+    - iva [10](vat) per cento
+    - [10](vat) per cento di iva
+
+- intent: inform_shelf
+  examples: |
+    - scaffale [0](shelf)
+    - scaffale numero [0](shelf)
+    - ripiano [b](shelf)

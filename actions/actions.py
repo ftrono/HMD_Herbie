@@ -30,16 +30,16 @@ class GetAzienda(Action):
         nomatch = False
 
         #get latest entity value from tracker, or None if it's not available:
-        nameprod = next(tracker.get_latest_entity_values("nameprod"), None)
+        p_name = next(tracker.get_latest_entity_values("p_name"), None)
 
         #fallback: under informative:
-        if not nameprod:
+        if not p_name:
             #utter: return a generally applicable message
             message = f"Mmm, non ho capito il nome del prodotto."
             dispatcher.utter_message(text=message)
             return []
         else:
-            utts['p_name'] = nameprod.lower()
+            utts['p_name'] = p_name.lower()
 
         #db extraction:
         conn, cursor = db_connect()        
@@ -55,12 +55,12 @@ class GetAzienda(Action):
         #fallback: not found:
         if nomatch == True:
             #utter: no match
-            message = f"Non ho trovato nessun prodotto chiamato {nameprod}. Prova a rilanciare!"
+            message = f"Non ho trovato nessun prodotto chiamato {p_name}. Prova a rilanciare!"
             dispatcher.utter_message(text=message)
             return []
 
         #utter:
-        message = f"{nameprod} è un prodotto di {resp['supplier']}."
+        message = f"{p_name} è un prodotto di {resp['supplier']}."
         dispatcher.utter_message(text=message)
         conn.close()
         return []

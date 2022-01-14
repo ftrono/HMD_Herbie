@@ -1,23 +1,32 @@
 version: "2.0"
 
 rules:
-
-- rule: Say goodbye anytime the user says goodbye
-  steps:
-  - intent: goodbye
-  - action: utter_goodbye
-
-- rule: Explain who I am
+#general:
+- rule: introduce myself
   steps:
   - intent: bot_challenge
   - action: utter_iamabot
 
-- rule: Answer to thanks
-  steps:
-  - intent: say_thanks
-  - action: utter_welcome
-
-- rule: Ask azienda
+#product info:
+- rule: ask azienda
   steps:
   - intent: ask_azienda
   - action: action_get_azienda
+
+# warehouse data:
+- rule: activate form magazzino
+  steps: 
+  - intent: ask_add_wh
+  - action: form_magazzino
+  - active_loop: form_magazzino
+
+- rule: submit form magazzino
+  condition:
+  - active_loop: form_magazzino
+  steps:
+  - action: form_magazzino
+  - active_loop: null
+  - slot_was_set:
+    - requested_slot: null
+  - action: utter_recap
+  - action: utter_done

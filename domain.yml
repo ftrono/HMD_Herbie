@@ -1,47 +1,170 @@
 version: "2.0"
 
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true
+
+
+#USER INTENTS:
 intents:
   - greet
   - goodbye
   - affirm
   - deny
-  - mood_great
-  - mood_unhappy
   - bot_challenge
-  - say_thanks
+  - thanks
   - ask_azienda
+  #magazzino:
+  - ask_add_wh
+  - inform_prod
+  - inform_price
+  - inform_quantity
+  - inform_discount
+  - inform_vat
+  - inform_shelf
 
+
+#ENTITIES:
 entities:
-  - nameprod
+  - p_code
+  - p_name
+  - supplier
+  - quantity
+  - price
+  - discount
+  - vat
+  - shelf
 
-#slots:
 
+#SLOTS:
+slots:
+  #product identification:
+  p_code:
+    type: float
+    influence_conversation: False
+    min_value: 0.0
+    #max_value: 
+    #initial_value: null
+    #auto_fill: True
+  
+  p_name:
+    type: text
+    influence_conversation: False
+
+  supplier:
+    type: text
+    influence_conversation: False
+
+  #warehouse data:
+  quantity:
+    type: float
+    influence_conversation: False
+    min_value: -100.0
+    max_value: 100.0
+
+  price:
+    type: float
+    influence_conversation: False
+    min_value: 0.0
+
+  discount:
+    type: float
+    influence_conversation: False
+    min_value: 0.0
+    max_value: 100.0
+
+  vat:
+    type: float
+    influence_conversation: False
+    min_value: 0.0
+    max_value: 100.0
+
+  shelf:
+    type: text
+    influence_conversation: False
+
+
+#AGENT'S RESPONSES:
 responses:
   utter_greet:
   - text: "Ciao!"
   #- text: "Hey, {name}! How is your day going?"
   #can add more alternative responses (one will be selected randomly).
 
-  utter_did_that_help:
-  - text: "Ti sono stato utile?"
-
   utter_happy:
   - text: "Ottimo! Buon lavoro."
-
-  utter_goodbye:
-  - text: "Ciao e a presto!"
 
   utter_welcome:
   - text: "Di nulla!"
   - text: "Nulla! Se ti serve altro mi trovi qui."
 
   utter_iamabot:
-  - text: "Sono Herbert, il tuo shop manager digitale."
+  - text: "Sono Herbie, il tuo shop manager digitale. Sono qui per aiutarti!"
 
-#custom actions:
+  utter_done:
+  - text: "Ottimo! Ho completato il lavoro. Chiamami pure se ti serve altro."
+  - text: "Fatto! Tutto settato."
+
+  utter_ask_p_code:
+  - text: "Certo! Per quale prodotto?"
+  - text: "Subito! Mi dici il prodotto?"
+
+  utter_ask_quantity:
+  - text: "Trovato! Mi dici il numero di pezzi da aggiungere?"
+  - text: "Prodotto trovato! Quanti pezzi aggiungo?"
+
+  utter_ask_price:
+  - text: "Mi dici il prezzo al pubblico?"
+  - text: "Ok! Prezzo di vendita?"
+  - text: "Ricevuto! Qual'è il prezzo al dettaglio?"
+
+  utter_ask_discount:
+  - text: "Qual è lo sconto medio su questo prodotto e fornitore?"
+  - text: "Mi dici la scontistica media applicata dal fornitore?"
+  - text: "Qual'è la scontistica media del fornitore?"
+
+  utter_ask_vat:
+  - text: "Mi dai l'aliquota IVA?"
+  - text: "Ok! Mi dici l'aliquota IVA?"
+  - text: "A quale aliquota IVA mappo il prodotto?"
+
+  utter_ask_shelf:
+  - text: "Su quale scaffale stai piazzando questo prodotto?"
+  - text: "Mi dici lo scaffale?"
+  - text: "Ok! Mi dai il riferimento dello scaffale?"
+
+  utter_recap:
+  - text: "Ok, ricapitolando: ti sto aggiungendo {quantity} pezzi di {p_code} al magazzino, mappati sullo scaffale {shelf}. Il prezzo di questi prodotti è {price} euro ognuno, li hai acquistati al {discount}% di sconto e si applicherà l'aliquota IVA al {vat}%."
+
+
+#AGENT'S CUSTOM ACTIONS:
 actions:
   - action_get_azienda
+  #- validate_entity #custom action for data validation
 
-session_config:
-  session_expiration_time: 60
-  carry_over_slots_to_new_session: true
+
+#FORMS:
+forms:
+  form_magazzino:
+    required_slots:
+      p_code:
+        - type: from_entity #alternative: from intent or from raw text
+          entity: p_code
+      quantity:
+        - type: from_entity
+          entity: quantity
+      price:
+        - type: from_entity
+          entity: price
+      discount:
+        - type: from_entity
+          entity: discount
+      vat:
+        - type: from_entity
+          entity: vat
+      shelf:
+        - type: from_entity
+          entity: shelf
+    #ignored_intents: ...
+
+

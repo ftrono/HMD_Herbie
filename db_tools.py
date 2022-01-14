@@ -33,7 +33,6 @@ def create_tables(conn=None, cursor=None):
             Produttore TEXT NOT NULL,
             Linea TEXT,
             Nome TEXT NOT NULL, 
-            Descrizione TEXT,
             Categoria TEXT NOT NULL,
             Quantità INTEGER NOT NULL DEFAULT 0,
             Prezzo REAL NOT NULL DEFAULT 0,
