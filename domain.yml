@@ -8,6 +8,7 @@ session_config:
 #USER INTENTS:
 intents:
   - greet
+  - stop
   - goodbye
   - affirm
   - deny
@@ -15,7 +16,7 @@ intents:
   - thanks
   - ask_azienda
   #magazzino:
-  - ask_add_wh
+  - ask_wh_upd
   - inform_prod
   - inform_price
   - inform_quantity
@@ -98,20 +99,28 @@ responses:
   - text: "Di nulla!"
   - text: "Nulla! Se ti serve altro mi trovi qui."
 
+  utter_ok:
+  - text: "Certo!"
+  - text: "Ok!"
+  - text: "Certamente!"
+  - text: "Sono pronto!"
+
   utter_iamabot:
   - text: "Sono Herbie, il tuo shop manager digitale. Sono qui per aiutarti!"
 
   utter_done:
-  - text: "Ottimo! Ho completato il lavoro. Chiamami pure se ti serve altro."
+  - text: "Missione compiuta!"
+  - text: "Lavoro completato! Chiamami pure se ti serve altro."
   - text: "Fatto! Tutto settato."
 
   utter_ask_p_code:
-  - text: "Certo! Per quale prodotto?"
-  - text: "Subito! Mi dici il prodotto?"
+  - text: "Mi serve sapere il nome del prodotto e il produttore, oppure il suo codice a barre!"
+  - text: "Puoi leggermi il codice a barre, oppure dirmi il nome del prodotto e il produttore."
+  - text: "Mi leggeresti il codice a barre, oppure il nome del prodotto e il produttore?"
 
   utter_ask_quantity:
-  - text: "Trovato! Mi dici il numero di pezzi da aggiungere?"
-  - text: "Prodotto trovato! Quanti pezzi aggiungo?"
+  - text: "Mi dici il numero di pezzi da aggiungere?"
+  - text: "Quanti pezzi aggiungo?"
 
   utter_ask_price:
   - text: "Mi dici il prezzo al pubblico?"
@@ -139,7 +148,7 @@ responses:
 
 #AGENT'S CUSTOM ACTIONS:
 actions:
-  - action_get_azienda
+  - action_getprod
   #- validate_entity #custom action for data validation
 
 

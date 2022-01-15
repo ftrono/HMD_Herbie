@@ -54,8 +54,7 @@ def create_tables(conn=None, cursor=None):
             Produttore TEXT NOT NULL,
             Riferimento TEXT,
             DataInoltro NUMERIC,
-            DataRicezione NUMERIC,
-            FOREIGN KEY (Produttore) REFERENCES Prodotti (Produttore) ON DELETE NO ACTION ON UPDATE NO ACTION
+            DataRicezione NUMERIC
             )''',
             
         'ListeOrdini': '''CREATE TABLE ListeOrdini (
@@ -63,8 +62,7 @@ def create_tables(conn=None, cursor=None):
             CodiceOrd INTEGER NOT NULL, 
             CodiceProd INTEGER NOT NULL, 
             Quantità INTEGER NOT NULL DEFAULT 1,
-            FOREIGN KEY (CodiceOrd) REFERENCES StoricoOrdini (CodiceOrd) ON DELETE CASCADE ON UPDATE CASCADE,
-            FOREIGN KEY (CodiceProd) REFERENCES Prodotti (CodiceProd) ON DELETE NO ACTION ON UPDATE NO ACTION
+            FOREIGN KEY (CodiceOrd) REFERENCES StoricoOrdini (CodiceOrd) ON DELETE CASCADE ON UPDATE CASCADE
             )''',
 
         'ComponentiAmbiti': '''CREATE TABLE ComponentiAmbiti (
@@ -78,8 +76,7 @@ def create_tables(conn=None, cursor=None):
             ID INTEGER PRIMARY KEY,
             CodiceProd INTEGER NOT NULL, 
             Componente TEXT NOT NULL,
-            FOREIGN KEY (CodiceProd) REFERENCES Prodotti (CodiceProd) ON DELETE CASCADE ON UPDATE CASCADE,
-            FOREIGN KEY (Componente) REFERENCES ComponentiAmbiti (Componente) ON DELETE CASCADE ON UPDATE CASCADE
+            FOREIGN KEY (CodiceProd) REFERENCES Prodotti (CodiceProd) ON DELETE CASCADE ON UPDATE CASCADE
             )''',
     }
 

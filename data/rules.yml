@@ -11,12 +11,18 @@ rules:
 - rule: ask azienda
   steps:
   - intent: ask_azienda
-  - action: action_get_azienda
+  - action: action_getprod
 
 # warehouse data:
+- rule: find product
+  steps:
+  - intent: inform_prod
+  - action: action_getprod
+
 - rule: activate form magazzino
   steps: 
-  - intent: ask_add_wh
+  - intent: ask_wh_upd
+  - action: utter_ok
   - action: form_magazzino
   - active_loop: form_magazzino
 
@@ -30,3 +36,5 @@ rules:
     - requested_slot: null
   - action: utter_recap
   - action: utter_done
+
+#  - rule: interruption in form

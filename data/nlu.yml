@@ -6,9 +6,20 @@ nlu:
     - ciao
     - buongiorno
     - hey
-    - herbert
-    - ciao herbert
-    - hey herbert
+    - herbie
+    - ciao herbie
+    - hey herbie
+
+- intent: stop
+  examples: |
+    - stop
+    - niente
+    - nulla
+    - no scusa
+    - no niente
+    - no nulla
+    - niente niente
+    - lascia stare
 
 - intent: thanks
   examples: |
@@ -38,8 +49,6 @@ nlu:
     - nono
     - sbagliato
     - non hai capito
-    - no scusa
-    - no niente
 
 - intent: bot_challenge
   examples: |
@@ -55,7 +64,7 @@ nlu:
     - di chi è [pappa reale](p_name)?
     - di quale società è [pappa reale](p_name)
 
-- intent: ask_add_wh
+- intent: ask_wh_upd
   examples: |
     - devo aggiornare i dati al magazzino
     - aggiorna magazzino
@@ -66,9 +75,11 @@ nlu:
   examples: |
     - prodotto codice [123456789143680](p_code)
     - codice [123456789143680](p_code)
+    - prodotto [nome1uno nome2due nome3tre nome4quattro nome5cinque](p_name)
+    - prodotto [nome1uno nome2due nome3tre nome4quattro nome5cinque](p_name)
     - prodotto [nomeuno](p_name) di [azienda](supplier)
-    - prodotto [nomeuno nomedue 12345 nometre](p_name) di [aziendanomeuno aziendanomedue](supplier)
-    - [nomeuno nomedue 12345 nomequattro](p_name) di [azienda](supplier)
+    - prodotto [nome1uno nome2due nome3tre nome4quattro nome5cinque](p_name) di [aziendanomeuno aziendanomedue](supplier)
+    - [nome1uno nome2due nome3tre nome4quattro nome5cinque](p_name) di [azienda](supplier)
 
 - intent: inform_quantity
   examples: |

@@ -46,7 +46,8 @@ def delete_prod(conn, cursor, utts):
 def get_prodinfo(conn, utts):
     #vars:
     params = []
-    resp = {}
+    resp = []
+    buf = {}
 
     #composable query:
     if 'p_code' in utts.keys():
@@ -54,8 +55,9 @@ def get_prodinfo(conn, utts):
         params.append(utts['p_code'])
 
     elif 'p_name' in utts.keys():
-        comp_str = "Nome = ?"
-        params.append(utts['p_name'])
+        comp_str = "Nome LIKE ?"
+        name = "%"+utts['p_name']+"%"
+        params.append(name)
 
         #additional pieces:
         if 'supplier' in utts.keys():
@@ -78,13 +80,16 @@ def get_prodinfo(conn, utts):
 
     #extract info:
     print(params)
-    Prodotto = pd.read_sql(query, conn, params=params)
-    if Prodotto.empty == False:
-        resp['p_code'] = Prodotto['CodiceProd'].iloc[0]
-        resp['supplier'] = Prodotto['Produttore'].iloc[0]
-        resp['line'] = Prodotto['Linea'].iloc[0]
-        resp['p_name'] = Prodotto['Nome'].iloc[0]
-        resp['category'] = Prodotto['Categoria'].iloc[0]
+    Prodotti = pd.read_sql(query, conn, params=params)
+    if Prodotti.empty == False:
+        for ind in Prodotti.index:
+            buf['p_code'] = Prodotti['CodiceProd'][ind]
+            buf['supplier'] = Prodotti['Produttore'][ind]
+            buf['line'] = Prodotti['Linea'][ind]
+            buf['p_name'] = Prodotti['Nome'][ind]
+            buf['category'] = Prodotti['Categoria'][ind]
+            resp.append(buf)
+            buf = {}
 
     return resp
 
@@ -94,9 +99,12 @@ if __name__ == '__main__':
     conn, cursor = db_connect()
     utts = {'p_code': 12345, 'p_name': 'flufast', 'supplier': 'biosline', 'category': 'health', 'quantity': 2}
     add_prod(conn, cursor, utts)
-    utts = {'p_code': 12346, 'p_name': 'pappa reale', 'supplier': 'aboca', 'category': 'health', 'quantity': 3}
+    utts = {'p_code': 12346, 'p_name': 'pappa reale fiale', 'supplier': 'aboca', 'category': 'health', 'quantity': 3}
+    add_prod(conn, cursor, utts)
+    utts = {'p_code': 12347, 'p_name': 'pappa reale bustine', 'supplier': 'aboca', 'category': 'health', 'quantity': 5}
     add_prod(conn, cursor, utts)
     utts = {'p_name': 'pappa reale'}
     print(get_prodinfo(conn, utts))
-    #delete_prod(conn, cursor, utts)
+    # utts = {'p_name': 'pappa reale fiale'}
+    # delete_prod(conn, cursor, utts)
     conn.close()
