@@ -1,5 +1,5 @@
+__pycache__
+*/__pycache__
 models/notes.txt
 logs/db_interactions.log
 models/*
-__pycache__
-*/__pycache__
