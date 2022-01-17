@@ -1,30 +1,26 @@
-# This files contains your custom actions which can be used to run
-# custom Python code.
-#
-# See this guide on how to implement these action:
-# https://rasa.com/docs/rasa/custom-actions
-
-
-# This is a simple example for a custom action which utters "Hello World!"
 from typing import Any, Text, Dict, List
-from rasa_sdk import Action, Tracker
+from rasa_sdk import Tracker, Action, FormValidationAction
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet
 from globals import *
 from db_tools import db_connect
 from db_interaction import get_prodinfo
-#import arrow ?
 
 
-class GetProd(Action):
+class ValidateMagazzinoForm(FormValidationAction):
     def name(self) -> Text:
-        return "action_getprod"
+        return "validate_magazzino_form"
 
-    def run(self, dispatcher: CollectingDispatcher,
-            tracker: Tracker,
-            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
+    def validate_p_text(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ) -> Dict[Text, Any]:
 
         utts = {}
+        print("PARTO")
         #get latest entity values from tracker, or None if they're not available:
         p_code = next(tracker.get_latest_entity_values("p_code"), None)
         p_name = next(tracker.get_latest_entity_values("p_name"), None)
@@ -36,8 +32,8 @@ class GetProd(Action):
         # - case c) p_name + supplier
         if p_name == None and p_code == None:
             message = f"Mmm, mi manca qualche informazione."
-            dispatcher.utter_message(response="utter_need_prodid")
-            return []
+            return {"p_text": None}
+
         elif p_code != None:
             utts['p_code'] = p_code.lower()
         else:
@@ -60,21 +56,21 @@ class GetProd(Action):
             else:
                 message = f"Non ho trovato nessun prodotto con questo nome. Riproviamo!"
             dispatcher.utter_message(text=message)
-            dispatcher.utter_message(response="utter_need_prodid")
-            return []
+            return {"p_text": None}
+
         elif len(resp) > 1:
             message = f"Ho trovato più di un prodotto simile:"
             for prod in resp:
                 message = message + "\nDi " + prod['supplier'] + ", " + prod['p_name'] + "."
-            message = message + "\n Prova a specificare meglio!"
+            message = message + "\nProva a specificare meglio!"
             dispatcher.utter_message(text=message)
-            dispatcher.utter_message(response="utter_need_prodid")
-            return []
+            return {"p_text": None}
+
         else:
             prod = resp[0]
             message = f"Trovato! Di {prod['supplier']}, {prod['p_name']}."
             dispatcher.utter_message(text=message)
-            return[SlotSet("p_code", str(prod['p_code']))]
+            return {"p_text": 'ok', "p_code": str(prod['p_code']), "p_name": str(prod['p_name']), "supplier": str(prod['supplier'])}
 
 
 class GetAzienda(Action):

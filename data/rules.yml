@@ -7,30 +7,36 @@ rules:
   - intent: bot_challenge
   - action: utter_iamabot
 
-#product info:
-- rule: ask azienda
-  steps:
-  - intent: ask_azienda
-  - action: action_getprod
+# #product info:
+# - rule: ask azienda
+#   steps:
+#   - intent: ask_azienda
+#   - action: action_getprod
 
-# warehouse data:
-- rule: find product
-  steps:
-  - intent: inform_prod
-  - action: action_getprod
+# # validate product:
+# - rule: validate product
+#   steps:
+#   - intent: inform_prod
+#   - action: validate_prod
+
+# validate product:
+# - rule: call inform_product
+#   steps:
+#   - action: ask_p_code
+#   - intent: inform_prod
 
 - rule: activate form magazzino
-  steps: 
+  steps:
   - intent: ask_wh_upd
   - action: utter_ok
-  - action: form_magazzino
-  - active_loop: form_magazzino
+  - action: magazzino_form
+  - active_loop: magazzino_form
 
 - rule: submit form magazzino
   condition:
-  - active_loop: form_magazzino
+  - active_loop: magazzino_form
   steps:
-  - action: form_magazzino
+  - action: magazzino_form
   - active_loop: null
   - slot_was_set:
     - requested_slot: null

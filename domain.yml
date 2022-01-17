@@ -56,6 +56,14 @@ slots:
     type: text
     influence_conversation: False
 
+  p_text:
+    type: text
+    influence_conversation: False
+
+  clarify_p_code:
+    type: bool
+    influence_conversation: False
+
   #warehouse data:
   quantity:
     type: float
@@ -113,10 +121,13 @@ responses:
   - text: "Lavoro completato! Chiamami pure se ti serve altro."
   - text: "Fatto! Tutto settato."
 
-  utter_ask_p_code:
+  utter_ask_p_text:
   - text: "Mi serve sapere il nome del prodotto e il produttore, oppure il suo codice a barre!"
   - text: "Puoi leggermi il codice a barre, oppure dirmi il nome del prodotto e il produttore."
   - text: "Mi leggeresti il codice a barre, oppure il nome del prodotto e il produttore?"
+
+  utter_wrong_p_text:
+  - text: "Mi ripeteresti il nome?"
 
   utter_ask_quantity:
   - text: "Mi dici il numero di pezzi da aggiungere?"
@@ -148,17 +159,17 @@ responses:
 
 #AGENT'S CUSTOM ACTIONS:
 actions:
-  - action_getprod
+  - validate_magazzino_form
   #- validate_entity #custom action for data validation
 
 
 #FORMS:
 forms:
-  form_magazzino:
+  magazzino_form:
     required_slots:
-      p_code:
-        - type: from_entity #alternative: from intent or from raw text
-          entity: p_code
+      p_text:
+        - type: from_text
+          entity: p_text
       quantity:
         - type: from_entity
           entity: quantity

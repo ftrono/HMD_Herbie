@@ -6,8 +6,6 @@ stories:
   steps:
   - intent: greet
   - action: utter_greet
-  - intent: ask_azienda
-  - action: action_getprod
   - intent: thanks
   - action: utter_welcome
 
