@@ -10,7 +10,6 @@ from db_interaction import get_prodinfo
 #get product reference from DB:
 def get_p_code(tracker, dispatcher):
     utts = {}
-    print("PARTO")
     #get latest entity values from tracker, or None if they're not available:
     p_code = next(tracker.get_latest_entity_values("p_code"), None)
     p_name = next(tracker.get_latest_entity_values("p_name"), None)
@@ -22,6 +21,7 @@ def get_p_code(tracker, dispatcher):
     # - case c) p_name + supplier
     if p_name == None and p_code == None:
         message = f"Mmm, mi manca qualche informazione."
+        message = "Puoi leggermi il codice a barre, oppure dirmi il nome del prodotto e il produttore!"
         return None
 
     elif p_code != None:

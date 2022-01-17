@@ -60,10 +60,6 @@ slots:
     type: text
     influence_conversation: False
 
-  clarify_p_code:
-    type: bool
-    influence_conversation: False
-
   #warehouse data:
   quantity:
     type: float
@@ -122,9 +118,9 @@ responses:
   - text: "Fatto! Tutto settato."
 
   utter_ask_p_text:
-  - text: "Mi serve sapere il nome del prodotto e il produttore, oppure il suo codice a barre!"
-  - text: "Puoi leggermi il codice a barre, oppure dirmi il nome del prodotto e il produttore."
-  - text: "Mi leggeresti il codice a barre, oppure il nome del prodotto e il produttore?"
+  - text: "Dimmi il prodotto!"
+  - text: "Dimmi pure il prodotto!"
+  - text: "Vai col prodotto!"
 
   utter_wrong_p_text:
   - text: "Mi ripeteresti il nome?"
@@ -154,7 +150,7 @@ responses:
   - text: "Ok! Mi dai il riferimento dello scaffale?"
 
   utter_recap:
-  - text: "Ok, ricapitolando: ti sto aggiungendo {quantity} pezzi di {p_code} al magazzino, mappati sullo scaffale {shelf}. Il prezzo di questi prodotti è {price} euro ognuno, li hai acquistati al {discount}% di sconto e si applicherà l'aliquota IVA al {vat}%."
+  - text: "Ok, ricapitolando: ti sto aggiungendo {quantity} pezzi di {p_name} di {supplier} al magazzino, mappati sullo scaffale {shelf}. Il prezzo di questi prodotti è {price} euro ognuno, li hai acquistati al {discount}% di sconto e si applicherà l'aliquota IVA al {vat}%."
 
 
 #AGENT'S CUSTOM ACTIONS:
