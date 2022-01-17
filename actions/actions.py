@@ -6,7 +6,64 @@ from globals import *
 from db_tools import db_connect
 from db_interaction import get_prodinfo
 
+#HELPER:
+#get product reference from DB:
+def get_p_code(tracker, dispatcher):
+    utts = {}
+    print("PARTO")
+    #get latest entity values from tracker, or None if they're not available:
+    p_code = next(tracker.get_latest_entity_values("p_code"), None)
+    p_name = next(tracker.get_latest_entity_values("p_name"), None)
+    supplier = next(tracker.get_latest_entity_values("supplier"), None)
 
+    #fallback: under informative:
+    # - case a) no info
+    # - case b) p_code (it's self-sufficient)
+    # - case c) p_name + supplier
+    if p_name == None and p_code == None:
+        message = f"Mmm, mi manca qualche informazione."
+        return None
+
+    elif p_code != None:
+        utts['p_code'] = p_code.lower()
+    else:
+        utts['p_name'] = p_name.lower()
+        if supplier != None:
+            utts['supplier'] = supplier.lower()
+    
+    #db extraction:
+    try:
+        conn, cursor = db_connect()   
+        resp = get_prodinfo(conn, utts)
+        conn.close()
+    except:
+        resp == []
+    
+    #fallback: not found:
+    if resp == []:
+        if p_code != None:
+            str1 = "codice"
+        else:
+            str1 = "nome"
+        message = f"Non ho trovato nessun prodotto con questo " + str1 + ". Riproviamo!"
+        dispatcher.utter_message(text=message)
+        return None
+
+    elif len(resp) > 1:
+        message = f"Ho trovato più di un prodotto simile:"
+        for prod in resp:
+            message = message + "\nDi " + prod['supplier'] + ", " + prod['p_name'] + "."
+        message = message + "\nProva a specificare meglio!"
+        dispatcher.utter_message(text=message)
+        return None
+
+    else:
+        prod = resp[0]
+        message = f"Trovato! Di {prod['supplier']}, {prod['p_name']}."
+        dispatcher.utter_message(text=message)
+        return prod
+
+#CUSTOM ACTIONS:
 class ValidateMagazzinoForm(FormValidationAction):
     def name(self) -> Text:
         return "validate_magazzino_form"
@@ -19,57 +76,10 @@ class ValidateMagazzinoForm(FormValidationAction):
         domain: Dict[Text, Any],
     ) -> Dict[Text, Any]:
 
-        utts = {}
-        print("PARTO")
-        #get latest entity values from tracker, or None if they're not available:
-        p_code = next(tracker.get_latest_entity_values("p_code"), None)
-        p_name = next(tracker.get_latest_entity_values("p_name"), None)
-        supplier = next(tracker.get_latest_entity_values("supplier"), None)
-
-        #fallback: under informative:
-        # - case a) no info
-        # - case b) p_code (it's self-sufficient)
-        # - case c) p_name + supplier
-        if p_name == None and p_code == None:
-            message = f"Mmm, mi manca qualche informazione."
+        prod = get_p_code(tracker, dispatcher)
+        if prod is None:
             return {"p_text": None}
-
-        elif p_code != None:
-            utts['p_code'] = p_code.lower()
         else:
-            utts['p_name'] = p_name.lower()
-            if supplier != None:
-                utts['supplier'] = supplier.lower()
-        
-        #db extraction:
-        try:
-            conn, cursor = db_connect()   
-            resp = get_prodinfo(conn, utts)
-            conn.close()
-        except:
-            resp == []
-        
-        #fallback: not found:
-        if resp == []:
-            if p_code != None:
-                message = f"Non ho trovato nessun prodotto con questo codice. Riproviamo!"
-            else:
-                message = f"Non ho trovato nessun prodotto con questo nome. Riproviamo!"
-            dispatcher.utter_message(text=message)
-            return {"p_text": None}
-
-        elif len(resp) > 1:
-            message = f"Ho trovato più di un prodotto simile:"
-            for prod in resp:
-                message = message + "\nDi " + prod['supplier'] + ", " + prod['p_name'] + "."
-            message = message + "\nProva a specificare meglio!"
-            dispatcher.utter_message(text=message)
-            return {"p_text": None}
-
-        else:
-            prod = resp[0]
-            message = f"Trovato! Di {prod['supplier']}, {prod['p_name']}."
-            dispatcher.utter_message(text=message)
             return {"p_text": 'ok', "p_code": str(prod['p_code']), "p_name": str(prod['p_name']), "supplier": str(prod['supplier'])}
 
 
