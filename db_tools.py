@@ -31,7 +31,6 @@ def create_tables(conn=None, cursor=None):
         'Prodotti': '''CREATE TABLE Prodotti (
             CodiceProd INTEGER PRIMARY KEY, 
             Produttore TEXT NOT NULL,
-            Linea TEXT,
             Nome TEXT NOT NULL, 
             Categoria TEXT NOT NULL,
             Quantità INTEGER NOT NULL DEFAULT 0,

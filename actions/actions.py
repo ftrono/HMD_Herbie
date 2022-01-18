@@ -8,28 +8,23 @@ from db_interaction import get_prodinfo
 
 #HELPER:
 #get product reference from DB:
-def get_p_code(tracker, dispatcher):
-    utts = {}
-    #get latest entity values from tracker, or None if they're not available:
-    p_code = next(tracker.get_latest_entity_values("p_code"), None)
-    p_name = next(tracker.get_latest_entity_values("p_name"), None)
-    supplier = next(tracker.get_latest_entity_values("supplier"), None)
+def get_p_code(tracker, dispatcher, p_text):
+   
+    utts = {'p_code': None, 'p_text': str(p_text).lower()}
 
-    #fallback: under informative:
-    # - case a) no info
-    # - case b) p_code (it's self-sufficient)
-    # - case c) p_name + supplier
-    if p_name == None and p_code == None:
+    #get latest entity values from tracker, or None if they're not available:
+    utts['p_code'] = next(tracker.get_latest_entity_values("p_code"), None)
+
+    #fallback:
+    if utts['p_code'] == None and utts['p_text'] == None:
         message = f"Mmm, mi manca qualche informazione."
         message = "Puoi leggermi il codice a barre, oppure dirmi il nome del prodotto e il produttore!"
+        dispatcher.utter_message(text=message)
         return None
 
-    elif p_code != None:
-        utts['p_code'] = p_code.lower()
-    else:
-        utts['p_name'] = p_name.lower()
-        if supplier != None:
-            utts['supplier'] = supplier.lower()
+    elif utts['p_code'] != None:
+        #p_code has priority:
+        utts['p_code'] = str(utts['p_code']).lower()
     
     #db extraction:
     try:
@@ -41,7 +36,7 @@ def get_p_code(tracker, dispatcher):
     
     #fallback: not found:
     if resp == []:
-        if p_code != None:
+        if utts['p_code'] != None:
             str1 = "codice"
         else:
             str1 = "nome"
@@ -63,6 +58,7 @@ def get_p_code(tracker, dispatcher):
         dispatcher.utter_message(text=message)
         return prod
 
+
 #CUSTOM ACTIONS:
 class ValidateMagazzinoForm(FormValidationAction):
     def name(self) -> Text:
@@ -76,11 +72,14 @@ class ValidateMagazzinoForm(FormValidationAction):
         domain: Dict[Text, Any],
     ) -> Dict[Text, Any]:
 
-        prod = get_p_code(tracker, dispatcher)
+        p_text = tracker.latest_message.get("text")
+        print(p_text)
+        prod = get_p_code(tracker, dispatcher, p_text)
         if prod is None:
-            return {"p_text": None}
+            slots = {"p_text": None}
         else:
-            return {"p_text": 'ok', "p_code": str(prod['p_code']), "p_name": str(prod['p_name']), "supplier": str(prod['supplier'])}
+            slots = {"p_text": 'ok', "p_code": str(prod['p_code']), "p_name": str(prod['p_name']), "supplier": str(prod['supplier'])}
+        return slots
 
 
 class GetAzienda(Action):

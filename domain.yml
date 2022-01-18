@@ -17,7 +17,8 @@ intents:
   - ask_azienda
   #magazzino:
   - ask_wh_upd
-  - inform_prod
+  - inform_p_code
+  - inform_p_text
   - inform_price
   - inform_quantity
   - inform_discount

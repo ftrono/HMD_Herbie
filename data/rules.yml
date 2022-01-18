@@ -22,8 +22,9 @@ rules:
 # validate product:
 # - rule: call inform_product
 #   steps:
-#   - action: ask_p_code
+#   - action: utter_ask_p_text
 #   - intent: inform_prod
+#   - action: validate_p_text
 
 - rule: activate form magazzino
   steps:

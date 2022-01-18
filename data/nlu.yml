@@ -71,15 +71,17 @@ nlu:
     - puoi aggiornarmi i dati al magazzino?
     - mi aggiorneresti i dati al magazzino?
 
-- intent: inform_prod
+- intent: inform_p_code
   examples: |
-    - prodotto codice [123456789143680](p_code)
-    - codice [123456789143680](p_code)
-    - prodotto [nome1uno nome2due nome3tre nome4quattro nome5cinque](p_name)
-    - prodotto [nome1uno nome2due nome3tre nome4quattro nome5cinque](p_name)
-    - prodotto [nomeuno](p_name) di [azienda](supplier)
-    - prodotto [nome1uno nome2due nome3tre nome4quattro nome5cinque](p_name) di [aziendanomeuno aziendanomedue](supplier)
-    - [nome1uno nome2due nome3tre nome4quattro nome5cinque](p_name) di [azienda](supplier)
+    - [91436804](p_code)
+    - [123456789143680](p_code)
+    - [12345678914368067930](p_code)
+
+- intent: inform_p_text
+  examples: |
+    - [nome1uno nome2due nome3tre](p_text)
+    - [nome1uno nome2due nome3tre nome4quattro nome5cinque](p_text)
+    - [nome1uno nome2due nome3tre nome4quattro nome5cinque nome6sei nome7sette](p_text)
 
 - intent: inform_quantity
   examples: |
@@ -112,5 +114,8 @@ nlu:
 - intent: inform_shelf
   examples: |
     - scaffale [0](shelf)
-    - scaffale numero [0](shelf)
-    - ripiano [b](shelf)
+    - scaffale [b](shelf)
+    - scaffale numero [1](shelf)
+    - scaffale lettera [a](shelf)
+    - ripiano [2](shelf)
+    - ripiano [c](shelf)
