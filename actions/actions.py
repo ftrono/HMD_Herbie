@@ -10,10 +10,10 @@ from db_interaction import get_prodinfo
 #get product reference from DB:
 def get_p_code(tracker, dispatcher, p_text):
    
-    utts = {'p_code': None, 'p_text': str(p_text).lower()}
-
-    #get latest entity values from tracker, or None if they're not available:
-    utts['p_code'] = next(tracker.get_latest_entity_values("p_code"), None)
+    utts = {
+        'p_code': next(tracker.get_latest_entity_values("p_code"), None), 
+        'p_text': str(p_text).lower()
+        }
 
     #fallback:
     if utts['p_code'] == None and utts['p_text'] == None:
