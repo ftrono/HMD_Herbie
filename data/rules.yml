@@ -41,7 +41,7 @@ rules:
   - active_loop: null
   - slot_was_set:
     - requested_slot: null
-  - action: utter_recap
-  - action: utter_done
+  - action: action_restart_magazzino_form
+  
 
 #  - rule: interruption in form

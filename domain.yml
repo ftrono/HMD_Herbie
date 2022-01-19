@@ -19,8 +19,10 @@ intents:
   - ask_wh_upd
   - inform_p_code
   - inform_p_text
+  - inform_add_pieces
+  - inform_decr_pieces
+  - more
   - inform_price
-  - inform_quantity
   - inform_discount
   - inform_vat
   - inform_shelf
@@ -32,6 +34,8 @@ entities:
   - p_name
   - supplier
   - quantity
+  - pieces
+  - more
   - price
   - discount
   - vat
@@ -63,31 +67,43 @@ slots:
 
   #warehouse data:
   quantity:
+    type: text
+    influence_conversation: False
+    # mappings:
+    # - type: custom
+    
+  pieces:
     type: float
     influence_conversation: False
-    min_value: -100.0
-    max_value: 100.0
+    min_value: 0
+    max_value: 100
+
+  more:
+    type: bool
+    influence_conversation: False
 
   price:
     type: float
     influence_conversation: False
-    min_value: 0.0
+    min_value: 0
 
   discount:
     type: float
     influence_conversation: False
-    min_value: 0.0
-    max_value: 100.0
+    min_value: 0
+    max_value: 100
 
   vat:
     type: float
     influence_conversation: False
-    min_value: 0.0
-    max_value: 100.0
+    min_value: 0
+    max_value: 100
 
   shelf:
-    type: text
+    type: float
     influence_conversation: False
+    min_value: 0.0
+    max_value: 100.0
 
 
 #AGENT'S RESPONSES:
@@ -130,6 +146,9 @@ responses:
   - text: "Mi dici il numero di pezzi da aggiungere?"
   - text: "Quanti pezzi aggiungo?"
 
+  utter_ask_more:
+  - text: "Continuiamo?"
+
   utter_ask_price:
   - text: "Mi dici il prezzo al pubblico?"
   - text: "Ok! Prezzo di vendita?"
@@ -157,6 +176,7 @@ responses:
 #AGENT'S CUSTOM ACTIONS:
 actions:
   - validate_magazzino_form
+  - action_restart_magazzino_form
   #- validate_entity #custom action for data validation
 
 
@@ -168,20 +188,9 @@ forms:
         - type: from_text
           entity: p_text
       quantity:
-        - type: from_entity
+        - type: from_text
           entity: quantity
-      price:
-        - type: from_entity
-          entity: price
-      discount:
-        - type: from_entity
-          entity: discount
-      vat:
-        - type: from_entity
-          entity: vat
-      shelf:
-        - type: from_entity
-          entity: shelf
-    #ignored_intents: ...
-
+      more:
+        - type: from_text
+          entity: more
 

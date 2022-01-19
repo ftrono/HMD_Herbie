@@ -115,6 +115,45 @@ def get_prodinfo(conn, utts):
     return resp
 
 
+def check_quantity(cursor, utts):
+    #check products already in DB:
+        query = "SELECT Quantità FROM Prodotti WHERE CodiceProd = " + str(utts['p_code'])
+        try:
+            cursor.execute(query)
+            quant = int(cursor.fetchall()[0][0])
+            return quant
+                        
+        except sqlite3.Error as e:
+            log.error("Unable to check quantity boundary for product code {}. {}".format(utts['oper'], utts['p_code'], e))
+            return -1
+
+
+def update_quantity(conn, cursor, utts):
+    #compose query:
+    if utts['oper'] == 'add':
+        str1 = "+ " + str(utts['value'])
+    elif utts['oper'] == 'decrease':
+        str1 = "- " + str(utts['value'])
+    else:
+        return -1
+    query = "UPDATE Prodotti SET Quantità = Quantità " + str1 + " WHERE CodiceProd = " + str(utts['p_code'])
+
+    #DB update:
+    try: 
+        cursor.execute(query)
+        changes = cursor.rowcount
+        if changes != 0:
+            conn.commit()
+            log.info("Success: {} {} pieces to product code {}.".format(utts['oper'], utts['value'], utts['p_code']))
+            return 0
+        else:
+            log.error("DB: No match for p_code {}.".format(utts['p_code']))
+            return -1
+    except sqlite3.Error as e:
+        log.error("Unable to perform operation {} to product code {}. {}".format(utts['oper'], utts['p_code'], e))
+        return -1
+
+
 #add a new product:
 def add_prod(conn, cursor, utts):
 
@@ -147,65 +186,6 @@ def delete_prod(conn, cursor, utts):
         log.error("Unable to delete product {} from DB. {}".format(utts['p_name'], e))
 
     conn.commit()
-
-
-#get product reference from DB:
-def get_p_code_from_ent(tracker, dispatcher):
-    
-    utts = {}
-    #get latest entity values from tracker, or None if they're not available:
-    utts['p_code'] = next(tracker.get_latest_entity_values("p_code"), None)
-    if utts['p_code'] != None:
-        utts['p_code'] = str(utts['p_code']).lower()
-
-    utts['p_name'] = next(tracker.get_latest_entity_values("p_name"), None)
-    if utts['p_name'] != None:
-        utts['p_name'] = utts['p_name'].lower()
-        
-    utts['supplier'] = next(tracker.get_latest_entity_values("supplier"), None)
-    if utts['supplier'] != None:
-        utts['supplier'] = utts['supplier'].lower()
-
-    #fallback: under informative:
-    # - case a) no info
-    # - case b) p_code (it's self-sufficient)
-    # - case c) p_name + supplier
-    if utts['p_name'] == None and utts['p_code'] == None:
-        message = f"Mmm, mi manca qualche informazione."
-        message = "Puoi leggermi il codice a barre, oppure dirmi il nome del prodotto e il produttore!"
-        return None
-    
-    #db extraction:
-    try:
-        conn, cursor = db_connect()   
-        resp = get_prodinfo(conn, utts)
-        conn.close()
-    except:
-        resp == []
-    
-    #fallback: not found:
-    if resp == []:
-        if utts['p_code'] != None:
-            str1 = "codice"
-        else:
-            str1 = "nome"
-        message = f"Non ho trovato nessun prodotto con questo " + str1 + ". Riproviamo!"
-        dispatcher.utter_message(text=message)
-        return None
-
-    elif len(resp) > 1:
-        message = f"Ho trovato più di un prodotto simile:"
-        for prod in resp:
-            message = message + "\nDi " + prod['supplier'] + ", " + prod['p_name'] + "."
-        message = message + "\nProva a specificare meglio!"
-        dispatcher.utter_message(text=message)
-        return None
-
-    else:
-        prod = resp[0]
-        message = f"Trovato! Di {prod['supplier']}, {prod['p_name']}."
-        dispatcher.utter_message(text=message)
-        return prod
 
 
 #MAIN:
