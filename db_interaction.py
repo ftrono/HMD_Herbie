@@ -1,12 +1,7 @@
 from globals import *
 from db_tools import db_connect
 
-#DB_INTERACTIONS:
-# - add_prod()
-# - get_prodinfo()
-# - get_quantity()
-# - delete_prod()
-
+#DB_INTERACTIONS
 
 #get basic product info:
 def get_prodinfo(conn, utts):
@@ -115,7 +110,7 @@ def get_prodinfo(conn, utts):
     return resp
 
 
-def check_quantity(cursor, utts):
+def check_pieces(cursor, utts):
     #check products already in DB:
         query = "SELECT Quantità FROM Prodotti WHERE CodiceProd = " + str(utts['p_code'])
         try:
@@ -124,16 +119,16 @@ def check_quantity(cursor, utts):
             return quant
                         
         except sqlite3.Error as e:
-            log.error("Unable to check quantity boundary for product code {}. {}".format(utts['oper'], utts['p_code'], e))
+            log.error("Unable to check quantity boundary for product code {}. {}".format(utts['var'], utts['p_code'], e))
             return -1
 
 
-def update_quantity(conn, cursor, utts):
+def update_pieces(conn, cursor, utts):
     #compose query:
-    if utts['oper'] == 'add':
-        str1 = "+ " + str(utts['value'])
-    elif utts['oper'] == 'decrease':
-        str1 = "- " + str(utts['value'])
+    if utts['var'] == 'add':
+        str1 = "+ " + str(utts['pieces'])
+    elif utts['var'] == 'decrease':
+        str1 = "- " + str(utts['pieces'])
     else:
         return -1
     query = "UPDATE Prodotti SET Quantità = Quantità " + str1 + " WHERE CodiceProd = " + str(utts['p_code'])
@@ -144,13 +139,13 @@ def update_quantity(conn, cursor, utts):
         changes = cursor.rowcount
         if changes != 0:
             conn.commit()
-            log.info("Success: {} {} pieces to product code {}.".format(utts['oper'], utts['value'], utts['p_code']))
+            log.info("Success: {} {} pieces to product code {}.".format(utts['var'], utts['pieces'], utts['p_code']))
             return 0
         else:
             log.error("DB: No match for p_code {}.".format(utts['p_code']))
             return -1
     except sqlite3.Error as e:
-        log.error("Unable to perform operation {} to product code {}. {}".format(utts['oper'], utts['p_code'], e))
+        log.error("Unable to perform operation {} to product code {}. {}".format(utts['var'], utts['p_code'], e))
         return -1
 
 
@@ -163,13 +158,6 @@ def add_prod(conn, cursor, utts):
         log.info("Added product {} to table Prodotti.".format(utts['p_name']))
     except sqlite3.Error as e:
         log.error("Unable to add product {} to table Prodotti. {}".format(utts['p_name'], e))
-
-    # tup = (str(utts['p_code']), utts['quantity'])
-    # try:
-    #     cursor.execute("INSERT INTO Magazzino (CodiceProd, Quantità) VALUES (?, ?)", tup)
-    #     log.info("Added product {} to table Magazzino.".format(utts['p_name']))
-    # except sqlite3.Error as e:
-    #     log.error("Unable to add product {} to table Magazzino. {}".format(utts['p_name'], e))
 
     conn.commit()
 
@@ -191,13 +179,13 @@ def delete_prod(conn, cursor, utts):
 #MAIN:
 if __name__ == '__main__':
     conn, cursor = db_connect()
-    # utts = {'p_code': 12345, 'p_name': 'flufast', 'supplier': 'biosline', 'category': 'health', 'quantity': 2}
+    # utts = {'p_code': 12345, 'p_name': 'flufast', 'supplier': 'biosline', 'category': 'health', 'pieces': 2}
     # add_prod(conn, cursor, utts)
-    # utts = {'p_code': 12346, 'p_name': 'pappa reale fiale', 'supplier': 'aboca', 'category': 'health', 'quantity': 3}
+    # utts = {'p_code': 12346, 'p_name': 'pappa reale fiale', 'supplier': 'aboca', 'category': 'health', 'pieces': 3}
     # add_prod(conn, cursor, utts)
-    # utts = {'p_code': 12347, 'p_name': 'pappa reale bustine', 'supplier': 'aboca', 'category': 'health', 'quantity': 5}
+    # utts = {'p_code': 12347, 'p_name': 'pappa reale bustine', 'supplier': 'aboca', 'category': 'health', 'pieces': 5}
     # add_prod(conn, cursor, utts)
-    # utts = {'p_code': 12348, 'p_name': 'pappa reale compresse', 'supplier': 'biosline', 'category': 'health', 'quantity': 10}
+    # utts = {'p_code': 12348, 'p_name': 'pappa reale compresse', 'supplier': 'biosline', 'category': 'health', 'pieces': 10}
     # add_prod(conn, cursor, utts)
     # utts = {'p_name': 'pappa reale'}
     # print(get_prodinfo(conn, utts))

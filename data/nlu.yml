@@ -1,6 +1,7 @@
 version: "2.0"
 nlu:
 
+#general:
 - intent: greet
   examples: |
     - ciao
@@ -28,9 +29,6 @@ nlu:
     - ti ringrazio
     - ottimo grazie
     - fatto grazie
-    - ottimo
-    - perfetto
-    - benissimo
 
 - intent: affirm
   examples: |
@@ -46,6 +44,7 @@ nlu:
 - intent: deny
   examples: |
     - no
+    - no grazie
     - nono
     - sbagliato
     - non hai capito
@@ -53,24 +52,14 @@ nlu:
 - intent: bot_challenge
   examples: |
     - chi sei?
+    - come ti chiami?
+    - qual è il tuo nome?
     - sei un umano?
     - sei digitale?
     - sei un bot?
+    - cosa sai fare?
 
-- intent: ask_azienda
-  examples: |
-    - mi dici di quale azienda è il prodotto [echinepid](p_name)?
-    - di che azienda è [flufast](p_name)?
-    - di chi è [pappa reale](p_name)?
-    - di quale società è [pappa reale](p_name)
-
-- intent: ask_wh_upd
-  examples: |
-    - devo aggiornare i dati al magazzino
-    - aggiorna magazzino
-    - puoi aggiornarmi i dati al magazzino?
-    - mi aggiorneresti i dati al magazzino?
-
+#product info:
 - intent: inform_p_code
   examples: |
     - [91436804](p_code)
@@ -82,6 +71,21 @@ nlu:
     - [nome1uno nome2due nome3tre](p_text)
     - [nome1uno nome2due nome3tre nome4quattro nome5cinque](p_text)
     - [nome1uno nome2due nome3tre nome4quattro nome5cinque nome6sei nome7sette](p_text)
+
+- intent: ask_azienda
+  examples: |
+    - mi dici di quale azienda è il prodotto [echinepid](p_name)?
+    - di che azienda è [flufast](p_name)?
+    - di chi è [pappa reale](p_name)?
+    - di quale società è [pappa reale](p_name)
+
+#warehouse:
+- intent: ask_wh_upd
+  examples: |
+    - devo aggiornare i dati al magazzino
+    - aggiorna magazzino
+    - puoi aggiornarmi i dati al magazzino?
+    - mi aggiorneresti i dati al magazzino?
 
 - intent: inform_add_pieces
   examples: |
@@ -105,31 +109,3 @@ nlu:
     - sottrai [10](pieces) pezzi
     - toglimi [2](pieces) pezzi
 
-- intent: inform_price
-  examples: |
-    - [20](price) euro
-    - [20.45](price) euro
-    - prezzo [25](price) euro
-    - prezzo [3.56](price) euro
-    - prezzo al pubblico [156.5](price) euro
-
-- intent: inform_discount
-  examples: |
-    - sconto [30](discount) per cento
-    - [30](discount) per cento di sconto
-    - [30](discount) di sconto
-
-- intent: inform_vat
-  examples: |
-    - aliquota [22](vat) per cento
-    - iva [10](vat) per cento
-    - [10](vat) per cento di iva
-
-- intent: inform_shelf
-  examples: |
-    - scaffale [0](shelf)
-    - scaffale [b](shelf)
-    - scaffale numero [1](shelf)
-    - scaffale lettera [a](shelf)
-    - ripiano [2](shelf)
-    - ripiano [c](shelf)

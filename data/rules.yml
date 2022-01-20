@@ -7,25 +7,12 @@ rules:
   - intent: bot_challenge
   - action: utter_iamabot
 
-# #product info:
-# - rule: ask azienda
-#   steps:
-#   - intent: ask_azienda
-#   - action: action_getprod
+- rule: you're welcome
+  steps:
+  - intent: thanks
+  - action: utter_welcome
 
-# # validate product:
-# - rule: validate product
-#   steps:
-#   - intent: inform_prod
-#   - action: validate_prod
-
-# validate product:
-# - rule: call inform_product
-#   steps:
-#   - action: utter_ask_p_text
-#   - intent: inform_prod
-#   - action: validate_p_text
-
+#warehouse:
 - rule: activate form magazzino
   steps:
   - intent: ask_wh_upd
