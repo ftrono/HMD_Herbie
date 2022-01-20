@@ -36,8 +36,6 @@ entities:
   - supplier
   - variation
   - pieces
-  - next
-  - more
   - price
   - discount
   - vat
@@ -80,6 +78,10 @@ slots:
     min_value: 0
     max_value: 100
 
+  check:
+    type: bool
+    influence_conversation: False
+
   mark_to_order:
     type: bool
     influence_conversation: False
@@ -119,11 +121,11 @@ responses:
   - text: "Alla prossima!"
 
   utter_ready:
-    - text: "Sono pronto!"
-    - text: "Certo!"
-    - text: "Subito!"
-    - text: "Certamente!"
-    - text: "Va benissimo!"
+  - text: "Sono pronto!"
+  - text: "Certo!"
+  - text: "Subito!"
+  - text: "Certamente!"
+  - text: "Va benissimo!"
 
   utter_ok:
   - text: "Ok!"
@@ -138,6 +140,17 @@ responses:
   - text: "Missione compiuta!"
   - text: "Fatto!"
   - text: "Fatto! Tutto settato."
+
+  utter_repeat:
+  - text: "Potresti ripetere?"
+  - text: "Puoi riprovare?"
+  - text: "Prova a precisare!"
+  - text: "Riprova da capo!"
+
+  utter_specify:
+  - text: "Prova a specificare meglio!"
+  - text: "A quale ti riferisci?"
+  - text: "A quale di questi ti riferisci?"
 
 #product info:
   utter_ask_p_text:
@@ -205,20 +218,19 @@ forms:
     required_slots:
       p_text:
         - type: from_text
-          entity: p_text
+      check:
+        - type: from_text
       variation:
         - type: from_text
-          entity: variation
       next:
         - type: from_text
-          entity: next
 
   giacenza_form:
     required_slots:
       p_text:
         - type: from_text
-          entity: p_text
+      check:
+        - type: from_text
       mark_to_order:
         - type: from_text
-          entity: mark_to_order
 

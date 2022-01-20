@@ -21,6 +21,9 @@ nlu:
     - no nulla
     - niente niente
     - lascia stare
+    - basta
+    - basta così
+    - herbie basta
 
 - intent: thanks
   examples: |
@@ -40,6 +43,8 @@ nlu:
     - esatto
     - certamente
     - giusto
+    - magari
+    - magari grazie
 
 - intent: deny
   examples: |

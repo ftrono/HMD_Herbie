@@ -18,8 +18,7 @@ def get_p_code(tracker, dispatcher, p_text):
 
     #fallback:
     if utts['p_code'] == None and utts['p_text'] == None:
-        message = f"Mmm, mi manca qualche informazione."
-        #message = "Puoi leggermi il codice a barre, oppure dirmi il nome del prodotto e il produttore!"
+        message = f"Mmm, mi manca qualche informazione. Puoi leggermi il codice a barre, oppure dirmi il nome del prodotto e il produttore!"
         dispatcher.utter_message(text=message)
         return None
 
@@ -41,16 +40,17 @@ def get_p_code(tracker, dispatcher, p_text):
             str1 = "codice"
         else:
             str1 = "nome"
-        message = f"Non ho trovato nessun prodotto con questo " + str1 + ". Riproviamo!"
+        message = f"Non ho trovato nessun prodotto con questo " + str1 + "."
         dispatcher.utter_message(text=message)
+        dispatcher.utter_message(response="utter_repeat")
         return None
 
     elif len(resp) > 1:
         message = f"Ho trovato più di un prodotto simile:"
         for prod in resp:
             message = message + "\nDi " + prod['supplier'] + ", " + prod['p_name'] + "."
-        message = message + "\nProva a specificare meglio!"
         dispatcher.utter_message(text=message)
+        dispatcher.utter_message(response="utter_specify")
         return None
 
     else:
@@ -58,6 +58,32 @@ def get_p_code(tracker, dispatcher, p_text):
         message = f"Trovato! Di {prod['supplier']}, {prod['p_name']}."
         dispatcher.utter_message(text=message)
         return prod
+
+def check_giacenze(dispatcher, prod):
+    #check pieces in DB:
+    try:
+        conn, cursor = db_connect()
+        pieces = int(check_pieces(cursor, prod))
+        conn.close()
+        if pieces == 0:
+            message = f"Non hai più pezzi rimasti in magazzino!"
+        elif pieces == 1:
+            message = f"Hai solo un solo pezzo rimasto in magazzino."
+        elif pieces <= MIN_TO_ORD:
+            message = f"Hai solo {pieces} pezzi rimasti in magazzino."
+        else:
+            message = f"Hai {pieces} pezzi in magazzino."
+        dispatcher.utter_message(text=message)
+        if pieces >= THRESHOLD_TO_ORD:
+            slots = {"p_text": 'ok', "check": True, "mark_to_order": False}
+        else:
+            slots = {"p_text": 'ok', "check": True, "p_code": str(prod['p_code'])}
+    except:
+        print("DB connection error.")
+        message = "C'è stato un problema con il mio database, ti chiedo scusa."
+        dispatcher.utter_message(text=message)
+        slots = {"p_text": None}
+    return slots
 
 
 #Check if a string is an integer:
@@ -115,9 +141,26 @@ class ValidateMagazzinoForm(FormValidationAction):
         print(p_text)
         prod = get_p_code(tracker, dispatcher, p_text)
         if prod is None:
-            slots = {"p_text": None}
+            slots = {"p_text": 'ok', "check": None}
         else:
-            slots = {"p_text": 'ok', "p_code": str(prod['p_code']), "p_name": str(prod['p_name']), "supplier": str(prod['supplier'])}
+            slots = {"p_text": 'ok', "check": True, "p_code": str(prod['p_code']), "p_name": str(prod['p_name']), "supplier": str(prod['supplier'])}
+        return slots
+
+    def validate_check(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        p_text = tracker.latest_message.get("text")
+        print(p_text)
+        prod = get_p_code(tracker, dispatcher, p_text)
+        if prod is None:
+            slots = {"p_text": 'ok', "check": None}
+        else:
+            slots = {"p_text": 'ok', "check": True, "p_code": str(prod['p_code']), "p_name": str(prod['p_name']), "supplier": str(prod['supplier'])}
         return slots
 
     def validate_variation(
@@ -244,31 +287,26 @@ class ValidateGiacenzaForm(FormValidationAction):
         print(p_text)
         prod = get_p_code(tracker, dispatcher, p_text)
         if prod is None:
-            slots = {"p_text": None}
+            slots = {"p_text": "ok", "check": None}
         else:
-            #check pieces in DB:
-            try:
-                conn, cursor = db_connect()
-                pieces = int(check_pieces(cursor, prod))
-                conn.close()
-                if pieces == 0:
-                    message = f"Non hai più pezzi rimasti in magazzino!"
-                elif pieces == 1:
-                    message = f"Hai solo un solo pezzo rimasto in magazzino."
-                elif pieces <= MIN_TO_ORD:
-                    message = f"Hai solo {pieces} pezzi rimasti in magazzino."
-                else:
-                    message = f"Hai {pieces} pezzi in magazzino."
-                dispatcher.utter_message(text=message)
-                if pieces >= THRESHOLD_TO_ORD:
-                    slots = {"p_text": 'ok', "mark_to_order": False}
-                else:
-                    slots = {"p_text": 'ok', "p_code": str(prod['p_code'])}
-            except:
-                print("DB connection error.")
-                message = "C'è stato un problema con il mio database, ti chiedo scusa."
-                dispatcher.utter_message(text=message)
-                slots = {"p_text": None}
+            slots = check_giacenze(dispatcher, prod)
+        return slots
+
+    def validate_check(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        p_text = tracker.latest_message.get("text")
+        print(p_text)
+        prod = get_p_code(tracker, dispatcher, p_text)
+        if prod is None:
+            slots = {"p_text": "ok", "check": None}
+        else:
+            slots = check_giacenze(dispatcher, prod)
         return slots
 
     def validate_mark_to_order(
