@@ -260,7 +260,10 @@ class ValidateGiacenzaForm(FormValidationAction):
                 else:
                     message = f"Hai {pieces} pezzi in magazzino."
                 dispatcher.utter_message(text=message)
-                slots = {"p_text": 'ok', "p_code": str(prod['p_code'])}
+                if pieces >= THRESHOLD_TO_ORD:
+                    slots = {"p_text": 'ok', "mark_to_order": False}
+                else:
+                    slots = {"p_text": 'ok', "p_code": str(prod['p_code'])}
             except:
                 print("DB connection error.")
                 message = "C'è stato un problema con il mio database, ti chiedo scusa."
