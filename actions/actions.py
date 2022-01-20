@@ -6,8 +6,8 @@ from rasa_sdk.types import DomainDict
 from rasa_sdk.events import AllSlotsReset, FollowupAction, SlotSet
 from globals import *
 from db_tools import db_connect
-from db_interaction import get_prodinfo, check_pieces, update_pieces
-    
+from db_interaction import get_prodinfo, check_pieces, update_pieces, flag_to_order
+
 #HELPER:
 #Get product reference from DB:
 def get_p_code(tracker, dispatcher, p_text):
@@ -68,6 +68,16 @@ def is_int(string: Text) -> bool:
     except ValueError:
         return False
 
+class ActionResetAllSlots(Action):
+    def name(self) -> Text:
+            return "action_reset_all_slots"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        return [AllSlotsReset()]
 
 class ActionRestartMagazzinoForm(Action):
     def name(self) -> Text:
@@ -78,16 +88,17 @@ class ActionRestartMagazzinoForm(Action):
         domain: Dict[Text, Any]
         ) -> List[Dict[Text, Any]]:
 
-        more = tracker.get_slot("more")
+        next = tracker.get_slot("next")
 
-        if more == True:
+        if next == True:
             return [AllSlotsReset(), FollowupAction(name="magazzino_form")]
-        elif more == False:
+        elif next == False:
             return [AllSlotsReset()]
         else:
             return []
 
 #Forms validation:
+#warehouse:
 class ValidateMagazzinoForm(FormValidationAction):
     def name(self) -> Text:
         return "validate_magazzino_form"
@@ -188,7 +199,7 @@ class ValidateMagazzinoForm(FormValidationAction):
             dispatcher.utter_message(text=message)
             return {"variation": None, "pieces": None}
 
-    def validate_more(
+    def validate_next(
         self, 
         value: Text,
         dispatcher: CollectingDispatcher,
@@ -201,17 +212,98 @@ class ValidateMagazzinoForm(FormValidationAction):
 
         if intent == 'affirm':
             print("Affermativo")
-            return {"more": True}
+            dispatcher.utter_message(response="utter_ok")
+            return {"next": True}
 
         elif intent == 'deny':
             print("Negativo")
             dispatcher.utter_message(response="utter_ok")
             dispatcher.utter_message(response="utter_available")
-            return {"more": False}
+            return {"next": False}
 
         else:
             message = "Mmm, non ho capito bene."
             dispatcher.utter_message(text=message)
-            return {"more": None}
+            return {"next": None}
 
 
+#giacenza:
+class ValidateGiacenzaForm(FormValidationAction):
+    def name(self) -> Text:
+        return "validate_giacenza_form"
+
+    def validate_p_text(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        p_text = tracker.latest_message.get("text")
+        print(p_text)
+        prod = get_p_code(tracker, dispatcher, p_text)
+        if prod is None:
+            slots = {"p_text": None}
+        else:
+            #check pieces in DB:
+            try:
+                conn, cursor = db_connect()
+                pieces = int(check_pieces(cursor, prod))
+                conn.close()
+                if pieces == 0:
+                    message = f"Non hai più pezzi rimasti in magazzino!"
+                elif pieces == 1:
+                    message = f"Hai solo un solo pezzo rimasto in magazzino."
+                elif pieces <= MIN_TO_ORD:
+                    message = f"Hai solo {pieces} pezzi rimasti in magazzino."
+                else:
+                    message = f"Hai {pieces} pezzi in magazzino."
+                dispatcher.utter_message(text=message)
+                slots = {"p_text": 'ok', "p_code": str(prod['p_code'])}
+            except:
+                print("DB connection error.")
+                message = "C'è stato un problema con il mio database, ti chiedo scusa."
+                dispatcher.utter_message(text=message)
+                slots = {"p_text": None}
+        return slots
+
+    def validate_mark_to_order(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        #validate user intent:
+        intent = tracker.latest_message['intent'].get('name')
+
+        if intent == 'affirm':
+            print("Affermativo")
+            try:
+                conn, cursor = db_connect()
+                utts = {'p_code': tracker.get_slot('p_code')}
+                ret = flag_to_order(conn, cursor, utts, mode=True)
+                conn.close()
+                if ret == 0:
+                    message = f"Fatto! L'ho inserito in lista per il prossimo ordine."
+                else:
+                    message = "C'è stato un problema con il mio database, ti chiedo scusa."
+            except:
+                print("DB connection error.")
+                message = "C'è stato un problema con il mio database, ti chiedo scusa."
+            dispatcher.utter_message(text=message)
+            dispatcher.utter_message(response="utter_available")
+            return {"mark_to_order": True}
+
+        elif intent == 'deny':
+            print("Negativo")
+            dispatcher.utter_message(response="utter_ok")
+            dispatcher.utter_message(response="utter_available")
+            return {"mark_to_order": False}
+
+        else:
+            message = "Mmm, non ho capito bene."
+            dispatcher.utter_message(text=message)
+            return {"mark_to_order": None}

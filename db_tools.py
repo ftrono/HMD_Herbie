@@ -34,6 +34,7 @@ def create_tables(conn=None, cursor=None):
             Nome TEXT NOT NULL, 
             Categoria TEXT NOT NULL,
             Quantità INTEGER NOT NULL DEFAULT 0,
+            DaOrdinare INTEGER NOT NULL DEFAULT 0,
             Prezzo REAL NOT NULL DEFAULT 0,
             ScontoMedio REAL NOT NULL DEFAULT 0,
             Aliquota REAL NOT NULL DEFAULT 0.22,

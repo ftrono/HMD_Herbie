@@ -3,6 +3,7 @@ import pandas as pd
 
 #globals:
 DB_FILE = "erb_copertino.db"
+MIN_TO_ORD = 5
 
 #Set logger:
 log=logging.getLogger('db_interactions')

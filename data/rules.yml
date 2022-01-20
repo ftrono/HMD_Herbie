@@ -13,10 +13,28 @@ rules:
   - action: utter_welcome
 
 #warehouse:
+- rule: activate form giacenza
+  steps:
+  - intent: ask_giacenza
+  - action: utter_ready
+  - action: giacenza_form
+  - active_loop: giacenza_form
+
+- rule: submit form giacenza
+  condition:
+  - active_loop: giacenza_form
+  steps:
+  - action: giacenza_form
+  - active_loop: null
+  - slot_was_set:
+    - requested_slot: null
+  - action: action_reset_all_slots
+
+#warehouse:
 - rule: activate form magazzino
   steps:
   - intent: ask_wh_upd
-  - action: utter_ok
+  - action: utter_ready
   - action: magazzino_form
   - active_loop: magazzino_form
 

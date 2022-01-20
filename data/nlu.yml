@@ -79,6 +79,23 @@ nlu:
     - di chi è [pappa reale](p_name)?
     - di quale società è [pappa reale](p_name)
 
+#inventory & orders:
+- intent: ask_giacenza
+  examples: |
+    - herbie controllami una giacenza
+    - mi controlli i pezzi in magazzino di un prodotto?
+    - mi controlli una giacenza?
+    - fammi un controllo dei pezzi
+
+- intent: ask_mark_to_order
+  examples: |
+    - me lo segni come da ordinare?
+    - segnamelo da ordinare
+    - ricordami di ordinarlo prossima volta
+    - ti ricordi di metterlo in lista?
+    - mettimelo in lista ordini
+    - segnalo per il prossimo ordine
+
 #warehouse:
 - intent: ask_wh_upd
   examples: |

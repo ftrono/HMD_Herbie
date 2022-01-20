@@ -17,11 +17,16 @@ intents:
   - inform_p_code
   - inform_p_text
   - ask_azienda
+  #inventory & orders:
+  - ask_giacenza
+  - ask_mark_to_order
   #warehouse:
   - ask_wh_upd
   - inform_add_pieces
   - inform_decr_pieces
+  - next
   - more
+  - ask_pieces
 
 
 #ENTITIES:
@@ -31,6 +36,7 @@ entities:
   - supplier
   - variation
   - pieces
+  - next
   - more
   - price
   - discount
@@ -74,6 +80,14 @@ slots:
     min_value: 0
     max_value: 100
 
+  mark_to_order:
+    type: bool
+    influence_conversation: False
+
+  next:
+    type: bool
+    influence_conversation: False
+
   more:
     type: bool
     influence_conversation: False
@@ -104,11 +118,17 @@ responses:
   - text: "Chiamami pure quando vuoi!"
   - text: "Alla prossima!"
 
+  utter_ready:
+    - text: "Sono pronto!"
+    - text: "Certo!"
+    - text: "Subito!"
+    - text: "Certamente!"
+    - text: "Va benissimo!"
+
   utter_ok:
-  - text: "Certo!"
   - text: "Ok!"
-  - text: "Certamente!"
-  - text: "Sono pronto!"
+  - text: "Perfetto!"
+  - text: "Ricevuto!"
   - text: "Va benissimo!"
 
   utter_iamabot:
@@ -116,7 +136,7 @@ responses:
 
   utter_done:
   - text: "Missione compiuta!"
-  - text: "Lavoro completato! Chiamami pure se ti serve altro."
+  - text: "Fatto!"
   - text: "Fatto! Tutto settato."
 
 #product info:
@@ -133,8 +153,18 @@ responses:
   - text: "Mi dici la variazione dei pezzi?"
   - text: "Variazione?"
 
-  utter_ask_more:
+  utter_ask_next:
   - text: "Continuiamo?"
+
+  utter_ask_more:
+  - text: "Cosa vuoi che faccia?"
+  - text: "Cosa ti può servire?"
+  - text: "Ti può servire qualcosa?"
+
+  utter_ask_mark_to_order:
+  - text: "Vuoi che te lo segni come da ordinare?"
+  - text: "Lo includo nel prossimo ordine?"
+  - text: "Te lo metto in lista per il prossimo ordine?"
 
 #extra:
   utter_ask_price:
@@ -163,9 +193,10 @@ responses:
 
 #AGENT'S CUSTOM ACTIONS:
 actions:
-  - validate_magazzino_form
   - action_restart_magazzino_form
-  #- validate_entity #custom action for data validation
+  - action_reset_all_slots
+  - validate_magazzino_form
+  - validate_giacenza_form
 
 
 #FORMS:
@@ -178,7 +209,16 @@ forms:
       variation:
         - type: from_text
           entity: variation
-      more:
+      next:
         - type: from_text
-          entity: more
+          entity: next
+
+  giacenza_form:
+    required_slots:
+      p_text:
+        - type: from_text
+          entity: p_text
+      mark_to_order:
+        - type: from_text
+          entity: mark_to_order
 

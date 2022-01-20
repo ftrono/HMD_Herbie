@@ -149,6 +149,30 @@ def update_pieces(conn, cursor, utts):
         return -1
 
 
+def flag_to_order(conn, cursor, utts, mode):
+    #prepare query:
+    if mode == True:
+        flag = 1
+    else:
+        flag = 0
+    query = f"UPDATE Prodotti SET DaOrdinare = {flag} WHERE CodiceProd = {utts['p_code']}"
+    
+    #DB update:
+    try: 
+        cursor.execute(query)
+        changes = cursor.rowcount
+        if changes != 0:
+            conn.commit()
+            log.info("Success: product code {} flagged as DaOrdinare.".format(utts['p_code']))
+            return 0
+        else:
+            log.error("DB: No match for p_code {}.".format(utts['p_code']))
+            return -1
+    except sqlite3.Error as e:
+        log.error("Unable to flag product code {} as DaOrdinare. {}".format(utts['p_code'], e))
+        return -1
+
+
 #add a new product:
 def add_prod(conn, cursor, utts):
 
@@ -179,19 +203,19 @@ def delete_prod(conn, cursor, utts):
 #MAIN:
 if __name__ == '__main__':
     conn, cursor = db_connect()
-    # utts = {'p_code': 12345, 'p_name': 'flufast', 'supplier': 'biosline', 'category': 'health', 'pieces': 2}
-    # add_prod(conn, cursor, utts)
-    # utts = {'p_code': 12346, 'p_name': 'pappa reale fiale', 'supplier': 'aboca', 'category': 'health', 'pieces': 3}
-    # add_prod(conn, cursor, utts)
-    # utts = {'p_code': 12347, 'p_name': 'pappa reale bustine', 'supplier': 'aboca', 'category': 'health', 'pieces': 5}
-    # add_prod(conn, cursor, utts)
-    # utts = {'p_code': 12348, 'p_name': 'pappa reale compresse', 'supplier': 'biosline', 'category': 'health', 'pieces': 10}
-    # add_prod(conn, cursor, utts)
+    utts = {'p_code': 12345, 'p_name': 'flufast', 'supplier': 'biosline', 'category': 'health', 'pieces': 2}
+    add_prod(conn, cursor, utts)
+    utts = {'p_code': 12346, 'p_name': 'pappa reale fiale', 'supplier': 'aboca', 'category': 'health', 'pieces': 3}
+    add_prod(conn, cursor, utts)
+    utts = {'p_code': 12347, 'p_name': 'pappa reale bustine', 'supplier': 'aboca', 'category': 'health', 'pieces': 5}
+    add_prod(conn, cursor, utts)
+    utts = {'p_code': 12348, 'p_name': 'pappa reale compresse', 'supplier': 'biosline', 'category': 'health', 'pieces': 10}
+    add_prod(conn, cursor, utts)
     # utts = {'p_name': 'pappa reale'}
     # print(get_prodinfo(conn, utts))
     # utts = {'p_name': 'pappa reale fiale'}
     # delete_prod(conn, cursor, utts)
-    utts = {'p_text': None, 'p_code': None}
-    utts['p_text'] = input("Insert prod name to find: ")
-    print(get_prodinfo(conn, utts))
+    # utts = {'p_text': None, 'p_code': None}
+    # utts['p_text'] = input("Insert prod name to find: ")
+    # print(get_prodinfo(conn, utts))
     conn.close()
