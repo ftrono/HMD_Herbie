@@ -68,7 +68,7 @@ def check_giacenze(dispatcher, prod):
         if pieces == 0:
             message = f"Non hai più pezzi rimasti in magazzino!"
         elif pieces == 1:
-            message = f"Hai solo un solo pezzo rimasto in magazzino."
+            message = f"Hai un solo pezzo rimasto in magazzino."
         elif pieces <= MIN_TO_ORD:
             message = f"Hai solo {pieces} pezzi rimasti in magazzino."
         else:
