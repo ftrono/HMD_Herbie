@@ -2,7 +2,7 @@ version: "2.0"
 
 session_config:
   session_expiration_time: 60
-  carry_over_slots_to_new_session: true
+  carry_over_slots_to_new_session: true ######################
 
 
 #USER INTENTS:
@@ -15,31 +15,28 @@ intents:
   - bot_challenge
   #product info:
   - inform_p_code
-  - inform_p_text
-  - ask_azienda
+  - inform_text
+  - ask_supplier
   #inventory & orders:
   - ask_giacenza
-  - ask_mark_to_order
+  - ask_add_to_order
   #warehouse:
   - ask_wh_upd
+  - inform_num_pieces
   - inform_add_pieces
   - inform_decr_pieces
-  - next
-  - more
-  - ask_pieces
+  #orders:
+  - inform_need_order
+  - ask_read
+  - ask_new
 
 
 #ENTITIES:
 entities:
   - p_code
-  - p_name
-  - supplier
-  - variation
+  - p_text
+  - s_text
   - pieces
-  - price
-  - discount
-  - vat
-  - shelf
 
 
 #SLOTS:
@@ -48,7 +45,7 @@ slots:
   p_code:
     type: float
     influence_conversation: False
-    min_value: 0.0
+    min_value: 0
     #max_value: 
     #initial_value: null
     #auto_fill: True
@@ -65,12 +62,18 @@ slots:
     type: text
     influence_conversation: False
 
+  s_text:
+    type: text
+    influence_conversation: False
+
   #warehouse:
   variation:
     type: text
     influence_conversation: False
-    # mappings:
-    # - type: custom
+
+  quantity:
+    type: text
+    influence_conversation: False
     
   pieces:
     type: float
@@ -82,7 +85,7 @@ slots:
     type: bool
     influence_conversation: False
 
-  mark_to_order:
+  add_to_order:
     type: bool
     influence_conversation: False
 
@@ -93,6 +96,45 @@ slots:
   more:
     type: bool
     influence_conversation: False
+
+  #orders:
+  ord_code:
+    type: float
+    influence_conversation: False
+    min_value: 0
+
+  ord_date:
+    type: text
+    influence_conversation: False
+
+  ord_list:
+    type: text
+    influence_conversation: False
+
+  s_check:
+    type: bool
+    influence_conversation: False
+
+  use_existing:
+    type: bool
+    influence_conversation: False
+
+  read:
+    type: bool
+    influence_conversation: False
+
+  keep:
+    type: bool
+    influence_conversation: False
+
+  proactive:
+    type: bool
+    influence_conversation: False
+
+  threshold:
+    type: float
+    influence_conversation: False
+    min_value: 0
 
 
 #AGENT'S RESPONSES:
@@ -174,46 +216,58 @@ responses:
   - text: "Cosa ti può servire?"
   - text: "Ti può servire qualcosa?"
 
-  utter_ask_mark_to_order:
+  utter_ask_add_to_order:
   - text: "Vuoi che te lo segni come da ordinare?"
   - text: "Lo includo nel prossimo ordine?"
   - text: "Te lo metto in lista per il prossimo ordine?"
 
-#extra:
-  utter_ask_price:
-  - text: "Mi dici il prezzo al pubblico?"
-  - text: "Ok! Prezzo di vendita?"
-  - text: "Ricevuto! Qual è il prezzo al dettaglio?"
+#orders:
+  utter_ask_s_text:
+  - text: "Mi diresti il nome del produttore?"
+  - text: "Qual è il produttore?"
+  - text: "Dimmi il nome del produttore!"
+  - text: "Quale produttore?"
+  
+  utter_ready_to_order:
+  - text: "Sono pronto a preparare l'ordine per {supplier}!"
+  - text: "Prepariamo l'ordine per {supplier}!"
 
-  utter_ask_discount:
-  - text: "Qual è lo sconto medio su questo prodotto e fornitore?"
-  - text: "Mi dici la scontistica media applicata dal fornitore?"
-  - text: "Qual è la scontistica media del fornitore?"
+  utter_ask_read:
+  - text: "Vuoi che te la rilegga prima di andare avanti?"
+  - text: "Vuoi che io te la legga prima di andare avanti?"
 
-  utter_ask_vat:
-  - text: "Mi dai l'aliquota IVA?"
-  - text: "Ok! Mi dici l'aliquota IVA?"
-  - text: "A quale aliquota IVA mappo il prodotto?"
+  utter_guidance_read:
+  - text: "Ti leggo i prodotti che abbiamo segnato in lista: dimmi se tenerli o rimuoverli e quanti pezzi vuoi ordinare!"
 
-  utter_ask_shelf:
-  - text: "Su quale scaffale stai piazzando questo prodotto?"
-  - text: "Mi dici lo scaffale?"
-  - text: "Ok! Mi dai il riferimento dello scaffale?"
+  utter_guidance_wo:
+  - text: "Dimmi i vari prodotti che vuoi aggiungere, uno alla volta. Ti chiederò subito dopo la quantità di pezzi da ordinare!"
+  - text: "Dimmi uno per uno i prodotti da inserire in lista. Ti chiederò subito dopo la quantità di pezzi da ordinare!"
 
-  utter_recap:
-  - text: "Ok, ricapitolando: ti sto aggiungendo {variation} pezzi di {p_name} di {supplier} al magazzino, mappati sullo scaffale {shelf}. Il prezzo di questi prodotti è {price} euro ognuno, li hai acquistati al {discount}% di sconto e si applicherà l'aliquota IVA al {vat}%."
+  utter_ask_num_pieces:
+  - text: "Quanti pezzi?"
+  - text: "Quanti pezzi aggiungo?"
+  - text: "Quanti pezzi ti ordino?"
+  - text: "Numero pezzi?"
 
 
 #AGENT'S CUSTOM ACTIONS:
 actions:
   - action_restart_magazzino_form
   - action_reset_all_slots
+  - action_ask_quantity
+  - action_ask_use_existing
+  - action_ask_keep
   - validate_magazzino_form
   - validate_giacenza_form
+  - validate_init_order_form
+  - validate_read_order_form
+  - validate_write_order_form
+  - validate_proactive_form
 
 
 #FORMS:
 forms:
+  #1. warehouse update:
   magazzino_form:
     required_slots:
       p_text:
@@ -225,12 +279,52 @@ forms:
       next:
         - type: from_text
 
+  #2. stock info:
   giacenza_form:
     required_slots:
       p_text:
         - type: from_text
       check:
         - type: from_text
-      mark_to_order:
+      add_to_order:
+        - type: from_text
+
+  #3. make order:
+  #3.0. parent forker:
+  init_order_form:
+    required_slots:
+      s_text:
+        - type: from_text
+      s_check:
+        - type: from_text
+      use_existing:
+        - type: from_text
+      read:
+        - type: from_text
+  
+  #3.1.a. system-driven read:
+  read_order_form:
+    required_slots:
+      keep:
+        - type: from_text
+      quantity:
+        - type: from_text
+
+  #3.1.b. user-driven write:
+  write_order_form:
+    required_slots:
+      p_text:
+        - type: from_text
+      check:
+        - type: from_text
+      quantity:
+        - type: from_text
+
+  #3.2. proactive order suggestions:
+  proactive_form:
+    required_slots:
+      proactive:
+        - type: from_text
+      threshold:
         - type: from_text
 

@@ -19,13 +19,7 @@ def db_connect():
 
 
 #create tables:
-def create_tables(conn=None, cursor=None):
-    if not conn:
-        connect = True
-        conn, cursor = db_connect()
-    else:
-        connect = False
-
+def create_tables(conn, cursor):
     #dict of queries:
     queries = {
         'Prodotti': '''CREATE TABLE Prodotti (
@@ -34,7 +28,6 @@ def create_tables(conn=None, cursor=None):
             Nome TEXT NOT NULL, 
             Categoria TEXT NOT NULL,
             Quantità INTEGER NOT NULL DEFAULT 0,
-            DaOrdinare INTEGER NOT NULL DEFAULT 0,
             Prezzo REAL NOT NULL DEFAULT 0,
             ScontoMedio REAL NOT NULL DEFAULT 0,
             Aliquota REAL NOT NULL DEFAULT 0.22,
@@ -49,12 +42,12 @@ def create_tables(conn=None, cursor=None):
             )''',
         
         'StoricoOrdini': '''CREATE TABLE StoricoOrdini (
-            CodiceOrd INTEGER PRIMARY KEY, 
-            DataCreazione NUMERIC NOT NULL,
+            CodiceOrd INTEGER PRIMARY KEY,
             Produttore TEXT NOT NULL,
             Riferimento TEXT,
-            DataInoltro NUMERIC,
-            DataRicezione NUMERIC
+            DataModifica TEXT NOT NULL,
+            DataInoltro TEXT,
+            DataRicezione TEXT
             )''',
             
         'ListeOrdini': '''CREATE TABLE ListeOrdini (
@@ -85,59 +78,37 @@ def create_tables(conn=None, cursor=None):
         try:
             cursor.execute(queries[t])
             conn.commit()
-            log.info("Created table {}".format(t))
+            log.info(f"Created table {t}.")
         except:
-            log.error("Unable to create table " + t)
-    
-    if connect == True:
-        conn.close()
+            log.error(f"Unable to create table {t}.")
     return 0
 
 
 #drop all tables:
-def drop_all(conn=True, cursor=True):
-    if not conn:
-        connect = True
-        conn, cursor = db_connect()
-    else:
-        connect = False
-
+def drop_all(conn, cursor):
     #ordered list of tables:
     tables = ['ComponentiProdotto', 'ComponentiAmbiti', 'ListeOrdini', 'StoricoOrdini', 'Prodotti']
-
     #execute:
     for t in tables:
         try:
             query = 'DROP TABLE '+ t
             cursor.execute(query)
             conn.commit()
-            log.info("Dropped table {}".format(t))
+            log.info(f"Dropped table {t}.")
         except:
-            log.error("Unable to drop table "+t)
-
-    if connect == True:
-        conn.close()
+            log.error(f"Unable to drop table {t}.")
     return 0
 
 
 #empty a specific table:
-def empty_table(tablename, conn=None, cursor=None):
-    if not conn:
-        connect = True
-        conn, cursor = db_connect()
-    else:
-        connect = False
-    
+def empty_table(tablename, conn, cursor):
     try:
-        query = "TRUNCATE TABLE "+tablename
+        query = "DELETE FROM "+tablename
         cursor.execute(query)
         conn.commit()
         log.info("Table "+tablename+" successfully reset.")
     except:
         log.error("ERROR: unable to reset "+tablename+" table.")
-    
-    if connect == True:
-        conn.close()
     return 0
 
 

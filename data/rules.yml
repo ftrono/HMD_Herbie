@@ -12,7 +12,25 @@ rules:
   - intent: thanks
   - action: utter_welcome
 
-#warehouse:
+#1. warehouse update:
+- rule: activate form magazzino
+  steps:
+  - intent: ask_wh_upd
+  - action: utter_ready
+  - action: magazzino_form
+  - active_loop: magazzino_form
+
+- rule: submit form magazzino
+  condition:
+  - active_loop: magazzino_form
+  steps:
+  - action: magazzino_form
+  - active_loop: null
+  - slot_was_set:
+    - requested_slot: null
+  - action: action_restart_magazzino_form
+
+#2. stock info:
 - rule: activate form giacenza
   steps:
   - intent: ask_giacenza
@@ -30,23 +48,71 @@ rules:
     - requested_slot: null
   - action: action_reset_all_slots
 
-#warehouse:
-- rule: activate form magazzino
+#3. make order:
+#3.0. parent forker:
+- rule: inform_init_order
   steps:
-  - intent: ask_wh_upd
+  - intent: inform_need_order
   - action: utter_ready
-  - action: magazzino_form
-  - active_loop: magazzino_form
+  - action: init_order_form
+  - active_loop: init_order_form
 
-- rule: submit form magazzino
+- rule: submit form init_order
   condition:
-  - active_loop: magazzino_form
+  - active_loop: init_order_form
   steps:
-  - action: magazzino_form
+  - action: init_order_form
   - active_loop: null
   - slot_was_set:
     - requested_slot: null
-  - action: action_restart_magazzino_form
-  
+  #- action: action_reset_all_slots
 
+#3.1.a. system-driven read:
+- rule: activate_read_order
+  steps:
+  - action: read_order_form
+  - active_loop: read_order_form
+
+- rule: submit form read_order
+  condition:
+  - active_loop: read_order_form
+  steps:
+  - action: read_order_form
+  - active_loop: null
+  - slot_was_set:
+    - requested_slot: null
+  #- action: action_reset_all_slots
+
+#3.1.b. user-driven write:
+- rule: activate_write_order
+  steps:
+  - action: write_order_form
+  - active_loop: write_order_form
+
+- rule: submit form write_order
+  condition:
+  - active_loop: write_order_form
+  steps:
+  - action: write_order_form
+  - active_loop: null
+  - slot_was_set:
+    - requested_slot: null
+  #- action: action_reset_all_slots
+
+#3.2. proactive order suggestions:
+- rule: activate_proactive
+  steps:
+  - action: proactive_form
+  - active_loop: proactive_form
+
+- rule: submit form proactive
+  condition:
+  - active_loop: proactive_form
+  steps:
+  - action: proactive_form
+  - active_loop: null
+  - slot_was_set:
+    - requested_slot: null
+  #- action: action_reset_all_slots
+  
 #  - rule: interruption in form

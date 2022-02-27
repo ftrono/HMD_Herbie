@@ -45,6 +45,10 @@ nlu:
     - giusto
     - magari
     - magari grazie
+    - sì aggiungilo
+    - si tienilo
+    - sì lo voglio
+    - sì questo sì
 
 - intent: deny
   examples: |
@@ -53,6 +57,11 @@ nlu:
     - nono
     - sbagliato
     - non hai capito
+    - no rimuovilo
+    - no toglilo
+    - no questo no
+    - questo non lo voglio
+    - toglilo dalla lista
 
 - intent: bot_challenge
   examples: |
@@ -71,13 +80,13 @@ nlu:
     - [123456789143680](p_code)
     - [12345678914368067930](p_code)
 
-- intent: inform_p_text
+- intent: inform_text
   examples: |
     - [nome1uno nome2due nome3tre](p_text)
     - [nome1uno nome2due nome3tre nome4quattro nome5cinque](p_text)
     - [nome1uno nome2due nome3tre nome4quattro nome5cinque nome6sei nome7sette](p_text)
 
-- intent: ask_azienda
+- intent: ask_supplier
   examples: |
     - mi dici di quale azienda è il prodotto [echinepid](p_name)?
     - di che azienda è [flufast](p_name)?
@@ -92,7 +101,7 @@ nlu:
     - mi controlli una giacenza?
     - fammi un controllo dei pezzi
 
-- intent: ask_mark_to_order
+- intent: ask_add_to_order
   examples: |
     - me lo segni come da ordinare?
     - segnamelo da ordinare
@@ -109,6 +118,13 @@ nlu:
     - puoi aggiornarmi i dati al magazzino?
     - mi aggiorneresti i dati al magazzino?
 
+- intent: inform_num_pieces
+  examples: |
+    - [6](pieces) pezzi
+    - [26](pieces) pezzi
+    - [5](pieces)
+    - [16](pieces)
+
 - intent: inform_add_pieces
   examples: |
     - più [6](pieces) pezzi
@@ -118,7 +134,10 @@ nlu:
     - aggiungi [10](pieces) pezzi
     - inserisci [5](pieces) pezzi
     - metti [10](pieces) pezzi
+    - mettine [20](pieces)
     - aggiungimi [2](pieces) pezzi
+    - aggiungine [5](pieces)
+    - segna [15](pieces)
 
 - intent: inform_decr_pieces
   examples: |
@@ -130,4 +149,29 @@ nlu:
     - rimuovi [10](pieces) pezzi
     - sottrai [10](pieces) pezzi
     - toglimi [2](pieces) pezzi
+
+#orders_list:
+- intent: inform_need_order
+  examples: |
+    - ho bisogno di fare un ordine per [nome1](s_text)
+    - compiliamo una lista ordini per [nome1](s_text)
+    - devo fare un ordine per [nome1 nome2 nome3](s_text)
+    - dobbiamo preparare un ordine per [nome1](s_text)
+    - prepara una lista ordine per [nome1 nome2](s_text)
+    - mi aiuti a fare un ordine?
+
+- intent: ask_read
+  examples: |
+    - puoi leggermi la lista?
+    - mi leggi la lista?
+    - mi leggeresti la lista?
+    - me la leggi per favore?
+    - non la ricordo, puoi leggere?
+
+- intent: ask_new
+  examples: | 
+    - fanne una nuova
+    - ripartiamo
+    - facciamone una nuova
+    - facciamone una da zero
 

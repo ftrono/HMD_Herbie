@@ -1,4 +1,3 @@
-from pdb import Restart
 from typing import Any, Text, Dict, List
 from rasa_sdk import Tracker, Action, Action, FormValidationAction
 from rasa_sdk.executor import CollectingDispatcher
@@ -6,94 +5,12 @@ from rasa_sdk.types import DomainDict
 from rasa_sdk.events import AllSlotsReset, FollowupAction, SlotSet
 from globals import *
 from db_tools import db_connect
-from db_interaction import get_prodinfo, check_pieces, update_pieces, flag_to_order
+from db_interaction import get_pieces, update_pieces, delete_ordlist, get_existing_ordlist, get_new_ordlist
+from common_actions import is_int, is_affirmative, readable_date, disambiguate_prod, disambiguate_supplier, check_giacenza, read_ord_list, update_ord_list
 
-#HELPER:
-#Get product reference from DB:
-def get_p_code(tracker, dispatcher, p_text):
-    utts = {
-        'p_code': next(tracker.get_latest_entity_values("p_code"), None), 
-        'p_text': str(p_text).lower()
-        }
+#CUSTOM ACTIONS & FORMS VALIDATION:
 
-    #fallback:
-    if utts['p_code'] == None and utts['p_text'] == None:
-        message = f"Mmm, mi manca qualche informazione. Puoi leggermi il codice a barre, oppure dirmi il nome del prodotto e il produttore!"
-        dispatcher.utter_message(text=message)
-        return None
-
-    elif utts['p_code'] != None:
-        #p_code has priority:
-        utts['p_code'] = str(utts['p_code']).lower()
-    
-    #db extraction:
-    try:
-        conn, cursor = db_connect()   
-        resp = get_prodinfo(conn, utts)
-        conn.close()
-    except:
-        resp = []
-    
-    #fallback: not found:
-    if resp == []:
-        if utts['p_code'] != None:
-            str1 = "codice"
-        else:
-            str1 = "nome"
-        message = f"Non ho trovato nessun prodotto con questo " + str1 + "."
-        dispatcher.utter_message(text=message)
-        dispatcher.utter_message(response="utter_repeat")
-        return None
-
-    elif len(resp) > 1:
-        message = f"Ho trovato più di un prodotto simile:"
-        for prod in resp:
-            message = message + "\nDi " + prod['supplier'] + ", " + prod['p_name'] + "."
-        dispatcher.utter_message(text=message)
-        dispatcher.utter_message(response="utter_specify")
-        return None
-
-    else:
-        prod = resp[0]
-        message = f"Trovato! Di {prod['supplier']}, {prod['p_name']}."
-        dispatcher.utter_message(text=message)
-        return prod
-
-def check_giacenze(dispatcher, prod):
-    #check pieces in DB:
-    try:
-        conn, cursor = db_connect()
-        pieces = int(check_pieces(cursor, prod))
-        conn.close()
-        if pieces == 0:
-            message = f"Non hai più pezzi rimasti in magazzino!"
-        elif pieces == 1:
-            message = f"Hai un solo pezzo rimasto in magazzino."
-        elif pieces <= MIN_TO_ORD:
-            message = f"Hai solo {pieces} pezzi rimasti in magazzino."
-        else:
-            message = f"Hai {pieces} pezzi in magazzino."
-        dispatcher.utter_message(text=message)
-        if pieces >= THRESHOLD_TO_ORD:
-            slots = {"p_text": 'ok', "check": True, "mark_to_order": False}
-        else:
-            slots = {"p_text": 'ok', "check": True, "p_code": str(prod['p_code'])}
-    except:
-        print("DB connection error.")
-        message = "C'è stato un problema con il mio database, ti chiedo scusa."
-        dispatcher.utter_message(text=message)
-        slots = {"p_text": None}
-    return slots
-
-
-#Check if a string is an integer:
-def is_int(string: Text) -> bool:
-    try:
-        int(string)
-        return True
-    except ValueError:
-        return False
-
+#Custom actions:
 class ActionResetAllSlots(Action):
     def name(self) -> Text:
             return "action_reset_all_slots"
@@ -123,8 +40,86 @@ class ActionRestartMagazzinoForm(Action):
         else:
             return []
 
+
+#For init_order_form:
+class ActionAskUseExisting(Action):
+    def name(self) -> Text:
+            return "action_ask_use_existing"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        #get slots saved:
+        supplier = tracker.get_slot("supplier")
+        dispatcher.utter_message(response="utter_ready_to_order")
+        slots = {}
+        slots_set = []
+        try:
+            conn, cursor = db_connect()
+            #check if an open list exists:
+            slots['ord_code'], slots['ord_date'], slots['ord_list'], num_prods = get_existing_ordlist(conn, supplier)
+            #if it exists:           
+            if slots['ord_code'] != None:
+                #prepare strings for message:
+                num_str = f"{num_prods} prodotti"
+                if num_prods == 1:
+                    num_str = "un prodotto"
+                read_date = readable_date(slots['ord_date'])
+                message = f"Abbiamo già una lista aperta, modificata per ultimo {read_date}, con {num_str}. Continuiamo con questa?"
+                dispatcher.utter_message(text=message)
+                #prepare next slots (continue form):
+                slots['use_existing'] = None
+                if num_prods == 0:
+                    slots['read'] = False
+                else:
+                    slots['read'] = None
+            else:
+                slots['ord_code'] = get_new_ordlist(conn, cursor, supplier)
+                message = f"Ti ho creato una nuova lista!"
+                dispatcher.utter_message(text=message)
+                #can deactivate init_order form:
+                slots['use_existing'] = False
+                slots['read'] = False
+                slots['requested_slot'] = None
+
+            conn.close()
+            #generate return:
+            for key in slots.keys():
+                slots_set.append(SlotSet(key, slots[key]))
+
+        except:
+            print("DB connection error.")
+            message = "C'è stato un problema con il mio database, ti chiedo scusa."
+            dispatcher.utter_message(text=message)
+
+        return slots_set
+
+
+#For order_form: read item in list:
+class ActionAskQuantity(Action):
+    def name(self) -> Text:
+            return "action_ask_quantity"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        #get list and positional index in reading:
+        ord_list = tracker.get_slot('ord_list')
+        ind = tracker.get_slot('index')
+        if ind == None:
+            ind = 0
+        #extract p_code and reading message:
+        p_code, message = read_ord_list(ord_list, ind, read_quantity=False)
+        dispatcher.utter_message(text=message)
+        return [SlotSet('p_code', p_code)]
+
+
 #Forms validation:
-#warehouse:
+#1. warehouse update:
 class ValidateMagazzinoForm(FormValidationAction):
     def name(self) -> Text:
         return "validate_magazzino_form"
@@ -137,13 +132,7 @@ class ValidateMagazzinoForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
 
-        p_text = tracker.latest_message.get("text")
-        print(p_text)
-        prod = get_p_code(tracker, dispatcher, p_text)
-        if prod is None:
-            slots = {"p_text": 'ok', "check": None}
-        else:
-            slots = {"p_text": 'ok', "check": True, "p_code": str(prod['p_code']), "p_name": str(prod['p_name']), "supplier": str(prod['supplier'])}
+        slots = disambiguate_prod(tracker, dispatcher)
         return slots
 
     def validate_check(
@@ -154,13 +143,7 @@ class ValidateMagazzinoForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
 
-        p_text = tracker.latest_message.get("text")
-        print(p_text)
-        prod = get_p_code(tracker, dispatcher, p_text)
-        if prod is None:
-            slots = {"p_text": 'ok', "check": None}
-        else:
-            slots = {"p_text": 'ok', "check": True, "p_code": str(prod['p_code']), "p_name": str(prod['p_name']), "supplier": str(prod['supplier'])}
+        slots = disambiguate_prod(tracker, dispatcher)
         return slots
 
     def validate_variation(
@@ -176,7 +159,7 @@ class ValidateMagazzinoForm(FormValidationAction):
         #validate user intent:
         intent = tracker.latest_message['intent'].get('name')
         print(tracker.latest_message['intent'].get('name'))
-        if intent == 'inform_add_pieces':
+        if intent == 'inform_add_pieces' or intent == 'inform_num_pieces':
             utts['var'] = 'add'
         elif intent == 'inform_decr_pieces':
             utts['var'] = 'decrease'
@@ -200,7 +183,7 @@ class ValidateMagazzinoForm(FormValidationAction):
                 conn, cursor = db_connect()
                 #check lower boundary:
                 if utts['var'] == 'decrease':
-                    floor = check_pieces(cursor, utts)
+                    floor = get_pieces(cursor, utts['p_code'])
 
                     if floor == 0:
                         message = f"La tua scorta era a zero, non ho potuto fare nulla. Riprova con un altro prodotto!"
@@ -250,27 +233,13 @@ class ValidateMagazzinoForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
 
-        #validate user intent:
-        intent = tracker.latest_message['intent'].get('name')
-
-        if intent == 'affirm':
-            print("Affermativo")
-            dispatcher.utter_message(response="utter_ok")
-            return {"next": True}
-
-        elif intent == 'deny':
-            print("Negativo")
-            dispatcher.utter_message(response="utter_ok")
+        next_one = is_affirmative(tracker, dispatcher)
+        if next_one == False:
             dispatcher.utter_message(response="utter_available")
-            return {"next": False}
-
-        else:
-            message = "Mmm, non ho capito bene."
-            dispatcher.utter_message(text=message)
-            return {"next": None}
+        return {'next': next_one}
 
 
-#giacenza:
+#2. stock info:
 class ValidateGiacenzaForm(FormValidationAction):
     def name(self) -> Text:
         return "validate_giacenza_form"
@@ -283,13 +252,14 @@ class ValidateGiacenzaForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
 
-        p_text = tracker.latest_message.get("text")
-        print(p_text)
-        prod = get_p_code(tracker, dispatcher, p_text)
-        if prod is None:
-            slots = {"p_text": "ok", "check": None}
-        else:
-            slots = check_giacenze(dispatcher, prod)
+        slots = disambiguate_prod(tracker, dispatcher)
+        slots['add_to_order'] = None
+        #check giacenza:
+        if slots['check'] != None:
+            sufficient = check_giacenza(dispatcher, slots['p_code'])
+            if sufficient == True:
+                #skip last slot:
+                slots['add_to_order'] = False
         return slots
 
     def validate_check(
@@ -300,16 +270,189 @@ class ValidateGiacenzaForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
 
-        p_text = tracker.latest_message.get("text")
-        print(p_text)
-        prod = get_p_code(tracker, dispatcher, p_text)
-        if prod is None:
-            slots = {"p_text": "ok", "check": None}
-        else:
-            slots = check_giacenze(dispatcher, prod)
+        slots = disambiguate_prod(tracker, dispatcher)
+        slots['add_to_order'] = None
+        #check giacenza:
+        if slots['check'] != None:
+            sufficient = check_giacenza(dispatcher, slots['p_code'])
+            if sufficient == True:
+                #skip last slot:
+                slots['add_to_order'] = False
         return slots
 
-    def validate_mark_to_order(
+    def validate_add_to_order(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        #validate user intent:
+        intent = tracker.latest_message['intent'].get('name')
+        #get slots saved:
+        slots = tracker.current_slot_values()
+
+        if intent == 'affirm' or intent == 'inform_add_pieces' or intent == 'inform_num_pieces':
+            print("Affermativo")
+
+            """
+            #store number of pieces to add, if said:
+            if intent == 'inform_add_pieces' or intent == 'inform_num_pieces':
+                pieces = next(tracker.get_latest_entity_values("pieces"), 1)
+                message = f"Fatto! Ti ho inserito {pieces} pezzi in lista per il prossimo ordine."
+            else:
+                pieces = 1
+                message = f"Fatto! L'ho inserito in lista per il prossimo ordine."
+            #add to order list in DB:
+            try:
+                conn, cursor = db_connect()
+                latest_code, _, _ = get_orderlist(conn, cursor, slots['supplier']) #####################
+                if latest_code != None:
+                    query = f"INSERT INTO ListeOrdini (CodiceOrd, CodiceProd, Quantità) VALUES ({latest_code}, '{slots['p_code']}', {pieces})"
+
+                    ####### END UPDATE #######
+
+                else:
+                    message = "C'è stato un problema con il mio database, ti chiedo scusa."
+                conn.close()
+            except:
+                print("DB connection error.")
+                message = "C'è stato un problema con il mio database, ti chiedo scusa."
+            """
+
+            message = f"Fatto! L'ho inserito in lista per il prossimo ordine."
+            dispatcher.utter_message(text=message)
+            dispatcher.utter_message(response="utter_available")
+            return {"add_to_order": True}
+
+        elif intent == 'deny':
+            print("Negativo")
+            dispatcher.utter_message(response="utter_ok")
+            dispatcher.utter_message(response="utter_available")
+            return {"add_to_order": False}
+
+        else:
+            message = "Mmm, non ho capito bene."
+            dispatcher.utter_message(text=message)
+            return {"add_to_order": None}
+
+
+#3. make order:
+#3.0. parent forker:
+class ValidateInitOrderForm(FormValidationAction):
+    def name(self) -> Text:
+        return "validate_init_order_form"
+
+    def validate_s_text(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        #find and disambiguate supplier:
+        slots = disambiguate_supplier(tracker, dispatcher)
+        return slots
+
+    def validate_s_check(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        #find and disambiguate supplier:
+        slots = disambiguate_supplier(tracker, dispatcher)
+        return slots
+
+    def validate_use_existing(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        #validate user intent:
+        intent = tracker.latest_message['intent'].get('name')
+        read = tracker.get_slot("read")
+        slots = {}
+
+        if intent == 'ask_read':
+            #use existing list and read it first:
+            print("Affermativo + leggi lista")
+            dispatcher.utter_message(response="utter_ok")
+            slots['use_existing'] = True
+            slots['read'] = True   #skip next slot & end form
+            slots['requested_slot'] = None
+
+        elif intent == 'affirm' and read == False:
+            #if use_existing list but it's empty: skip request to read:
+            print("Affermativo + lista vuota")
+            dispatcher.utter_message(response="utter_ok")
+            slots['use_existing'] = True
+            slots['requested_slot'] = None
+        
+        elif intent == 'affirm':
+            #use existing list. Need to ask whether to read it or not:
+            print("Affermativo")
+            dispatcher.utter_message(response="utter_ok")
+            slots['use_existing'] = True
+
+        elif intent == 'deny' or intent == 'ask_new':
+            #don't use existing list: discard it and create a new list:
+            print("Negativo")
+            dispatcher.utter_message(response="utter_ok")
+            supplier = tracker.get_slot("supplier")
+            ord_code = tracker.get_slot("ord_code")
+            try:
+                conn, cursor = db_connect()
+                ret = delete_ordlist(conn, cursor, ord_code)
+                slots['ord_code'] = get_new_ordlist(conn, cursor, supplier)
+                conn.close()
+                message = f"Ti ho creato una nuova lista per {supplier}, useremo questa!"
+                dispatcher.utter_message(text=message)
+
+            except:
+                print("DB connection error.")
+                message = "C'è stato un problema con il mio database, ti chiedo scusa."
+                dispatcher.utter_message(text=message)
+
+            #reset old slots + can deactivate init_order form:
+            slots['ord_date'] = None
+            slots['ord_list'] = None
+            slots['use_existing'] = False
+            slots['read'] = False   #skip next slot & end form
+
+        else:
+            message = "Mmm, non ho capito bene."
+            dispatcher.utter_message(text=message)
+            slots['use_existing'] = None
+        
+        return slots
+
+    def validate_read(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        read = is_affirmative(tracker, dispatcher)
+        return {'read': read}
+
+
+########################
+#3.0. parent forker:
+class ValidateReadOrderForm(FormValidationAction):
+    def name(self) -> Text:
+        return "validate_read_order_form"
+
+    def validate_quantity(
         self, 
         value: Text,
         dispatcher: CollectingDispatcher,
@@ -320,31 +463,99 @@ class ValidateGiacenzaForm(FormValidationAction):
         #validate user intent:
         intent = tracker.latest_message['intent'].get('name')
 
-        if intent == 'affirm':
-            print("Affermativo")
+        #if stop:
+        if intent == 'deny':
+            print("Negativo")
+            #fork: either remove prod or stop conversation
+            dispatcher.utter_message(response="utter_ok")
+            return False
+        else:
+            pieces = next(tracker.get_latest_entity_values("pieces"), None)
+            if pieces != None:
+                slots = tracker.current_slot_values()
+                slots['pieces'] = pieces
+                ord_list = update_ord_list(slots['ord_code'], slots['index'], slots['p_code'], slots['pieces'])
+            else:
+                message = "Mmm, non ho capito bene."
+                dispatcher.utter_message(text=message)
+                return None
+
+    def validate_p_text(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        new_slots = disambiguate_prod(tracker, dispatcher, supplier=True)
+        return new_slots
+
+    def validate_check(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        new_slots = disambiguate_prod(tracker, dispatcher, supplier=True)
+        return new_slots
+
+    def validate_quantity(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        utts = {}
+        #extract needed info:
+        utts['pieces'] = next(tracker.get_latest_entity_values("pieces"), None)
+        utts['p_code'] = tracker.get_slot("p_code")
+        print(utts['p_code'])
+
+        #fallback 1:
+        if utts['pieces'] == None:
+            message = "Mmm, non ho capito bene."
+            dispatcher.utter_message(text=message)
+            return {"quantity": None, "pieces": None}
+
+        #db extraction:
+        if is_int(utts['pieces']) and int(utts['pieces']) > 0:
+            print("Write", utts['pieces'])
             try:
                 conn, cursor = db_connect()
-                utts = {'p_code': tracker.get_slot('p_code')}
-                ret = flag_to_order(conn, cursor, utts, mode=True)
+                ret = update_pieces(conn, cursor, utts) ##############
                 conn.close()
                 if ret == 0:
-                    message = f"Fatto! L'ho inserito in lista per il prossimo ordine."
+                    if int(utts['pieces']) == 1:
+                        message = "Segnato un pezzo."
+                    else:
+                        message = f"Segnàti {utts['pieces']} pezzi"
                 else:
                     message = "C'è stato un problema con il mio database, ti chiedo scusa."
             except:
-                print("DB connection error.")
+                print("DB connection error")
                 message = "C'è stato un problema con il mio database, ti chiedo scusa."
             dispatcher.utter_message(text=message)
-            dispatcher.utter_message(response="utter_available")
-            return {"mark_to_order": True}
-
-        elif intent == 'deny':
-            print("Negativo")
-            dispatcher.utter_message(response="utter_ok")
-            dispatcher.utter_message(response="utter_available")
-            return {"mark_to_order": False}
-
+            return {"quantity": 'None', "pieces": None, 'requested_slot': None} ###################
         else:
-            message = "Mmm, non ho capito bene."
+            print(utts['var'], utts['pieces'])
+            message = f"Mmm, non ho capito il numero di pezzi."
             dispatcher.utter_message(text=message)
-            return {"mark_to_order": None}
+            return {"quantity": None, "pieces": None}
+
+    def validate_next(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        next_one = is_affirmative(tracker, dispatcher)
+        if next_one == False:
+            dispatcher.utter_message(response="utter_available")
+        return {'next': next_one}
