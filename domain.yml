@@ -16,7 +16,6 @@ intents:
   #product info:
   - inform_p_code
   - inform_text
-  - ask_supplier
   #inventory & orders:
   - ask_giacenza
   - ask_add_to_order
@@ -209,7 +208,10 @@ responses:
   - text: "Variazione?"
 
   utter_ask_next:
-  - text: "Continuiamo?"
+  - text: "Andiamo avanti."
+  - text: "Prossimo."
+  - text: "Continuiamo."
+  - text: "Successivo."
 
   utter_ask_more:
   - text: "Cosa vuoi che faccia?"
@@ -275,8 +277,6 @@ forms:
       check:
         - type: from_text
       variation:
-        - type: from_text
-      next:
         - type: from_text
 
   #2. stock info:

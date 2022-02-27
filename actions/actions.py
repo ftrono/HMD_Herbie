@@ -6,7 +6,7 @@ from rasa_sdk.events import AllSlotsReset, FollowupAction, SlotSet
 from globals import *
 from db_tools import db_connect
 from db_interaction import get_pieces, update_pieces, delete_ordlist, get_existing_ordlist, get_new_ordlist
-from common_actions import is_int, is_affirmative, readable_date, disambiguate_prod, disambiguate_supplier, check_giacenza, read_ord_list, update_ord_list
+from common_actions import is_int, is_affirmative, reset_and_goto, check_deactivate, readable_date, disambiguate_prod, disambiguate_supplier, check_giacenza, read_ord_list, update_ord_list
 
 #CUSTOM ACTIONS & FORMS VALIDATION:
 
@@ -131,9 +131,16 @@ class ValidateMagazzinoForm(FormValidationAction):
         tracker: Tracker,
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
-
-        slots = disambiguate_prod(tracker, dispatcher)
-        return slots
+        
+        #check if stop intent:
+        slots = tracker.current_slot_values()
+        deact, slots = check_deactivate(tracker, dispatcher, slots)
+        if deact == True:
+            return slots
+        else:
+            #look for product:
+            slots = disambiguate_prod(tracker, dispatcher)
+            return slots
 
     def validate_check(
         self, 
@@ -143,8 +150,15 @@ class ValidateMagazzinoForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
 
-        slots = disambiguate_prod(tracker, dispatcher)
-        return slots
+        #check if stop intent:
+        slots = tracker.current_slot_values()
+        deact, slots = check_deactivate(tracker, dispatcher, slots)
+        if deact == True:
+            return slots
+        else:
+            #look for product:
+            slots = disambiguate_prod(tracker, dispatcher)
+            return slots
 
     def validate_variation(
         self, 
@@ -170,7 +184,15 @@ class ValidateMagazzinoForm(FormValidationAction):
 
         #get slots saved:
         slots = tracker.current_slot_values()
+
+        #check if stop intent:
+        deact, ret_slots = check_deactivate(tracker, dispatcher, slots)
+        if deact == True:
+            return ret_slots
+
+        #else:
         print(slots['p_code'], slots['p_name'], slots['supplier'])
+        ret_slots = {}
 
         #validate extracted no of pieces:
         utts['p_code'] = slots['p_code']
@@ -186,9 +208,11 @@ class ValidateMagazzinoForm(FormValidationAction):
                     floor = get_pieces(cursor, utts['p_code'])
 
                     if floor == 0:
-                        message = f"La tua scorta era a zero, non ho potuto fare nulla. Riprova con un altro prodotto!"
+                        message = f"La tua scorta era a zero, non ho potuto fare nulla. Proviamo con un altro prodotto!"
                         dispatcher.utter_message(text=message)
-                        return {"variation": utts['var'], "pieces": utts['pieces']}
+                        #empty slots and restart form:
+                        ret_slots = reset_and_goto(slots, req_slot='p_text')
+                        return ret_slots
 
                     if floor < int(utts['pieces']):
                         if floor == 1:
@@ -213,30 +237,26 @@ class ValidateMagazzinoForm(FormValidationAction):
 
             if ret == 0 and utts['var'] == 'add':
                 message = f"Ti ho aggiunto {str1} a {slots['p_name']} di {slots['supplier']}."
+                dispatcher.utter_message(text=message)
+                dispatcher.utter_message(response='utter_ask_next')
+
             elif ret == 0 and utts['var'] == 'decrease':
                 message = f"Ti ho rimosso {str1} a {slots['p_name']} di {slots['supplier']}."
+                dispatcher.utter_message(text=message)
+                dispatcher.utter_message(response='utter_ask_next')
+
             else:
                 message = "C'è stato un problema con il mio database, ti chiedo scusa. Riprova al prossimo turno!"
-            dispatcher.utter_message(text=message)
-            return {"variation": utts['var'], "pieces": utts['pieces']}
+                dispatcher.utter_message(text=message)
+            #empty slots and restart form:
+            ret_slots = reset_and_goto(slots, req_slot='p_text')
+            return ret_slots
         else:
             print(utts['var'], utts['pieces'])
             message = f"Mmm, non ho capito il numero di pezzi."
             dispatcher.utter_message(text=message)
-            return {"variation": None, "pieces": None}
-
-    def validate_next(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
-        next_one = is_affirmative(tracker, dispatcher)
-        if next_one == False:
-            dispatcher.utter_message(response="utter_available")
-        return {'next': next_one}
+            ret_slots = {"variation": None}
+            return ret_slots
 
 
 #2. stock info:
@@ -488,6 +508,7 @@ class ValidateReadOrderForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
 
+        #GET SUPPLIER SLOT AND PASS IT TO DISAMBIGUATE_PROD, IN PLACE OF =True !!!
         new_slots = disambiguate_prod(tracker, dispatcher, supplier=True)
         return new_slots
 
@@ -499,6 +520,7 @@ class ValidateReadOrderForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
 
+        #GET SUPPLIER SLOT AND PASS IT TO DISAMBIGUATE_PROD, IN PLACE OF =True !!!
         new_slots = disambiguate_prod(tracker, dispatcher, supplier=True)
         return new_slots
 

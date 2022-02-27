@@ -37,6 +37,30 @@ def is_affirmative(tracker, dispatcher):
         return None
 
 
+#reset all slots and go to req_slot:
+def reset_and_goto(slots, req_slot=None):
+    for key in slots.keys():
+        slots[key] = None
+    #deactivate form:
+    slots['requested_slot'] = req_slot
+    return slots
+
+
+#stop form & reset:
+def check_deactivate(tracker, dispatcher, slots):
+    deact = False
+    intent = tracker.latest_message['intent'].get('name')
+    print(f"Intent: {intent}")
+    #stop check:
+    if intent == 'stop':
+        dispatcher.utter_message(response='utter_ok')
+        dispatcher.utter_message(response='utter_available')
+        #reset all slots and deactivate:
+        reset_and_goto(slots)
+        deact = True
+    return deact, slots
+
+
 #convert date to readable:
 def readable_date(datestr):
     #orig date (format: '%Y-%m-%d'):
@@ -68,22 +92,21 @@ def readable_date(datestr):
 
 
 #Disambiguate product reference from DB:
-def disambiguate_prod(tracker, dispatcher, supplier=False):
+def disambiguate_prod(tracker, dispatcher, supplier=None):
     #extract needed info:
     utts = {
         'p_code': next(tracker.get_latest_entity_values("p_code"), None), 
         'p_text': str(tracker.latest_message.get("text")).lower(),
-        'supplier': None
+        'supplier': supplier if supplier else None
         }
-    if supplier == True:
-        utts['supplier'] = tracker.get_slot('supplier')
     print(utts)
 
     #fallback:
     if utts['p_code'] == None and utts['p_text'] == None:
         message = f"Mmm, mi manca qualche informazione. Puoi leggermi il codice a barre, oppure dirmi il nome del prodotto e il produttore!"
         dispatcher.utter_message(text=message)
-        return {"p_text": 'ok', "check": None}
+        slots = {"p_text": 'ok', "check": None}
+        return slots
 
     elif utts['p_code'] != None:
         #p_code has priority:
@@ -106,7 +129,8 @@ def disambiguate_prod(tracker, dispatcher, supplier=False):
         message = f"Non ho trovato nessun prodotto con questo " + str1 + "."
         dispatcher.utter_message(text=message)
         dispatcher.utter_message(response="utter_repeat")
-        return {"p_text": 'ok', "check": None}
+        slots = {"p_text": 'ok', "check": None}
+        return slots
 
     #fallback: multiple found:
     elif len(resp) > 1:
@@ -115,14 +139,16 @@ def disambiguate_prod(tracker, dispatcher, supplier=False):
             message = message + "\nDi " + prod['supplier'] + ", " + prod['p_name'] + "."
         dispatcher.utter_message(text=message)
         dispatcher.utter_message(response="utter_specify")
-        return {"p_text": 'ok', "check": None}
+        slots = {"p_text": 'ok', "check": None}
+        return slots
 
     #fallback: not found:
     else:
         prod = resp[0]
         message = f"Trovato! Di {prod['supplier']}, {prod['p_name']}."
         dispatcher.utter_message(text=message)
-        return {"p_text": 'ok', "check": True, "p_code": str(prod['p_code']), "p_name": str(prod['p_name']), "supplier": str(prod['supplier'])}
+        slots = {"p_text": 'ok', "check": True, "p_code": str(prod['p_code']), "p_name": str(prod['p_name']), "supplier": str(prod['supplier'])}
+        return slots
 
 
 #Get supplier reference from DB:

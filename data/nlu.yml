@@ -14,16 +14,9 @@ nlu:
 - intent: stop
   examples: |
     - stop
-    - niente
-    - nulla
-    - no scusa
-    - no niente
-    - no nulla
-    - niente niente
-    - lascia stare
     - basta
     - basta così
-    - herbie basta
+    - fermati
 
 - intent: thanks
   examples: |
@@ -85,13 +78,6 @@ nlu:
     - [nome1uno nome2due nome3tre](p_text)
     - [nome1uno nome2due nome3tre nome4quattro nome5cinque](p_text)
     - [nome1uno nome2due nome3tre nome4quattro nome5cinque nome6sei nome7sette](p_text)
-
-- intent: ask_supplier
-  examples: |
-    - mi dici di quale azienda è il prodotto [echinepid](p_name)?
-    - di che azienda è [flufast](p_name)?
-    - di chi è [pappa reale](p_name)?
-    - di quale società è [pappa reale](p_name)
 
 #inventory & orders:
 - intent: ask_giacenza
