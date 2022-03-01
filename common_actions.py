@@ -105,7 +105,7 @@ def disambiguate_prod(tracker, dispatcher, supplier=None):
     if utts['p_code'] == None and utts['p_text'] == None:
         message = f"Mmm, mi manca qualche informazione. Puoi leggermi il codice a barre, oppure dirmi il nome del prodotto e il produttore!"
         dispatcher.utter_message(text=message)
-        slots = {"p_text": 'ok', "check": None}
+        slots = {"p_text": False, "check": None}
         return slots
 
     elif utts['p_code'] != None:
@@ -129,7 +129,7 @@ def disambiguate_prod(tracker, dispatcher, supplier=None):
         message = f"Non ho trovato nessun prodotto con questo " + str1 + "."
         dispatcher.utter_message(text=message)
         dispatcher.utter_message(response="utter_repeat")
-        slots = {"p_text": 'ok', "check": None}
+        slots = {"p_text": False, "check": None}
         return slots
 
     #fallback: multiple found:
@@ -139,7 +139,7 @@ def disambiguate_prod(tracker, dispatcher, supplier=None):
             message = message + "\nDi " + prod['supplier'] + ", " + prod['p_name'] + "."
         dispatcher.utter_message(text=message)
         dispatcher.utter_message(response="utter_specify")
-        slots = {"p_text": 'ok', "check": None}
+        slots = {"p_text": True, "check": None}
         return slots
 
     #fallback: not found:
@@ -147,7 +147,7 @@ def disambiguate_prod(tracker, dispatcher, supplier=None):
         prod = resp[0]
         message = f"Trovato! Di {prod['supplier']}, {prod['p_name']}."
         dispatcher.utter_message(text=message)
-        slots = {"p_text": 'ok', "check": True, "p_code": str(prod['p_code']), "p_name": str(prod['p_name']), "supplier": str(prod['supplier'])}
+        slots = {"p_text": True, "check": True, "p_code": str(prod['p_code']), "p_name": str(prod['p_name']), "supplier": str(prod['supplier'])}
         return slots
 
 
@@ -175,7 +175,7 @@ def disambiguate_supplier(tracker, dispatcher):
         message = f"Non ho trovato nessun produttore con questo nome!"
         dispatcher.utter_message(text=message)
         dispatcher.utter_message(response="utter_repeat")
-        return {"s_text": 'ok', "s_check": None}
+        return {"s_text": False, "check": None}
 
     #fallback: multiple found:
     elif len(resp) > 1:
@@ -184,12 +184,12 @@ def disambiguate_supplier(tracker, dispatcher):
             message = message + suppl + "\n"
         dispatcher.utter_message(text=message)
         dispatcher.utter_message(response="utter_specify")
-        return {"s_text": 'ok', "s_check": None}
+        return {"s_text": True, "check": None}
 
     #ok: unique:
     else:
         suppl = resp[0]
-        return {"s_text": 'ok', "s_check": True, "supplier": suppl}
+        return {"s_text": True, "check": True, "supplier": suppl}
 
 
 #Check pieces in DB and return if they are sufficient:

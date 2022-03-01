@@ -132,15 +132,15 @@ class ValidateMagazzinoForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
         
-        #check if stop intent:
-        slots = tracker.current_slot_values()
-        deact, slots = check_deactivate(tracker, dispatcher, slots)
-        if deact == True:
-            return slots
-        else:
-            #look for product:
-            slots = disambiguate_prod(tracker, dispatcher)
-            return slots
+        #look for product:
+        slots = disambiguate_prod(tracker, dispatcher)
+        if slots['p_text'] != True:
+            #check if stop intent:
+            slots_ret = tracker.current_slot_values()
+            deact, slots_ret = check_deactivate(tracker, dispatcher, slots_ret)
+            if deact == True:
+                return slots_ret
+        return slots
 
     def validate_check(
         self, 
@@ -150,15 +150,15 @@ class ValidateMagazzinoForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
 
-        #check if stop intent:
-        slots = tracker.current_slot_values()
-        deact, slots = check_deactivate(tracker, dispatcher, slots)
-        if deact == True:
-            return slots
-        else:
-            #look for product:
-            slots = disambiguate_prod(tracker, dispatcher)
-            return slots
+        #look for product:
+        slots = disambiguate_prod(tracker, dispatcher)
+        if slots['p_text'] != True:
+            #check if stop intent:
+            slots_ret = tracker.current_slot_values()
+            deact, slots_ret = check_deactivate(tracker, dispatcher, slots_ret)
+            if deact == True:
+                return slots_ret
+        return slots
 
     def validate_variation(
         self, 
@@ -169,6 +169,8 @@ class ValidateMagazzinoForm(FormValidationAction):
         ) -> Dict[Text, Any]:
 
         utts = {'p_code': None, 'pieces': None, 'var': None}
+        #get slots saved:
+        slots = tracker.current_slot_values()
 
         #validate user intent:
         intent = tracker.latest_message['intent'].get('name')
@@ -178,17 +180,14 @@ class ValidateMagazzinoForm(FormValidationAction):
         elif intent == 'inform_decr_pieces':
             utts['var'] = 'decrease'
         else:
-            message = "Mmm, non ho capito bene."
-            dispatcher.utter_message(text=message)
-            return {"variation": None, "pieces": None}
-
-        #get slots saved:
-        slots = tracker.current_slot_values()
-
-        #check if stop intent:
-        deact, ret_slots = check_deactivate(tracker, dispatcher, slots)
-        if deact == True:
-            return ret_slots
+            #check if stop intent:
+            deact, ret_slots = check_deactivate(tracker, dispatcher, slots)
+            if deact == True:
+                return ret_slots
+            else:
+                message = "Mmm, non ho capito bene."
+                dispatcher.utter_message(text=message)
+                return {"variation": None, "pieces": None}
 
         #else:
         print(slots['p_code'], slots['p_name'], slots['supplier'])
@@ -376,7 +375,7 @@ class ValidateInitOrderForm(FormValidationAction):
         slots = disambiguate_supplier(tracker, dispatcher)
         return slots
 
-    def validate_s_check(
+    def validate_check(
         self, 
         value: Text,
         dispatcher: CollectingDispatcher,
@@ -562,7 +561,7 @@ class ValidateReadOrderForm(FormValidationAction):
                 print("DB connection error")
                 message = "C'è stato un problema con il mio database, ti chiedo scusa."
             dispatcher.utter_message(text=message)
-            return {"quantity": 'None', "pieces": None, 'requested_slot': None} ###################
+            return {"quantity": None, "pieces": None, 'requested_slot': None} ###################
         else:
             print(utts['var'], utts['pieces'])
             message = f"Mmm, non ho capito il numero di pezzi."

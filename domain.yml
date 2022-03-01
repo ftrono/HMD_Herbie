@@ -40,7 +40,21 @@ entities:
 
 #SLOTS:
 slots:
-  #product identification:
+  #0) data identification:
+  #green light:
+  p_text:
+    type: bool
+    influence_conversation: False
+
+  s_text:
+    type: bool
+    influence_conversation: False
+
+  check:
+    type: bool
+    influence_conversation: False
+
+  #containers:
   p_code:
     type: float
     influence_conversation: False
@@ -57,46 +71,37 @@ slots:
     type: text
     influence_conversation: False
 
-  p_text:
-    type: text
-    influence_conversation: False
 
-  s_text:
-    type: text
-    influence_conversation: False
-
-  #warehouse:
+  #1) warehouse:
+  #green light:
   variation:
-    type: text
+    type: bool
     influence_conversation: False
 
-  quantity:
-    type: text
-    influence_conversation: False
-    
+  #containers:    
   pieces:
     type: float
     influence_conversation: False
     min_value: 0
     max_value: 100
 
-  check:
-    type: bool
-    influence_conversation: False
-
+  #2) stock:
+  #green light:
   add_to_order:
     type: bool
     influence_conversation: False
 
-  next:
+  #3.0) init_order:
+  #green lights:
+  use_existing:
     type: bool
     influence_conversation: False
 
-  more:
+  read:
     type: bool
     influence_conversation: False
 
-  #orders:
+  #containers:
   ord_code:
     type: float
     influence_conversation: False
@@ -110,30 +115,36 @@ slots:
     type: text
     influence_conversation: False
 
-  s_check:
-    type: bool
-    influence_conversation: False
-
-  use_existing:
-    type: bool
-    influence_conversation: False
-
-  read:
-    type: bool
-    influence_conversation: False
-
+  #3.1) read/write order:
+  #green lights:
   keep:
     type: bool
     influence_conversation: False
+  
+  quantity:
+    type: bool
+    influence_conversation: False
 
+  #3.2) proactive:
+  #green light:
   proactive:
     type: bool
     influence_conversation: False
 
+  #container:
   threshold:
     type: float
     influence_conversation: False
     min_value: 0
+
+  #others:
+  next:
+    type: bool
+    influence_conversation: False
+
+  more:
+    type: bool
+    influence_conversation: False
 
 
 #AGENT'S RESPONSES:
@@ -295,7 +306,7 @@ forms:
     required_slots:
       s_text:
         - type: from_text
-      s_check:
+      check:
         - type: from_text
       use_existing:
         - type: from_text

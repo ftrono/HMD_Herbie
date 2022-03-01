@@ -78,13 +78,11 @@ nlu:
 
 - intent: inform_text
   examples: |
-    - [nome1uno](p_text)
-    - [nome1uno nome2due](p_text)
-    - [nome1uno nome2due nome3tre](p_text)
-    - [nome1uno nome2due nome3tre nome4quattro](p_text)
-    - [nome1uno nome2due nome3tre nome4quattro nome5cinque](p_text)
-    - [nome1uno nome2due nome3tre nome4quattro nome5cinque nome6sei](p_text)
-    - [nome1uno nome2due nome3tre nome4quattro nome5cinque nome6sei nome7sette](p_text)
+    - [nome](p_text)
+    - [nome fiale](p_text)
+    - [nome bustine](p_text)
+    - [prodotto nome compresse](p_text)
+    - [nome altro buste blister](p_text)
 
 #inventory & orders:
 - intent: ask_giacenza
