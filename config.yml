@@ -1,6 +1,6 @@
 # Configuration for Rasa NLU.
 # https://rasa.com/docs/rasa/nlu/components/
-language: en
+language: it
 
 pipeline:
 # # No configuration for the NLU pipeline was provided. The following default pipeline was used to train your model.
@@ -9,7 +9,9 @@ pipeline:
     #language model to load:
   - name: SpacyNLP
     model: "it_core_news_sm"
+  #- name: SpacyTokenizer
   - name: WhitespaceTokenizer
+  #- name: SpacyFeaturizer
   - name: RegexFeaturizer
   - name: LexicalSyntacticFeaturizer
   - name: CountVectorsFeaturizer
@@ -28,8 +30,8 @@ pipeline:
     epochs: 100
     constrain_similarities: True
   - name: FallbackClassifier
-    threshold: 0.3
-    ambiguity_threshold: 0.1
+    threshold: 0.5
+    ambiguity_threshold: 0.3
 
 # Configuration for Rasa Core.
 # https://rasa.com/docs/rasa/core/policies/

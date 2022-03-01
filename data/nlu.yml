@@ -13,10 +13,13 @@ nlu:
 
 - intent: stop
   examples: |
-    - stop
-    - basta
     - basta così
-    - fermati
+    - no basta
+    - basta basta
+    - fermati qui
+    - fermiamoci
+    - va bene così
+    - ok stop
 
 - intent: thanks
   examples: |
@@ -75,8 +78,12 @@ nlu:
 
 - intent: inform_text
   examples: |
+    - [nome1uno](p_text)
+    - [nome1uno nome2due](p_text)
     - [nome1uno nome2due nome3tre](p_text)
+    - [nome1uno nome2due nome3tre nome4quattro](p_text)
     - [nome1uno nome2due nome3tre nome4quattro nome5cinque](p_text)
+    - [nome1uno nome2due nome3tre nome4quattro nome5cinque nome6sei](p_text)
     - [nome1uno nome2due nome3tre nome4quattro nome5cinque nome6sei nome7sette](p_text)
 
 #inventory & orders:
@@ -161,3 +168,6 @@ nlu:
     - facciamone una nuova
     - facciamone una da zero
 
+
+# - lookup: countries
+#   - path/to/countries.txt
