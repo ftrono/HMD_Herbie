@@ -106,7 +106,7 @@ def disambiguate_prod(tracker, dispatcher, supplier=None):
 
     #fallback a: no info:
     if utts['p_code'] == None and utts['p_text'] == None:
-        message = f"Mmm, mi manca qualche informazione. Puoi leggermi il codice a barre, oppure dirmi il nome del prodotto e il produttore!"
+        message = f"Mmm, mi manca qualche informazione. Puoi leggermi il codice a barre, oppure dirmi produttore e nome, o anche solo il nome!"
         dispatcher.utter_message(text=message)
         slots = {"p_code": None, "check": None}
         return slots
@@ -128,7 +128,6 @@ def disambiguate_prod(tracker, dispatcher, supplier=None):
     if resp == []:
         message = f"Non ho trovato nessun prodotto con questo " + str1 + "."
         dispatcher.utter_message(text=message)
-        dispatcher.utter_message(response="utter_repeat")
         slots = {"p_code": None, "check": None}
         return slots
 

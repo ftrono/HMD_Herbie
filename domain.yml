@@ -269,6 +269,7 @@ responses:
   - text: "Puoi riprovare?"
   - text: "Prova a precisare!"
   - text: "Riprova da capo!"
+  - text: "Riprova!"
 
   utter_specify:
   - text: "Prova a specificare meglio!"

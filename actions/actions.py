@@ -132,7 +132,6 @@ class ValidateMagazzinoForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
         
-        #look for product:
         slots = disambiguate_prod(tracker, dispatcher)
         return slots
 
@@ -144,7 +143,6 @@ class ValidateMagazzinoForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
 
-        #look for product:
         slots = disambiguate_prod(tracker, dispatcher)
         return slots
 
@@ -156,9 +154,7 @@ class ValidateMagazzinoForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
 
-        #confirm variation:
         variation = tracker.get_slot("variation")
-        print(variation)
         if variation != 'add' and variation != 'decrease':
             dispatcher.utter_message(response='utter_please_rephrase')
             variation = None
@@ -173,11 +169,10 @@ class ValidateMagazzinoForm(FormValidationAction):
         ) -> Dict[Text, Any]:
 
         slots = tracker.current_slot_values()
-        #confirm slots variation & pieces:
         slots['pieces'] = next(tracker.get_latest_entity_values("pieces"), None)
         if slots['pieces'] != None:
-            print("Ok", slots['variation'], slots['pieces'])
             #update warehouse and reset form:
+            print("Ok", slots['variation'], slots['pieces'])
             slots = update_warehouse(tracker, dispatcher, slots)
         else:
             message = f"Mmm, non ho capito il numero di pezzi."
