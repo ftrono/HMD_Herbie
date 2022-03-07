@@ -1,4 +1,4 @@
-version: "2.0"
+version: "3.0"
 
 rules:
 #general:
@@ -11,6 +11,11 @@ rules:
   steps:
   - intent: thanks
   - action: utter_welcome
+
+- rule: low confidence
+  steps:
+  - intent: nlu_fallback
+  - action: utter_please_rephrase
 
 #1. warehouse update:
 - rule: activate form magazzino
@@ -28,6 +33,17 @@ rules:
   - active_loop: null
   - slot_was_set:
     - requested_slot: null
+
+- rule: early stop form magazzino
+  condition:
+  - active_loop: magazzino_form
+  steps:
+  - intent: stop
+  - action: action_deactivate_loop
+  - active_loop: null
+  - action: action_reset_all_slots
+  - action: utter_ok
+  - action: utter_available
 
 #2. stock info:
 - rule: activate form giacenza

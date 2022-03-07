@@ -1,4 +1,4 @@
-version: "2.0"
+version: "3.0"
 nlu:
 
 #general:
@@ -78,11 +78,11 @@ nlu:
 
 - intent: inform_text
   examples: |
-    - [nome](p_text)
-    - [nome fiale](p_text)
-    - [nome bustine](p_text)
-    - [prodotto nome compresse](p_text)
-    - [nome altro buste blister](p_text)
+    - nome
+    - nome fiale
+    - nome bustine
+    - prodotto nome compresse
+    - nome altro buste blister
 
 #inventory & orders:
 - intent: ask_giacenza
@@ -144,11 +144,11 @@ nlu:
 #orders_list:
 - intent: inform_need_order
   examples: |
-    - ho bisogno di fare un ordine per [nome1](s_text)
-    - compiliamo una lista ordini per [nome1](s_text)
-    - devo fare un ordine per [nome1 nome2 nome3](s_text)
-    - dobbiamo preparare un ordine per [nome1](s_text)
-    - prepara una lista ordine per [nome1 nome2](s_text)
+    - ho bisogno di fare un ordine per [nome1](supplier)
+    - compiliamo una lista ordini per [nome1](supplier)
+    - devo fare un ordine per [nome1 nome2 nome3](supplier)
+    - dobbiamo preparare un ordine per [nome1](supplier)
+    - prepara una lista ordine per [nome1 nome2](supplier)
     - mi aiuti a fare un ordine?
 
 - intent: ask_read

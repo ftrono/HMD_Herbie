@@ -6,7 +6,7 @@ from rasa_sdk.events import AllSlotsReset, FollowupAction, SlotSet
 from globals import *
 from db_tools import db_connect
 from db_interaction import get_pieces, update_pieces, delete_ordlist, get_existing_ordlist, get_new_ordlist
-from common_actions import is_int, is_affirmative, reset_and_goto, check_deactivate, readable_date, disambiguate_prod, disambiguate_supplier, check_giacenza, read_ord_list, update_ord_list
+from common_actions import is_int, is_affirmative, reset_and_goto, check_deactivate, readable_date, disambiguate_prod, disambiguate_supplier, update_warehouse, check_giacenza, read_ord_list, update_ord_list
 
 #CUSTOM ACTIONS & FORMS VALIDATION:
 
@@ -124,7 +124,7 @@ class ValidateMagazzinoForm(FormValidationAction):
     def name(self) -> Text:
         return "validate_magazzino_form"
 
-    def validate_p_text(
+    def validate_p_code(
         self, 
         value: Text,
         dispatcher: CollectingDispatcher,
@@ -134,12 +134,6 @@ class ValidateMagazzinoForm(FormValidationAction):
         
         #look for product:
         slots = disambiguate_prod(tracker, dispatcher)
-        if slots['p_text'] != True:
-            #check if stop intent:
-            slots_ret = tracker.current_slot_values()
-            deact, slots_ret = check_deactivate(tracker, dispatcher, slots_ret)
-            if deact == True:
-                return slots_ret
         return slots
 
     def validate_check(
@@ -152,12 +146,6 @@ class ValidateMagazzinoForm(FormValidationAction):
 
         #look for product:
         slots = disambiguate_prod(tracker, dispatcher)
-        if slots['p_text'] != True:
-            #check if stop intent:
-            slots_ret = tracker.current_slot_values()
-            deact, slots_ret = check_deactivate(tracker, dispatcher, slots_ret)
-            if deact == True:
-                return slots_ret
         return slots
 
     def validate_variation(
@@ -168,94 +156,34 @@ class ValidateMagazzinoForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
 
-        utts = {'p_code': None, 'pieces': None, 'var': None}
-        #get slots saved:
+        #confirm variation:
+        variation = tracker.get_slot("variation")
+        print(variation)
+        if variation != 'add' and variation != 'decrease':
+            dispatcher.utter_message(response='utter_please_rephrase')
+            variation = None
+        return {'variation': variation}
+
+    def validate_pieces(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
         slots = tracker.current_slot_values()
-
-        #validate user intent:
-        intent = tracker.latest_message['intent'].get('name')
-        print(tracker.latest_message['intent'].get('name'))
-        if intent == 'inform_add_pieces' or intent == 'inform_num_pieces':
-            utts['var'] = 'add'
-        elif intent == 'inform_decr_pieces':
-            utts['var'] = 'decrease'
+        #confirm slots variation & pieces:
+        slots['pieces'] = next(tracker.get_latest_entity_values("pieces"), None)
+        if slots['pieces'] != None:
+            print("Ok", slots['variation'], slots['pieces'])
+            #update warehouse and reset form:
+            slots = update_warehouse(tracker, dispatcher, slots)
         else:
-            #check if stop intent:
-            deact, ret_slots = check_deactivate(tracker, dispatcher, slots)
-            if deact == True:
-                return ret_slots
-            else:
-                message = "Mmm, non ho capito bene."
-                dispatcher.utter_message(text=message)
-                return {"variation": None, "pieces": None}
-
-        #else:
-        print(slots['p_code'], slots['p_name'], slots['supplier'])
-        ret_slots = {}
-
-        #validate extracted no of pieces:
-        utts['p_code'] = slots['p_code']
-        utts['pieces'] = next(tracker.get_latest_entity_values("pieces"), None)
-
-        #db extraction:
-        if is_int(utts['pieces']) and int(utts['pieces']) > 0:
-            print("Ok", utts['var'], utts['pieces'])
-            try:
-                conn, cursor = db_connect()
-                #check lower boundary:
-                if utts['var'] == 'decrease':
-                    floor = get_pieces(cursor, utts['p_code'])
-
-                    if floor == 0:
-                        message = f"La tua scorta era a zero, non ho potuto fare nulla. Proviamo con un altro prodotto!"
-                        dispatcher.utter_message(text=message)
-                        #empty slots and restart form:
-                        ret_slots = reset_and_goto(slots, req_slot='p_text')
-                        return ret_slots
-
-                    if floor < int(utts['pieces']):
-                        if floor == 1:
-                            str1 = "un pezzo"
-                        else:
-                            str1 = f"{floor} pezzi"
-                        message = "Ho trovato solo " + str1 + "."
-                        dispatcher.utter_message(text=message)
-                        utts['pieces'] = floor
-
-                #update DB:
-                ret = update_pieces(conn, cursor, utts)
-                conn.close()
-            except:
-                ret = -1
-                print("DB connection error")
-            
-            if int(utts['pieces']) == 1:
-                str1 = "un pezzo"
-            else:
-                str1 = f"{utts['pieces']} pezzi"
-
-            if ret == 0 and utts['var'] == 'add':
-                message = f"Ti ho aggiunto {str1} a {slots['p_name']} di {slots['supplier']}."
-                dispatcher.utter_message(text=message)
-                dispatcher.utter_message(response='utter_ask_next')
-
-            elif ret == 0 and utts['var'] == 'decrease':
-                message = f"Ti ho rimosso {str1} a {slots['p_name']} di {slots['supplier']}."
-                dispatcher.utter_message(text=message)
-                dispatcher.utter_message(response='utter_ask_next')
-
-            else:
-                message = "C'è stato un problema con il mio database, ti chiedo scusa. Riprova al prossimo turno!"
-                dispatcher.utter_message(text=message)
-            #empty slots and restart form:
-            ret_slots = reset_and_goto(slots, req_slot='p_text')
-            return ret_slots
-        else:
-            print(utts['var'], utts['pieces'])
             message = f"Mmm, non ho capito il numero di pezzi."
             dispatcher.utter_message(text=message)
-            ret_slots = {"variation": None}
-            return ret_slots
+            slots['pieces'] = None
+        return slots
 
 
 #2. stock info:

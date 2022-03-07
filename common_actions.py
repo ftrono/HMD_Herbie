@@ -3,7 +3,7 @@ from datetime import datetime, date
 import pytz
 from globals import *
 from db_tools import db_connect
-from db_interaction import get_prodinfo, get_supplier, get_pieces
+from db_interaction import get_prodinfo, get_supplier, get_pieces, update_pieces
 
 #DB DIALOG INTERFACES:
 #Interface functions that are used across multiple forms.
@@ -47,10 +47,12 @@ def reset_and_goto(slots, req_slot=None):
 
 
 #stop form & reset:
-def check_deactivate(tracker, dispatcher, slots):
+def check_deactivate(tracker, dispatcher, slots=None):
     deact = False
     intent = tracker.latest_message['intent'].get('name')
     print(f"Intent: {intent}")
+    if not slots:
+        slots = tracker.current_slot_values()
     #stop check:
     if intent == 'stop':
         dispatcher.utter_message(response='utter_ok')
@@ -94,6 +96,7 @@ def readable_date(datestr):
 #Disambiguate product reference from DB:
 def disambiguate_prod(tracker, dispatcher, supplier=None):
     #extract needed info:
+    str1 = "nome"
     utts = {
         'p_code': next(tracker.get_latest_entity_values("p_code"), None), 
         'p_text': str(tracker.latest_message.get("text")).lower(),
@@ -101,16 +104,17 @@ def disambiguate_prod(tracker, dispatcher, supplier=None):
         }
     print(utts)
 
-    #fallback:
+    #fallback a: no info:
     if utts['p_code'] == None and utts['p_text'] == None:
         message = f"Mmm, mi manca qualche informazione. Puoi leggermi il codice a barre, oppure dirmi il nome del prodotto e il produttore!"
         dispatcher.utter_message(text=message)
-        slots = {"p_text": False, "check": None}
+        slots = {"p_code": None, "check": None}
         return slots
 
     elif utts['p_code'] != None:
-        #p_code has priority:
+        #entity p_code, if found, has priority over intent text:
         utts['p_code'] = str(utts['p_code']).lower()
+        str1 = "codice"
     
     #db extraction:
     try:
@@ -120,34 +124,30 @@ def disambiguate_prod(tracker, dispatcher, supplier=None):
     except:
         resp = []
     
-    #fallback: not found:
+    #fallback b: not found:
     if resp == []:
-        if utts['p_code'] != None:
-            str1 = "codice"
-        else:
-            str1 = "nome"
         message = f"Non ho trovato nessun prodotto con questo " + str1 + "."
         dispatcher.utter_message(text=message)
         dispatcher.utter_message(response="utter_repeat")
-        slots = {"p_text": False, "check": None}
+        slots = {"p_code": None, "check": None}
         return slots
 
-    #fallback: multiple found:
+    #fallback c: multiple found:
     elif len(resp) > 1:
         message = f"Ho trovato più di un prodotto simile:"
         for prod in resp:
             message = message + "\nDi " + prod['supplier'] + ", " + prod['p_name'] + "."
         dispatcher.utter_message(text=message)
         dispatcher.utter_message(response="utter_specify")
-        slots = {"p_text": True, "check": None}
+        slots = {"p_code": 0, "check": None}
         return slots
 
-    #fallback: not found:
+    #success: match found:
     else:
         prod = resp[0]
         message = f"Trovato! Di {prod['supplier']}, {prod['p_name']}."
         dispatcher.utter_message(text=message)
-        slots = {"p_text": True, "check": True, "p_code": str(prod['p_code']), "p_name": str(prod['p_name']), "supplier": str(prod['supplier'])}
+        slots = {"p_code": str(prod['p_code']), "check": True, "p_name": str(prod['p_name']), "supplier": str(prod['supplier'])}
         return slots
 
 
@@ -190,6 +190,59 @@ def disambiguate_supplier(tracker, dispatcher):
     else:
         suppl = resp[0]
         return {"s_text": True, "check": True, "supplier": suppl}
+
+
+def update_warehouse(tracker, dispatcher, slots):
+    try:
+        conn, cursor = db_connect()
+        #check lower boundary:
+        if slots['variation'] == 'decrease':
+            floor = get_pieces(cursor, slots['p_code'])
+
+            if floor == 0:
+                message = f"La tua scorta era a zero, non ho potuto fare nulla. Proviamo con un altro prodotto!"
+                dispatcher.utter_message(text=message)
+                #empty slots and restart form:
+                ret_slots = reset_and_goto(slots, req_slot='p_code')
+                return ret_slots
+
+            if floor < int(slots['pieces']):
+                if floor == 1:
+                    str1 = "un pezzo"
+                else:
+                    str1 = f"{floor} pezzi"
+                message = "Ho trovato solo " + str1 + "."
+                dispatcher.utter_message(text=message)
+                slots['pieces'] = floor
+
+        #update DB:
+        ret = update_pieces(conn, cursor, slots)
+        conn.close()
+    except:
+        ret = -1
+        print("DB connection error")
+    
+    if int(slots['pieces']) == 1:
+        str1 = "un pezzo"
+    else:
+        str1 = f"{slots['pieces']} pezzi"
+
+    if ret == 0 and slots['variation'] == 'add':
+        message = f"Ti ho aggiunto {str1} a {slots['p_name']} di {slots['supplier']}."
+        dispatcher.utter_message(text=message)
+        dispatcher.utter_message(response='utter_ask_next')
+
+    elif ret == 0 and slots['variation'] == 'decrease':
+        message = f"Ti ho rimosso {str1} a {slots['p_name']} di {slots['supplier']}."
+        dispatcher.utter_message(text=message)
+        dispatcher.utter_message(response='utter_ask_next')
+
+    else:
+        message = "C'è stato un problema con il mio database, ti chiedo scusa. Riprova al prossimo turno!"
+        dispatcher.utter_message(text=message)
+    #empty slots and restart form:
+    ret_slots = reset_and_goto(slots, req_slot='p_code')
+    return ret_slots
 
 
 #Check pieces in DB and return if they are sufficient:

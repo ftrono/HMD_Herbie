@@ -1,4 +1,5 @@
 __pycache__
+.rasa
 */__pycache__
 models/notes.txt
 logs/db_interactions.log

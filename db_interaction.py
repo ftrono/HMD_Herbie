@@ -178,9 +178,9 @@ def get_pieces(cursor, p_code):
 
 def update_pieces(conn, cursor, utts):
     #compose query:
-    if utts['var'] == 'add':
+    if utts['variation'] == 'add':
         str1 = "+ " + str(utts['pieces'])
-    elif utts['var'] == 'decrease':
+    elif utts['variation'] == 'decrease':
         str1 = "- " + str(utts['pieces'])
     else:
         return -1
@@ -192,13 +192,13 @@ def update_pieces(conn, cursor, utts):
         changes = cursor.rowcount
         if changes != 0:
             conn.commit()
-            log.info(f"Success: {utts['var']} {utts['pieces']} pieces to product code {utts['p_code']}.")
+            log.info(f"Success: {utts['variation']} {utts['pieces']} pieces to product code {utts['p_code']}.")
             return 0
         else:
             log.error(f"DB: No match for p_code {utts['p_code']}.")
             return -1
     except sqlite3.Error as e:
-        log.error(f"Unable to perform operation {utts['var']} to product code {utts['p_code']}. {e}")
+        log.error(f"Unable to perform operation {utts['variation']} to product code {utts['p_code']}. {e}")
         return -1
 
 

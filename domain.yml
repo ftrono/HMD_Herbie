@@ -1,4 +1,4 @@
-version: "2.0"
+version: "3.0"
 
 session_config:
   session_expiration_time: 60
@@ -31,10 +31,10 @@ intents:
 
 
 #ENTITIES:
+#to be captured by NLU:
 entities:
   - p_code
-  - p_text
-  - s_text
+  - supplier
   - pieces
 
 
@@ -42,109 +42,177 @@ entities:
 slots:
   #0) data identification:
   #green light:
-  p_text:
-    type: bool
+  p_code:
+    type: text
     influence_conversation: False
-
-  s_text:
-    type: bool
-    influence_conversation: False
+    mappings:
+    - type: from_text
+      not_intent: stop
+      conditions:
+      - active_loop: magazzino_form
+        requested_slot: p_code
 
   check:
     type: bool
     influence_conversation: False
-
-  #containers:
-  p_code:
-    type: float
-    influence_conversation: False
-    min_value: 0
-    #max_value: 
-    #initial_value: null
-    #auto_fill: True
+    mappings:
+    - type: from_text
+      not_intent: stop
+      conditions:
+      - active_loop: magazzino_form
+        requested_slot: check
   
   p_name:
     type: text
     influence_conversation: False
+    mappings:
+    - type: custom
+
+  s_text:
+    type: bool
+    influence_conversation: False
+    mappings:
+    - type: from_text
 
   supplier:
     type: text
     influence_conversation: False
-
+    mappings:
+    - type: from_text
+      #entity: supplier
 
   #1) warehouse:
-  #green light:
   variation:
-    type: bool
+    type: categorical
     influence_conversation: False
-
-  #containers:    
+    values:
+    - add
+    - decrease
+    - unk
+    mappings:
+    - type: from_intent
+      intent: inform_add_pieces
+      value: add
+      conditions:
+        - active_loop: magazzino_form
+          requested_slot: variation
+    - type: from_intent
+      intent: inform_num_pieces
+      value: add
+      conditions:
+        - active_loop: magazzino_form
+          requested_slot: variation
+    - type: from_intent
+      intent: inform_decr_pieces
+      value: decrease
+      conditions:
+        - active_loop: magazzino_form
+          requested_slot: variation
+    - type: from_text
+      not_intent:
+        - inform_add_pieces
+        - inform_num_pieces
+        - inform_decr_pieces
+        - stop
+      conditions:
+        - active_loop: magazzino_form
+          requested_slot: variation
+   
   pieces:
     type: float
     influence_conversation: False
     min_value: 0
     max_value: 100
+    mappings:
+    - type: from_entity
+      entity: pieces
+      not_intent: stop
+
 
   #2) stock:
   #green light:
   add_to_order:
     type: bool
     influence_conversation: False
+    mappings:
+    - type: custom
 
   #3.0) init_order:
   #green lights:
   use_existing:
     type: bool
     influence_conversation: False
+    mappings:
+    - type: custom
 
   read:
     type: bool
     influence_conversation: False
+    mappings:
+    - type: custom
 
   #containers:
   ord_code:
     type: float
     influence_conversation: False
     min_value: 0
+    mappings:
+    - type: custom
 
   ord_date:
     type: text
     influence_conversation: False
+    mappings:
+    - type: custom
 
   ord_list:
     type: text
     influence_conversation: False
+    mappings:
+    - type: custom
 
   #3.1) read/write order:
   #green lights:
   keep:
     type: bool
     influence_conversation: False
+    mappings:
+    - type: custom
   
   quantity:
     type: bool
     influence_conversation: False
+    mappings:
+    - type: custom
 
   #3.2) proactive:
   #green light:
   proactive:
     type: bool
     influence_conversation: False
+    mappings:
+    - type: custom
 
   #container:
   threshold:
     type: float
     influence_conversation: False
     min_value: 0
+    mappings:
+    - type: custom
 
   #others:
   next:
     type: bool
     influence_conversation: False
+    mappings:
+    - type: custom
 
   more:
     type: bool
     influence_conversation: False
+    mappings:
+    - type: custom
 
 
 #AGENT'S RESPONSES:
@@ -193,6 +261,9 @@ responses:
   - text: "Fatto!"
   - text: "Fatto! Tutto settato."
 
+  utter_please_rephrase:
+  - text: "Mmm, non ho capito bene. Potresti ripetere?"
+
   utter_repeat:
   - text: "Potresti ripetere?"
   - text: "Puoi riprovare?"
@@ -205,18 +276,20 @@ responses:
   - text: "A quale di questi ti riferisci?"
 
 #product info:
-  utter_ask_p_text:
+  utter_ask_p_code:
   - text: "Dimmi il prodotto!"
   - text: "Dimmi pure il prodotto!"
   - text: "Vai col prodotto!"
-
-  utter_wrong_p_text:
-  - text: "Mi ripeteresti il nome?"
 
 #warehouse:
   utter_ask_variation:
   - text: "Mi dici la variazione dei pezzi?"
   - text: "Variazione?"
+
+  utter_ask_pieces:
+  - text: "Quanti pezzi?"
+  - text: "Mi dici il numero dei pezzi?"
+  - text: "Numero di pezzi?"
 
   utter_ask_next:
   - text: "Andiamo avanti."
@@ -256,12 +329,6 @@ responses:
   - text: "Dimmi i vari prodotti che vuoi aggiungere, uno alla volta. Ti chiederò subito dopo la quantità di pezzi da ordinare!"
   - text: "Dimmi uno per uno i prodotti da inserire in lista. Ti chiederò subito dopo la quantità di pezzi da ordinare!"
 
-  utter_ask_num_pieces:
-  - text: "Quanti pezzi?"
-  - text: "Quanti pezzi aggiungo?"
-  - text: "Quanti pezzi ti ordino?"
-  - text: "Numero pezzi?"
-
 
 #AGENT'S CUSTOM ACTIONS:
 actions:
@@ -283,59 +350,43 @@ forms:
   #1. warehouse update:
   magazzino_form:
     required_slots:
-      p_text:
-        - type: from_text
-      check:
-        - type: from_text
-      variation:
-        - type: from_text
+    - p_code
+    - check
+    - variation
+    - pieces
 
   #2. stock info:
   giacenza_form:
     required_slots:
-      p_text:
-        - type: from_text
-      check:
-        - type: from_text
-      add_to_order:
-        - type: from_text
+    - p_code
+    - check
+    - add_to_order
 
   #3. make order:
   #3.0. parent forker:
   init_order_form:
     required_slots:
-      s_text:
-        - type: from_text
-      check:
-        - type: from_text
-      use_existing:
-        - type: from_text
-      read:
-        - type: from_text
+    - s_text
+    - check
+    - use_existing
+    - read
   
   #3.1.a. system-driven read:
   read_order_form:
     required_slots:
-      keep:
-        - type: from_text
-      quantity:
-        - type: from_text
+    - keep
+    - quantity
 
   #3.1.b. user-driven write:
   write_order_form:
     required_slots:
-      p_text:
-        - type: from_text
-      check:
-        - type: from_text
-      quantity:
-        - type: from_text
+    - p_code
+    - check
+    - quantity
 
   #3.2. proactive order suggestions:
   proactive_form:
     required_slots:
-      proactive:
-        - type: from_text
-      threshold:
-        - type: from_text
+    - proactive
+    - threshold
 
