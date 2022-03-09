@@ -6,7 +6,7 @@ from rasa_sdk.events import SlotSet, AllSlotsReset, FollowupAction
 from globals import *
 from db_tools import db_connect
 from db_interaction import get_pieces, update_pieces, delete_ordlist, get_existing_ordlist, get_new_ordlist
-from common_actions import is_int, is_affirmative, readable_date, disambiguate_prod, disambiguate_supplier, update_warehouse, read_ord_list, update_ord_list
+from common_actions import readable_date, disambiguate_prod, disambiguate_supplier, update_warehouse, read_ord_list, update_ord_list
 
 #CUSTOM ACTIONS & FORMS VALIDATION:
 
@@ -16,6 +16,7 @@ from common_actions import is_int, is_affirmative, readable_date, disambiguate_p
 
 
 #CUSTOM ACTIONS:
+#All -> reset all slots:
 class ActionResetAllSlots(Action):
     def name(self) -> Text:
             return "action_reset_all_slots"
@@ -28,7 +29,7 @@ class ActionResetAllSlots(Action):
         return [AllSlotsReset()]
 
 
-#Check pieces in DB and return if they are sufficient:
+#Stock Info -> check pieces in DB and return need_order T/F:
 class ActionCheckWH(Action):
     def name(self) -> Text:
             return "action_check_wh"
@@ -64,6 +65,8 @@ class ActionCheckWH(Action):
                 dispatcher.utter_message(text=message)
             return [SlotSet('fail', True)]
 
+
+#Stock Info -> add product to the next order list:
 class ActionAddToList(Action):
     def name(self) -> Text:
             return "action_add_to_list"
@@ -104,7 +107,7 @@ class ActionAddToList(Action):
         return [AllSlotsReset()]
 
 
-#For create order:
+#Create Order -> get latest order list from DB:
 class ActionGetOrdList(Action):
     def name(self) -> Text:
             return "action_get_ordlist"
@@ -164,6 +167,7 @@ class ActionGetOrdList(Action):
         return slots_set
 
 
+#Create Order -> create new order list into DB:
 class ActionGetNewList(Action):
     def name(self) -> Text:
             return "action_get_newlist"
@@ -198,7 +202,7 @@ class ActionGetNewList(Action):
         return slots_set
 
 
-#For order_form: read item in list:
+#Create Order -> read item in list and ask keep:
 class ActionAskQuantity(Action):
     def name(self) -> Text:
             return "action_ask_quantity"
@@ -220,7 +224,7 @@ class ActionAskQuantity(Action):
 
 
 #FORMS VALIDATION:
-#1. Warehouse update:
+#Finders -> find a product in DB:
 class ValidateFindProdForm(FormValidationAction):
     def name(self) -> Text:
         return "validate_find_prod_form"
@@ -248,7 +252,37 @@ class ValidateFindProdForm(FormValidationAction):
         return slots
 
 
-#1. Warehouse update:
+#Finders -> find a supplier in DB:
+class ValidateFindSupplierForm(FormValidationAction):
+    def name(self) -> Text:
+        return "validate_find_supplier_form"
+
+    def validate_supplier(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        #find and disambiguate supplier:
+        slots = disambiguate_supplier(tracker, dispatcher)
+        return slots
+
+    def validate_check(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        #find and disambiguate supplier:
+        slots = disambiguate_supplier(tracker, dispatcher)
+        return slots
+
+
+#Loopers -> Warehouse update:
 class ValidateWhUpdateForm(FormValidationAction):
     def name(self) -> Text:
         return "validate_wh_update_form"
@@ -310,95 +344,12 @@ class ValidateWhUpdateForm(FormValidationAction):
         return slots
 
 
-#3. make order:
-#3.0. parent forker:
-class ValidateFindSupplierForm(FormValidationAction):
-    def name(self) -> Text:
-        return "validate_find_supplier_form"
-
-    def validate_supplier(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
-        #find and disambiguate supplier:
-        slots = disambiguate_supplier(tracker, dispatcher)
-        return slots
-
-    def validate_check(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
-        #find and disambiguate supplier:
-        slots = disambiguate_supplier(tracker, dispatcher)
-        return slots
-
-
-########################
-#3.0. parent forker:
+#Loopers -> read order list:
 class ValidateReadOrderForm(FormValidationAction):
     def name(self) -> Text:
         return "validate_read_order_form"
 
-    def validate_quantity(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
-        #validate user intent:
-        intent = tracker.latest_message['intent'].get('name')
-
-        #if stop:
-        if intent == 'deny':
-            print("Negativo")
-            #fork: either remove prod or stop conversation
-            dispatcher.utter_message(response="utter_ok")
-            return False
-        else:
-            pieces = next(tracker.get_latest_entity_values("pieces"), None)
-            if pieces != None:
-                slots = tracker.current_slot_values()
-                slots['pieces'] = pieces
-                ord_list = update_ord_list(slots['ord_code'], slots['index'], slots['p_code'], slots['pieces'])
-            else:
-                message = "Mmm, non ho capito bene."
-                dispatcher.utter_message(text=message)
-                return None
-
-    def validate_p_text(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
-        #GET SUPPLIER SLOT AND PASS IT TO DISAMBIGUATE_PROD, IN PLACE OF =True !!!
-        new_slots = disambiguate_prod(tracker, dispatcher, supplier=True)
-        return new_slots
-
-    def validate_check(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
-        #GET SUPPLIER SLOT AND PASS IT TO DISAMBIGUATE_PROD, IN PLACE OF =True !!!
-        new_slots = disambiguate_prod(tracker, dispatcher, supplier=True)
-        return new_slots
-
+    ################
     def validate_quantity(
         self, 
         value: Text,
@@ -424,7 +375,11 @@ class ValidateReadOrderForm(FormValidationAction):
             print("Write", utts['pieces'])
             try:
                 conn, cursor = db_connect()
-                ret = update_pieces(conn, cursor, utts) ##############
+                #######
+                ord_list = update_ord_list(slots['ord_code'], slots['index'], slots['p_code'], slots['pieces'])
+                #OR:
+                ret = update_pieces(conn, cursor, utts)
+                ##############
                 conn.close()
                 if ret == 0:
                     if int(utts['pieces']) == 1:
@@ -443,16 +398,3 @@ class ValidateReadOrderForm(FormValidationAction):
             message = f"Mmm, non ho capito il numero di pezzi."
             dispatcher.utter_message(text=message)
             return {"quantity": None, "pieces": None}
-
-    def validate_next(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
-        next_one = is_affirmative(tracker, dispatcher)
-        if next_one == False:
-            dispatcher.utter_message(response="utter_available")
-        return {'next': next_one}

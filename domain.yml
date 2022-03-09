@@ -26,7 +26,6 @@ intents:
   - inform_decr_pieces
   #orders:
   - inform_need_order
-  - ask_read
   - ask_new_list
 
 
@@ -222,19 +221,6 @@ slots:
     mappings:
     - type: custom
 
-  #others:
-  next:
-    type: bool
-    influence_conversation: False
-    mappings:
-    - type: custom
-
-  more:
-    type: bool
-    influence_conversation: False
-    mappings:
-    - type: custom
-
 
 #AGENT'S RESPONSES:
 responses:
@@ -392,7 +378,7 @@ forms:
     - supplier
     - check
 
-  #warehouse update:
+  #loopers:
   wh_update_form:
     required_slots:
     - p_code
@@ -405,7 +391,7 @@ forms:
   read_order_form:
     required_slots:
     - keep
-    - quantity
+    - pieces
 
   #3.1.b. user-driven write:
   write_order_form:

@@ -1,9 +1,18 @@
-from datetime import datetime
-import pytz
 from globals import *
 from db_tools import db_connect
 
-#DB_INTERACTIONS
+#DB_INTERACTIONS:
+#Low-level DB interfaces:
+# - get_prodinfo()
+# - get_supplier()
+# - get_pieces()
+# - update_pieces()
+# - delete_ordlist()
+# - get_existing_ordlist()
+# - get_new_ordlist()
+# - add_prod()
+# - delete_prod()
+
 
 #get basic product info:
 def get_prodinfo(conn, utts):

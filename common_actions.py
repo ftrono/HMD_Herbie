@@ -1,40 +1,17 @@
 from typing import Any, Text, Dict, List
-from datetime import datetime, date
-import pytz
 from globals import *
 from db_tools import db_connect
 from db_interaction import get_prodinfo, get_supplier, get_pieces, update_pieces
+from utils import readable_date
 
-#DB DIALOG INTERFACES:
-#Interface functions that are used across multiple forms.
-
-#Check if a string is an integer:
-def is_int(string: Text) -> bool:
-    try:
-        int(string)
-        return True
-    except ValueError:
-        return False
-
-
-def is_affirmative(tracker, dispatcher):
-    #validate user intent:
-    intent = tracker.latest_message['intent'].get('name')
-
-    if intent == 'affirm':
-        print("Affermativo")
-        dispatcher.utter_message(response="utter_ok")
-        return True
-
-    elif intent == 'deny':
-        print("Negativo")
-        dispatcher.utter_message(response="utter_ok")
-        return False
-
-    else:
-        message = "Mmm, non ho capito bene."
-        dispatcher.utter_message(text=message)
-        return None
+#COMMON BACKBONES FOR CUSTOM ACTIONS / VALIDATION:
+#High-level dialogue-DB interfaces that are used across multiple custom actions / forms:
+# - reset_and_goto()
+# - disambiguate_prod()
+# - disambiguate_supplier()
+# - update_warehouse()
+# - read_ord_list()
+# - update_ord_list()
 
 
 #reset all slots and go to req_slot:
@@ -44,53 +21,6 @@ def reset_and_goto(slots, req_slot=None):
     #deactivate form:
     slots['requested_slot'] = req_slot
     return slots
-
-
-#stop form & reset:
-def check_deactivate(tracker, dispatcher, slots=None):
-    deact = False
-    intent = tracker.latest_message['intent'].get('name')
-    print(f"Intent: {intent}")
-    if not slots:
-        slots = tracker.current_slot_values()
-    #stop check:
-    if intent == 'stop':
-        dispatcher.utter_message(response='utter_ok')
-        dispatcher.utter_message(response='utter_available')
-        #reset all slots and deactivate:
-        reset_and_goto(slots)
-        deact = True
-    return deact, slots
-
-
-#convert date to readable:
-def readable_date(datestr):
-    #orig date (format: '%Y-%m-%d'):
-    comps = datestr.split('-')
-    date_orig = date(int(comps[0]), int(comps[1]), int(comps[2]))
-    mon = MONTHS[int(comps[1])-1]
-    read_date = f"{int(comps[2])} {mon} {comps[0]}"
-
-    #today:
-    td = datetime.now(pytz.timezone('Europe/Rome'))
-    td = td.strftime('%Y-%m-%d')
-    comps_td = td.split('-')
-    date_today = date(int(comps_td[0]), int(comps_td[1]), int(comps_td[2]))
-
-    #datedif (in number of days):
-    datedif = (date_today-date_orig).days
-
-    #message:
-    if datedif == 0:
-        read_str = f"oggi"
-    elif datedif == 1:
-        read_str = f"ieri"
-    elif datedif > 1 and datedif <= 15:
-        read_str = f"{datedif} giorni fa, in data {read_date}"
-    else:
-        read_str = f"in data {read_date}"
-
-    return read_str
 
 
 #Disambiguate product reference from DB:
