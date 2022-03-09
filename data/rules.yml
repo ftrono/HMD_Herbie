@@ -1,7 +1,7 @@
 version: "3.0"
 
 rules:
-#general:
+#GENERAL:
 - rule: introduce myself
   steps:
   - intent: bot_challenge
@@ -18,11 +18,41 @@ rules:
   - intent: nlu_fallback
   - action: utter_please_rephrase
 
-#stop rules:
+#DB FAIL:
+- rule: DB fail
+  condition:
+  - slot_was_set:
+    - fail: True
+  steps:
+  - action: action_reset_all_slots
+
+#FORCED MAPPINGS:
+- rule: inform prod
+  steps:
+  - action: utter_ask_p_code
+  - intent: inform_text
+
+- rule: inform supplier
+  steps:
+  - action: utter_ask_supplier
+  - intent: inform_text
+
+#STOP RULES:
 #during forms:
 - rule: early stop - find_prod_form
   condition:
   - active_loop: find_prod_form
+  steps:
+  - intent: stop
+  - action: action_deactivate_loop
+  - active_loop: null
+  - action: utter_ok
+  - action: utter_available
+  - action: action_reset_all_slots
+
+- rule: early stop - find_supplier_form
+  condition:
+  - active_loop: find_supplier_form
   steps:
   - intent: stop
   - action: action_deactivate_loop
@@ -51,24 +81,6 @@ rules:
   - action: action_reset_all_slots
 
 #3. make order:
-#3.0. parent forker:
-- rule: inform_init_order
-  steps:
-  - intent: inform_need_order
-  - action: utter_ready
-  - action: init_order_form
-  - active_loop: init_order_form
-
-- rule: submit form init_order
-  condition:
-  - active_loop: init_order_form
-  steps:
-  - action: init_order_form
-  - active_loop: null
-  - slot_was_set:
-    - requested_slot: null
-  #- action: action_reset_all_slots
-
 #3.1.a. system-driven read:
 - rule: activate_read_order
   steps:

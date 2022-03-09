@@ -159,10 +159,13 @@ nlu:
     - me la leggi per favore?
     - non la ricordo, puoi leggere?
 
-- intent: ask_new
+- intent: ask_new_list
   examples: |
     - fanne una nuova
-    - ripartiamo
+    - no ripartiamo
+    - no resetta
+    - no azzera
+    - no facciamone una da capo
     - facciamone una nuova
     - facciamone una da zero
 

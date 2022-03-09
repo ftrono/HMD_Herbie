@@ -62,7 +62,7 @@ class ActionCheckWH(Action):
                 print("DB connection error.")
                 message = "C'è stato un problema con il mio database, ti chiedo scusa."
                 dispatcher.utter_message(text=message)
-            return []
+            return [SlotSet('fail', True)]
 
 class ActionAddToList(Action):
     def name(self) -> Text:
@@ -95,7 +95,7 @@ class ActionAddToList(Action):
                 print("DB connection error.")
                 message = "C'è stato un problema con il mio database, ti chiedo scusa."
                 dispatcher.utter_message(text=message)
-                return [AllSlotsReset()]
+                return [SlotSet('fail', True)]
             '''
             dispatcher.utter_message(response="utter_done")
         else:
@@ -104,10 +104,10 @@ class ActionAddToList(Action):
         return [AllSlotsReset()]
 
 
-#For init_order_form:
-class ActionAskUseExisting(Action):
+#For create order:
+class ActionGetOrdList(Action):
     def name(self) -> Text:
-            return "action_ask_use_existing"
+            return "action_get_ordlist"
 
     def run(self, dispatcher: CollectingDispatcher,
         tracker: Tracker,
@@ -123,40 +123,78 @@ class ActionAskUseExisting(Action):
             conn, cursor = db_connect()
             #check if an open list exists:
             slots['ord_code'], slots['ord_date'], slots['ord_list'], num_prods = get_existing_ordlist(conn, supplier)
-            #if it exists:           
-            if slots['ord_code'] != None:
+
+            #if no open lists -> create new list:
+            if slots['ord_code'] == None:
+                slots['ord_code'] = get_new_ordlist(conn, cursor, supplier)
+                message = f"Ti ho creato una nuova lista!"
+                dispatcher.utter_message(text=message)
+                slots['new_list'] = True
+                
+            #if open list but empty -> discard and create new list:
+            elif num_prods == 0:
+                delete_ordlist(conn, cursor, slots['ord_code'])
+                slots['ord_code'] = get_new_ordlist(conn, cursor, supplier)
+                message = f"Ti ho creato una nuova lista!"
+                dispatcher.utter_message(text=message)
+                slots['new_list'] = True
+
+            #load open list:
+            else:
                 #prepare strings for message:
                 num_str = f"{num_prods} prodotti"
                 if num_prods == 1:
                     num_str = "un prodotto"
                 read_date = readable_date(slots['ord_date'])
-                message = f"Abbiamo già una lista aperta, modificata per ultimo {read_date}, con {num_str}. Continuiamo con questa?"
+                message = f"Abbiamo già una lista aperta, modificata per ultimo {read_date}, con {num_str}. Useremo questa lista!"
                 dispatcher.utter_message(text=message)
-                #prepare next slots (continue form):
-                slots['use_existing'] = None
-                if num_prods == 0:
-                    slots['read'] = False
-                else:
-                    slots['read'] = None
-            else:
-                slots['ord_code'] = get_new_ordlist(conn, cursor, supplier)
-                message = f"Ti ho creato una nuova lista!"
-                dispatcher.utter_message(text=message)
-                #can deactivate init_order form:
-                slots['use_existing'] = False
-                slots['read'] = False
-                slots['requested_slot'] = None
+                slots['new_list'] = False
 
             conn.close()
-            #generate return:
-            for key in slots.keys():
-                slots_set.append(SlotSet(key, slots[key]))
 
         except:
             print("DB connection error.")
             message = "C'è stato un problema con il mio database, ti chiedo scusa."
             dispatcher.utter_message(text=message)
+            slots['fail'] = True
+        
+        #generate return:
+        for key in slots.keys():
+            slots_set.append(SlotSet(key, slots[key]))
+        return slots_set
 
+
+class ActionGetNewList(Action):
+    def name(self) -> Text:
+            return "action_get_newlist"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        #get slots saved:
+        supplier = tracker.get_slot("supplier")
+        slots = {}
+        slots['ord_code'] = tracker.get_slot("ord_code")
+        slots_set = []
+        try:
+            conn, cursor = db_connect()
+            if slots['ord_code'] != None:
+                delete_ordlist(conn, cursor, slots['ord_code'])
+            slots['ord_code'] = get_new_ordlist(conn, cursor, supplier)
+            message = f"Ti ho creato una nuova lista, useremo questa!"
+            dispatcher.utter_message(text=message)
+            conn.close()
+        except:
+            print("DB connection error.")
+            message = "C'è stato un problema con il mio database, ti chiedo scusa."
+            dispatcher.utter_message(text=message)
+            slots['fail'] = True
+        
+        #generate return:
+        for key in slots.keys():
+            slots_set.append(SlotSet(key, slots[key]))
         return slots_set
 
 
@@ -274,11 +312,11 @@ class ValidateWhUpdateForm(FormValidationAction):
 
 #3. make order:
 #3.0. parent forker:
-class ValidateInitOrderForm(FormValidationAction):
+class ValidateFindSupplierForm(FormValidationAction):
     def name(self) -> Text:
-        return "validate_init_order_form"
+        return "validate_find_supplier_form"
 
-    def validate_s_text(
+    def validate_supplier(
         self, 
         value: Text,
         dispatcher: CollectingDispatcher,
@@ -301,83 +339,6 @@ class ValidateInitOrderForm(FormValidationAction):
         #find and disambiguate supplier:
         slots = disambiguate_supplier(tracker, dispatcher)
         return slots
-
-    def validate_use_existing(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
-        #validate user intent:
-        intent = tracker.latest_message['intent'].get('name')
-        read = tracker.get_slot("read")
-        slots = {}
-
-        if intent == 'ask_read':
-            #use existing list and read it first:
-            print("Affermativo + leggi lista")
-            dispatcher.utter_message(response="utter_ok")
-            slots['use_existing'] = True
-            slots['read'] = True   #skip next slot & end form
-            slots['requested_slot'] = None
-
-        elif intent == 'affirm' and read == False:
-            #if use_existing list but it's empty: skip request to read:
-            print("Affermativo + lista vuota")
-            dispatcher.utter_message(response="utter_ok")
-            slots['use_existing'] = True
-            slots['requested_slot'] = None
-        
-        elif intent == 'affirm':
-            #use existing list. Need to ask whether to read it or not:
-            print("Affermativo")
-            dispatcher.utter_message(response="utter_ok")
-            slots['use_existing'] = True
-
-        elif intent == 'deny' or intent == 'ask_new':
-            #don't use existing list: discard it and create a new list:
-            print("Negativo")
-            dispatcher.utter_message(response="utter_ok")
-            supplier = tracker.get_slot("supplier")
-            ord_code = tracker.get_slot("ord_code")
-            try:
-                conn, cursor = db_connect()
-                ret = delete_ordlist(conn, cursor, ord_code)
-                slots['ord_code'] = get_new_ordlist(conn, cursor, supplier)
-                conn.close()
-                message = f"Ti ho creato una nuova lista per {supplier}, useremo questa!"
-                dispatcher.utter_message(text=message)
-
-            except:
-                print("DB connection error.")
-                message = "C'è stato un problema con il mio database, ti chiedo scusa."
-                dispatcher.utter_message(text=message)
-
-            #reset old slots + can deactivate init_order form:
-            slots['ord_date'] = None
-            slots['ord_list'] = None
-            slots['use_existing'] = False
-            slots['read'] = False   #skip next slot & end form
-
-        else:
-            message = "Mmm, non ho capito bene."
-            dispatcher.utter_message(text=message)
-            slots['use_existing'] = None
-        
-        return slots
-
-    def validate_read(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
-        read = is_affirmative(tracker, dispatcher)
-        return {'read': read}
 
 
 ########################

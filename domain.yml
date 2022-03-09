@@ -27,7 +27,7 @@ intents:
   #orders:
   - inform_need_order
   - ask_read
-  - ask_new
+  - ask_new_list
 
 
 #ENTITIES:
@@ -40,6 +40,13 @@ entities:
 
 #SLOTS:
 slots:
+  #basics:
+  fail:
+    type: bool
+    influence_conversation: True
+    mappings:
+    - type: custom
+
   #0) data identification:
   p_code:
     type: text
@@ -53,6 +60,16 @@ slots:
       - active_loop: wh_update_form
         requested_slot: p_code
 
+  supplier:
+    type: text
+    influence_conversation: True
+    mappings:
+    - type: from_text
+      not_intent: stop
+      conditions:
+      - active_loop: find_supplier_form
+        requested_slot: supplier
+
   check:
     type: bool
     influence_conversation: False
@@ -64,25 +81,14 @@ slots:
         requested_slot: check
       - active_loop: wh_update_form
         requested_slot: check
+      - active_loop: find_supplier_form
+        requested_slot: check
   
   p_name:
     type: text
     influence_conversation: False
     mappings:
     - type: custom
-
-  s_text:
-    type: bool
-    influence_conversation: False
-    mappings:
-    - type: from_text
-
-  supplier:
-    type: text
-    influence_conversation: False
-    mappings:
-    - type: from_text
-      #entity: supplier
 
   #1) warehouse:
   variation:
@@ -131,7 +137,6 @@ slots:
       entity: pieces
       not_intent: stop
 
-
   #2) stock:
   need_order:
     type: bool
@@ -161,21 +166,13 @@ slots:
         - deny
         - stop
 
-  #3.0) init_order:
-  #green lights:
-  use_existing:
+  #3) orders:
+  new_list:
     type: bool
-    influence_conversation: False
+    influence_conversation: True
     mappings:
     - type: custom
 
-  read:
-    type: bool
-    influence_conversation: False
-    mappings:
-    - type: custom
-
-  #containers:
   ord_code:
     type: float
     influence_conversation: False
@@ -339,7 +336,7 @@ responses:
   - text: "Te lo metto in lista per il prossimo ordine?"
 
 #orders:
-  utter_ask_s_text:
+  utter_ask_supplier:
   - text: "Mi diresti il nome del produttore?"
   - text: "Qual è il produttore?"
   - text: "Dimmi il nome del produttore!"
@@ -370,12 +367,13 @@ actions:
   - action_reset_all_slots
   - action_check_wh
   - action_add_to_list
-  - action_ask_use_existing
+  - action_get_ordlist
+  - action_get_newlist
   - action_ask_quantity
   #forms validation:
   - validate_find_prod_form
+  - validate_find_supplier_form
   - validate_wh_update_form
-  - validate_init_order_form
   - validate_read_order_form
   - validate_write_order_form
   - validate_proactive_form
@@ -383,13 +381,18 @@ actions:
 
 #FORMS:
 forms:
-  #0. find a product:
+  #finders:
   find_prod_form:
     required_slots:
     - p_code
     - check
+  
+  find_supplier_form:
+    required_slots:
+    - supplier
+    - check
 
-  #1. warehouse update:
+  #warehouse update:
   wh_update_form:
     required_slots:
     - p_code
@@ -397,15 +400,7 @@ forms:
     - variation
     - pieces
 
-  #3. make order:
-  #3.0. parent forker:
-  init_order_form:
-    required_slots:
-    - s_text
-    - check
-    - use_existing
-    - read
-  
+  #make order:  
   #3.1.a. system-driven read:
   read_order_form:
     required_slots:

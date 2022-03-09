@@ -153,7 +153,7 @@ def disambiguate_prod(tracker, dispatcher, supplier=None):
 #Get supplier reference from DB:
 def disambiguate_supplier(tracker, dispatcher):
     #extract s_text:
-    s_text = next(tracker.get_latest_entity_values("s_text"), None)
+    s_text = next(tracker.get_latest_entity_values("supplier"), None)
     if s_text == None:
         s_text = tracker.latest_message.get("text")
     
@@ -173,8 +173,7 @@ def disambiguate_supplier(tracker, dispatcher):
     if resp == []:
         message = f"Non ho trovato nessun produttore con questo nome!"
         dispatcher.utter_message(text=message)
-        dispatcher.utter_message(response="utter_repeat")
-        return {"s_text": False, "check": None}
+        return {"supplier": None, "check": None}
 
     #fallback: multiple found:
     elif len(resp) > 1:
@@ -183,12 +182,12 @@ def disambiguate_supplier(tracker, dispatcher):
             message = message + suppl + "\n"
         dispatcher.utter_message(text=message)
         dispatcher.utter_message(response="utter_specify")
-        return {"s_text": True, "check": None}
+        return {"supplier": 0, "check": None}
 
     #ok: unique:
     else:
         suppl = resp[0]
-        return {"s_text": True, "check": True, "supplier": suppl}
+        return {"supplier": suppl, "check": True}
 
 
 def update_warehouse(tracker, dispatcher, slots):
