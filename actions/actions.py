@@ -79,6 +79,7 @@ class ActionAddToList(Action):
             #store number of pieces to add, if said:
             if slots['pieces'] == None:
                 slots['pieces'] = 1
+            print("Pieces: ", slots['pieces'])
             '''
             #add to order list in DB:
             try:
