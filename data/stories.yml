@@ -74,7 +74,6 @@ stories:
   - action: action_check_wh
   - slot_was_set:
       - need_order: False
-  - action: utter_available
   - action: action_reset_all_slots
 
 - story: ask stock info - b.2) don't order
