@@ -324,9 +324,14 @@ responses:
   - text: "Successivo."
 
   utter_ask_more:
-  - text: "Cosa vuoi che faccia?"
-  - text: "Cosa ti può servire?"
-  - text: "Ti può servire qualcosa?"
+  - text: "Può servirti altro?"
+  - text: "Posso fare qualcos'altro per te?"
+  - text: "Cos'altro posso fare?"
+
+  utter_ask_what:
+  - text: "Ok! Cosa vuoi che faccia?"
+  - text: "Ok! Cosa ti può servire?"
+  - text: "Ok! Dimmi cosa posso fare!"
 
   utter_ask_add_to_order:
   - text: "Vuoi che te lo segni come da ordinare?"
@@ -360,7 +365,7 @@ responses:
 #AGENT'S CUSTOM ACTIONS:
 actions:
   #global slots validation:
-  - action_validate_slot_mappings
+  #- action_validate_slot_mappings
   #custom actions:
   - action_reset_all_slots
   - action_check_wh

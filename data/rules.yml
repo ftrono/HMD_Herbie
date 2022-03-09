@@ -18,30 +18,34 @@ rules:
   - intent: nlu_fallback
   - action: utter_please_rephrase
 
-#1. warehouse update:
-- rule: activate form wh_update
-  steps:
-  - intent: ask_wh_update
-  - action: utter_guidance_wo
-  - action: wh_update_form
-  - active_loop: wh_update_form
-
-- rule: submit form wh_update
+#stop rules:
+#during forms:
+- rule: early stop - find_prod_form
   condition:
-  - active_loop: wh_update_form
+  - active_loop: find_prod_form
   steps:
-  - action: wh_update_form
+  - intent: stop
+  - action: action_deactivate_loop
   - active_loop: null
-  - slot_was_set:
-    - requested_slot: null
+  - action: utter_ok
+  - action: utter_available
+  - action: action_reset_all_slots
 
-- rule: early stop form wh_update
+- rule: early stop - wh_update_form
   condition:
   - active_loop: wh_update_form
   steps:
   - intent: stop
   - action: action_deactivate_loop
   - active_loop: null
+  - action: utter_ok
+  - action: utter_available
+  - action: action_reset_all_slots
+
+#general:
+- rule: early stop - general trigger
+  steps:
+  - intent: stop
   - action: utter_ok
   - action: utter_available
   - action: action_reset_all_slots
