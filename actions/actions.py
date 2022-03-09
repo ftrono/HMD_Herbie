@@ -1,16 +1,21 @@
 from typing import Any, Text, Dict, List
-from rasa_sdk import Tracker, Action, Action, FormValidationAction
+from rasa_sdk import Tracker, Action, Action, ValidationAction, FormValidationAction
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.types import DomainDict
-from rasa_sdk.events import AllSlotsReset, FollowupAction, SlotSet
+from rasa_sdk.events import SlotSet, AllSlotsReset, FollowupAction
 from globals import *
 from db_tools import db_connect
 from db_interaction import get_pieces, update_pieces, delete_ordlist, get_existing_ordlist, get_new_ordlist
-from common_actions import is_int, is_affirmative, reset_and_goto, check_deactivate, readable_date, disambiguate_prod, disambiguate_supplier, update_warehouse, check_giacenza, read_ord_list, update_ord_list
+from common_actions import is_int, is_affirmative, readable_date, disambiguate_prod, disambiguate_supplier, update_warehouse, read_ord_list, update_ord_list
 
 #CUSTOM ACTIONS & FORMS VALIDATION:
 
-#Custom actions:
+#GLOBAL SLOTS VALIDATION:
+#(when slots are used outside a form)
+#class ValidatePredefinedSlots(ValidationAction):
+
+
+#CUSTOM ACTIONS:
 class ActionResetAllSlots(Action):
     def name(self) -> Text:
             return "action_reset_all_slots"
@@ -22,23 +27,80 @@ class ActionResetAllSlots(Action):
 
         return [AllSlotsReset()]
 
-class ActionRestartMagazzinoForm(Action):
+
+#Check pieces in DB and return if they are sufficient:
+class ActionCheckWH(Action):
     def name(self) -> Text:
-            return "action_restart_magazzino_form"
+            return "action_check_wh"
 
     def run(self, dispatcher: CollectingDispatcher,
         tracker: Tracker,
         domain: Dict[Text, Any]
         ) -> List[Dict[Text, Any]]:
 
-        next = tracker.get_slot("next")
-
-        if next == True:
-            return [AllSlotsReset(), FollowupAction(name="magazzino_form")]
-        elif next == False:
-            return [AllSlotsReset()]
-        else:
+        p_code = tracker.get_slot("p_code")
+        print("CHECKING: ", p_code)
+        if p_code != None:
+            try:
+                conn, cursor = db_connect()
+                pieces = int(get_pieces(cursor, p_code))
+                conn.close()
+                if pieces > THRESHOLD_TO_ORD:
+                    message = f"Hai {pieces} pezzi in magazzino."
+                    dispatcher.utter_message(text=message)
+                    return [SlotSet('need_order', False)]
+                else:
+                    if pieces == 0:
+                        message = f"Non hai più pezzi rimasti in magazzino!"
+                    elif pieces == 1:
+                        message = f"Hai un solo pezzo rimasto in magazzino."
+                    else:
+                        message = f"Hai solo {pieces} pezzi rimasti in magazzino."
+                    dispatcher.utter_message(text=message)
+                    return [SlotSet('need_order', True)]
+            except:
+                print("DB connection error.")
+                message = "C'è stato un problema con il mio database, ti chiedo scusa."
+                dispatcher.utter_message(text=message)
             return []
+
+class ActionAddToList(Action):
+    def name(self) -> Text:
+            return "action_add_to_list"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        print("AGGIUNGO ALLA LISTA")
+        slots = tracker.current_slot_values()
+        if slots['add_to_order'] == True:
+            #store number of pieces to add, if said:
+            if slots['pieces'] == None:
+                slots['pieces'] = 1
+            '''
+            #add to order list in DB:
+            try:
+                conn, cursor = db_connect()
+                latest_code, _, _ = get_orderlist(conn, cursor, slots['supplier']) #####################
+                if latest_code != None:
+                    query = f"INSERT INTO ListeOrdini (CodiceOrd, CodiceProd, Quantità) VALUES ({latest_code}, '{slots['p_code']}', {slots['pieces']})"
+
+                    ####### END UPDATE #######
+
+                conn.close()
+            except:
+                print("DB connection error.")
+                message = "C'è stato un problema con il mio database, ti chiedo scusa."
+                dispatcher.utter_message(text=message)
+                return [AllSlotsReset()]
+            '''
+            dispatcher.utter_message(response="utter_done")
+        else:
+            dispatcher.utter_message(response="utter_ok")
+        dispatcher.utter_message(response="utter_available")
+        return [AllSlotsReset()]
 
 
 #For init_order_form:
@@ -118,11 +180,39 @@ class ActionAskQuantity(Action):
         return [SlotSet('p_code', p_code)]
 
 
-#Forms validation:
-#1. warehouse update:
-class ValidateMagazzinoForm(FormValidationAction):
+#FORMS VALIDATION:
+#1. Warehouse update:
+class ValidateFindProdForm(FormValidationAction):
     def name(self) -> Text:
-        return "validate_magazzino_form"
+        return "validate_find_prod_form"
+
+    def validate_p_code(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+        
+        slots = disambiguate_prod(tracker, dispatcher)
+        return slots
+
+    def validate_check(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        slots = disambiguate_prod(tracker, dispatcher)
+        return slots
+
+
+#1. Warehouse update:
+class ValidateWhUpdateForm(FormValidationAction):
+    def name(self) -> Text:
+        return "validate_wh_update_form"
 
     def validate_p_code(
         self, 
@@ -179,105 +269,6 @@ class ValidateMagazzinoForm(FormValidationAction):
             dispatcher.utter_message(text=message)
             slots['pieces'] = None
         return slots
-
-
-#2. stock info:
-class ValidateGiacenzaForm(FormValidationAction):
-    def name(self) -> Text:
-        return "validate_giacenza_form"
-
-    def validate_p_text(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
-        slots = disambiguate_prod(tracker, dispatcher)
-        slots['add_to_order'] = None
-        #check giacenza:
-        if slots['check'] != None:
-            sufficient = check_giacenza(dispatcher, slots['p_code'])
-            if sufficient == True:
-                #skip last slot:
-                slots['add_to_order'] = False
-        return slots
-
-    def validate_check(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
-        slots = disambiguate_prod(tracker, dispatcher)
-        slots['add_to_order'] = None
-        #check giacenza:
-        if slots['check'] != None:
-            sufficient = check_giacenza(dispatcher, slots['p_code'])
-            if sufficient == True:
-                #skip last slot:
-                slots['add_to_order'] = False
-        return slots
-
-    def validate_add_to_order(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
-        #validate user intent:
-        intent = tracker.latest_message['intent'].get('name')
-        #get slots saved:
-        slots = tracker.current_slot_values()
-
-        if intent == 'affirm' or intent == 'inform_add_pieces' or intent == 'inform_num_pieces':
-            print("Affermativo")
-
-            """
-            #store number of pieces to add, if said:
-            if intent == 'inform_add_pieces' or intent == 'inform_num_pieces':
-                pieces = next(tracker.get_latest_entity_values("pieces"), 1)
-                message = f"Fatto! Ti ho inserito {pieces} pezzi in lista per il prossimo ordine."
-            else:
-                pieces = 1
-                message = f"Fatto! L'ho inserito in lista per il prossimo ordine."
-            #add to order list in DB:
-            try:
-                conn, cursor = db_connect()
-                latest_code, _, _ = get_orderlist(conn, cursor, slots['supplier']) #####################
-                if latest_code != None:
-                    query = f"INSERT INTO ListeOrdini (CodiceOrd, CodiceProd, Quantità) VALUES ({latest_code}, '{slots['p_code']}', {pieces})"
-
-                    ####### END UPDATE #######
-
-                else:
-                    message = "C'è stato un problema con il mio database, ti chiedo scusa."
-                conn.close()
-            except:
-                print("DB connection error.")
-                message = "C'è stato un problema con il mio database, ti chiedo scusa."
-            """
-
-            message = f"Fatto! L'ho inserito in lista per il prossimo ordine."
-            dispatcher.utter_message(text=message)
-            dispatcher.utter_message(response="utter_available")
-            return {"add_to_order": True}
-
-        elif intent == 'deny':
-            print("Negativo")
-            dispatcher.utter_message(response="utter_ok")
-            dispatcher.utter_message(response="utter_available")
-            return {"add_to_order": False}
-
-        else:
-            message = "Mmm, non ho capito bene."
-            dispatcher.utter_message(text=message)
-            return {"add_to_order": None}
 
 
 #3. make order:

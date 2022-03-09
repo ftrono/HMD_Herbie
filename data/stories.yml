@@ -2,6 +2,7 @@ version: "3.0"
 
 stories:
 
+#basics:
 - story: basics
   steps:
   - intent: greet
@@ -10,4 +11,41 @@ stories:
   - action: utter_iamabot
   - intent: thanks
   - action: utter_welcome
+  - action: action_reset_all_slots
 
+#stock info:
+- story: ask stock info - a) full path (need to order, add to order)
+  steps:
+  - intent: ask_stock_info
+  - action: utter_ok
+  - action: find_prod_form
+  - active_loop: find_prod_form
+  - slot_was_set:
+      - requested_slot: null
+  - active_loop: null
+  - action: action_check_wh
+  - slot_was_set:
+      - need_order: True
+  - action: utter_ask_add_to_order
+  - or:
+    - intent: affirm
+    - intent: inform_add_pieces
+    - intent: inform_num_pieces
+  - slot_was_set:
+      - add_to_order: True
+  - action: action_add_to_list
+
+- story: ask stock info - b.1) sufficient stock
+  steps:
+  - action: action_check_wh
+  - slot_was_set:
+      - need_order: False
+
+- story: ask stock info - b.2) don't order
+  steps:
+  - action: utter_ask_add_to_order
+  - intent: deny
+  - slot_was_set:
+      - add_to_order: False
+  - action: utter_ok
+  - action: utter_available

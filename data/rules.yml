@@ -11,6 +11,7 @@ rules:
   steps:
   - intent: thanks
   - action: utter_welcome
+  - action: action_reset_all_slots
 
 - rule: low confidence
   steps:
@@ -18,49 +19,31 @@ rules:
   - action: utter_please_rephrase
 
 #1. warehouse update:
-- rule: activate form magazzino
+- rule: activate form wh_update
   steps:
-  - intent: ask_wh_upd
-  - action: utter_ready
-  - action: magazzino_form
-  - active_loop: magazzino_form
+  - intent: ask_wh_update
+  - action: utter_guidance_wo
+  - action: wh_update_form
+  - active_loop: wh_update_form
 
-- rule: submit form magazzino
+- rule: submit form wh_update
   condition:
-  - active_loop: magazzino_form
+  - active_loop: wh_update_form
   steps:
-  - action: magazzino_form
+  - action: wh_update_form
   - active_loop: null
   - slot_was_set:
     - requested_slot: null
 
-- rule: early stop form magazzino
+- rule: early stop form wh_update
   condition:
-  - active_loop: magazzino_form
+  - active_loop: wh_update_form
   steps:
   - intent: stop
   - action: action_deactivate_loop
   - active_loop: null
-  - action: action_reset_all_slots
   - action: utter_ok
   - action: utter_available
-
-#2. stock info:
-- rule: activate form giacenza
-  steps:
-  - intent: ask_giacenza
-  - action: utter_ready
-  - action: giacenza_form
-  - active_loop: giacenza_form
-
-- rule: submit form giacenza
-  condition:
-  - active_loop: giacenza_form
-  steps:
-  - action: giacenza_form
-  - active_loop: null
-  - slot_was_set:
-    - requested_slot: null
   - action: action_reset_all_slots
 
 #3. make order:

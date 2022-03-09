@@ -244,32 +244,6 @@ def update_warehouse(tracker, dispatcher, slots):
     return ret_slots
 
 
-#Check pieces in DB and return if they are sufficient:
-def check_giacenza(dispatcher, p_code):
-    try:
-        conn, cursor = db_connect()
-        pieces = int(get_pieces(cursor, p_code))
-        conn.close()
-        if pieces > THRESHOLD_TO_ORD:
-            message = f"Hai {pieces} pezzi in magazzino."
-            dispatcher.utter_message(text=message)
-            return True
-        else:
-            if pieces == 0:
-                message = f"Non hai più pezzi rimasti in magazzino!"
-            elif pieces == 1:
-                message = f"Hai un solo pezzo rimasto in magazzino."
-            else:
-                message = f"Hai solo {pieces} pezzi rimasti in magazzino."
-            dispatcher.utter_message(text=message)
-            return False
-    except:
-        print("DB connection error.")
-        message = "C'è stato un problema con il mio database, ti chiedo scusa."
-        dispatcher.utter_message(text=message)
-    return None
-
-
 #read order list:
 def read_ord_list(ord_list, ind, read_quantity=True):
     #unpack JSON string to DataFrame:

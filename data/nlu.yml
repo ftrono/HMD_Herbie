@@ -85,7 +85,7 @@ nlu:
     - nome altro buste blister
 
 #inventory & orders:
-- intent: ask_giacenza
+- intent: ask_stock_info
   examples: |
     - herbie controllami una giacenza
     - mi controlli i pezzi in magazzino di un prodotto?
@@ -102,7 +102,7 @@ nlu:
     - segnalo per il prossimo ordine
 
 #warehouse:
-- intent: ask_wh_upd
+- intent: ask_wh_update
   examples: |
     - devo aggiornare i dati al magazzino
     - aggiorna magazzino
@@ -160,12 +160,12 @@ nlu:
     - non la ricordo, puoi leggere?
 
 - intent: ask_new
-  examples: | 
+  examples: |
     - fanne una nuova
     - ripartiamo
     - facciamone una nuova
     - facciamone una da zero
 
-
+    
 # - lookup: countries
 #   - path/to/countries.txt

@@ -17,10 +17,10 @@ intents:
   - inform_p_code
   - inform_text
   #inventory & orders:
-  - ask_giacenza
+  - ask_stock_info
   - ask_add_to_order
   #warehouse:
-  - ask_wh_upd
+  - ask_wh_update
   - inform_num_pieces
   - inform_add_pieces
   - inform_decr_pieces
@@ -41,15 +41,16 @@ entities:
 #SLOTS:
 slots:
   #0) data identification:
-  #green light:
   p_code:
     type: text
-    influence_conversation: False
+    influence_conversation: True
     mappings:
     - type: from_text
       not_intent: stop
       conditions:
-      - active_loop: magazzino_form
+      - active_loop: find_prod_form
+        requested_slot: p_code
+      - active_loop: wh_update_form
         requested_slot: p_code
 
   check:
@@ -59,7 +60,9 @@ slots:
     - type: from_text
       not_intent: stop
       conditions:
-      - active_loop: magazzino_form
+      - active_loop: find_prod_form
+        requested_slot: check
+      - active_loop: wh_update_form
         requested_slot: check
   
   p_name:
@@ -94,19 +97,19 @@ slots:
       intent: inform_add_pieces
       value: add
       conditions:
-        - active_loop: magazzino_form
+        - active_loop: wh_update_form
           requested_slot: variation
     - type: from_intent
       intent: inform_num_pieces
       value: add
       conditions:
-        - active_loop: magazzino_form
+        - active_loop: wh_update_form
           requested_slot: variation
     - type: from_intent
       intent: inform_decr_pieces
       value: decrease
       conditions:
-        - active_loop: magazzino_form
+        - active_loop: wh_update_form
           requested_slot: variation
     - type: from_text
       not_intent:
@@ -115,7 +118,7 @@ slots:
         - inform_decr_pieces
         - stop
       conditions:
-        - active_loop: magazzino_form
+        - active_loop: wh_update_form
           requested_slot: variation
    
   pieces:
@@ -130,12 +133,33 @@ slots:
 
 
   #2) stock:
-  #green light:
-  add_to_order:
+  need_order:
     type: bool
-    influence_conversation: False
+    influence_conversation: True
     mappings:
     - type: custom
+
+  add_to_order:
+    type: bool
+    influence_conversation: True
+    mappings:
+    - type: from_intent
+      intent: deny
+      value: False
+    - type: from_intent
+      intent: affirm
+      value: True
+    - type: from_intent
+      intent: inform_add_pieces
+      value: True
+    - type: from_intent
+      intent: inform_num_pieces
+      value: True
+    - type: from_text
+      not_intent:
+        - affirm
+        - deny
+        - stop
 
   #3.0) init_order:
   #green lights:
@@ -257,9 +281,10 @@ responses:
   - text: "Sono Herbie, il tuo shop manager digitale. Sono qui per aiutarti!"
 
   utter_done:
-  - text: "Missione compiuta!"
   - text: "Fatto!"
-  - text: "Fatto! Tutto settato."
+  - text: "Ho completato!"
+  - text: "Completato!"
+  - text: "Missione compiuta!"
 
   utter_please_rephrase:
   - text: "Mmm, non ho capito bene. Potresti ripetere?"
@@ -323,23 +348,28 @@ responses:
   - text: "Vuoi che te la rilegga prima di andare avanti?"
   - text: "Vuoi che io te la legga prima di andare avanti?"
 
+  #guidance:
+  utter_guidance_wo:
+  - text: "Ok! Dimmi, uno alla volta, per quali prodotti vuoi aggiornare le giacenze. Inizia col primo."
+  - text: "Certo! Dimmi, uno alla volta, per quali prodotti vuoi aggiornare le giacenze. Iniziamo con il primo."
+
   utter_guidance_read:
   - text: "Ti leggo i prodotti che abbiamo segnato in lista: dimmi se tenerli o rimuoverli e quanti pezzi vuoi ordinare!"
-
-  utter_guidance_wo:
-  - text: "Dimmi i vari prodotti che vuoi aggiungere, uno alla volta. Ti chiederò subito dopo la quantità di pezzi da ordinare!"
-  - text: "Dimmi uno per uno i prodotti da inserire in lista. Ti chiederò subito dopo la quantità di pezzi da ordinare!"
 
 
 #AGENT'S CUSTOM ACTIONS:
 actions:
-  - action_restart_magazzino_form
+  #global slots validation:
+  - action_validate_slot_mappings
+  #custom actions:
   - action_reset_all_slots
-  - action_ask_quantity
+  - action_check_wh
+  - action_add_to_list
   - action_ask_use_existing
-  - action_ask_keep
-  - validate_magazzino_form
-  - validate_giacenza_form
+  - action_ask_quantity
+  #forms validation:
+  - validate_find_prod_form
+  - validate_wh_update_form
   - validate_init_order_form
   - validate_read_order_form
   - validate_write_order_form
@@ -348,20 +378,19 @@ actions:
 
 #FORMS:
 forms:
+  #0. find a product:
+  find_prod_form:
+    required_slots:
+    - p_code
+    - check
+
   #1. warehouse update:
-  magazzino_form:
+  wh_update_form:
     required_slots:
     - p_code
     - check
     - variation
     - pieces
-
-  #2. stock info:
-  giacenza_form:
-    required_slots:
-    - p_code
-    - check
-    - add_to_order
 
   #3. make order:
   #3.0. parent forker:
