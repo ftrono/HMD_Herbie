@@ -15,10 +15,29 @@ from utils import readable_date
 
 
 #reset all slots and go to req_slot:
-def reset_and_goto(slots, req_slot=None):
+def reset_and_goto(slots, req_slot=None, keep_slots=None):
+    '''
+    params:
+    - slots = dict
+    - req_slot = str (None)
+    - keep_slots = list of strings (None)
+    '''
+    #1) save slot values to keep:
+    if keep_slots:
+        buf = {} #buffer
+        for sname in keep_slots:
+            buf[sname] = slots[sname]
+
+    #2) reset all slots:
     for key in slots.keys():
         slots[key] = None
-    #deactivate form:
+
+    #3) restore slots to keep:
+    if keep_slots:
+        for sname in keep_slots:
+            slots[sname] = buf[sname]
+
+    #4) set new requested_slot (either req_slot or None):
     slots['requested_slot'] = req_slot
     return slots
 
