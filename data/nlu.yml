@@ -83,6 +83,9 @@ nlu:
     - nome bustine
     - prodotto nome compresse
     - nome altro buste blister
+    - aboca
+    - esi
+    - bio2
 
 #inventory & orders:
 - intent: ask_stock_info
@@ -115,6 +118,12 @@ nlu:
     - [26](pieces) pezzi
     - [5](pieces)
     - [16](pieces)
+    - metti [10](pieces) pezzi
+    - mettine [20](pieces)
+    - facciamo [3](pieces) pezzi
+    - fai [8](pieces)
+    - segna [15](pieces)
+    - cambia, [2](pieces) pezzi
 
 - intent: inform_add_pieces
   examples: |
@@ -123,12 +132,9 @@ nlu:
     - [6](pieces) pezzi in più
     - [16](pieces) pezzi da aggiungere
     - aggiungi [10](pieces) pezzi
-    - inserisci [5](pieces) pezzi
-    - metti [10](pieces) pezzi
-    - mettine [20](pieces)
     - aggiungimi [2](pieces) pezzi
     - aggiungine [5](pieces)
-    - segna [15](pieces)
+    - inserisci [15](pieces)
 
 - intent: inform_decr_pieces
   examples: |
@@ -140,6 +146,7 @@ nlu:
     - rimuovi [10](pieces) pezzi
     - sottrai [10](pieces) pezzi
     - toglimi [2](pieces) pezzi
+    - leva [3](pieces) pezzi
 
 #orders_list:
 - intent: inform_need_order

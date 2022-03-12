@@ -31,7 +31,7 @@ stories:
 - story: ask warehouse update - full
   steps:
   - intent: ask_wh_update
-  - action: utter_guidance_wo
+  - action: utter_guidance_wo #wh_upd form
   - action: wh_update_form
   - active_loop: wh_update_form
   - slot_was_set:
@@ -44,7 +44,7 @@ stories:
   steps:
   - intent: ask_stock_info
   - action: utter_ok
-  - action: find_prod_form
+  - action: find_prod_form #find prod
   - active_loop: find_prod_form
   - slot_was_set:
     - requested_slot: null
@@ -66,7 +66,7 @@ stories:
   steps:
   - intent: ask_stock_info
   - action: utter_ok
-  - action: find_prod_form
+  - action: find_prod_form #find prod
   - active_loop: find_prod_form
   - slot_was_set:
     - requested_slot: null
@@ -91,7 +91,7 @@ stories:
   steps:
   - intent: inform_need_order
   - action: utter_ok
-  - action: find_supplier_form
+  - action: find_supplier_form #find supplier
   - active_loop: find_supplier_form
   - slot_was_set:
     - requested_slot: null
@@ -99,14 +99,14 @@ stories:
   - action: action_get_ordlist
   - slot_was_set:
     - new_list: True
-  #- action: action_write_form
+  #- action: write_order_form
   ###
 
 - story: create order - b.1) existing list -> read
   steps:
   - intent: inform_need_order
   - action: utter_ok
-  - action: find_supplier_form
+  - action: find_supplier_form #find supplier
   - active_loop: find_supplier_form
   - slot_was_set:
     - requested_slot: null
@@ -116,15 +116,21 @@ stories:
     - new_list: False
   - action: utter_ask_read
   - intent: affirm
-  - action: utter_ok
-  #- action: action_read_form
+  - action: utter_guidance_read #read form
+  - action: read_order_form
+  - active_loop: read_order_form
+  - slot_was_set:
+    - requested_slot: null
+  - active_loop: null
+  - action: utter_available
+  #- action: write_order_form
   ###
 
 - story: create order - b.2) existing list -> don't read -> write
   steps:
   - intent: inform_need_order
   - action: utter_ok
-  - action: find_supplier_form
+  - action: find_supplier_form #find supplier
   - active_loop: find_supplier_form
   - slot_was_set:
     - requested_slot: null
@@ -135,14 +141,14 @@ stories:
   - action: utter_ask_read
   - intent: deny
   - action: utter_ok
-  #- action: action_write_form
+  #- action: write_order_form
   ###
 
 - story: create order - b.3) existing list -> ask_new -> new & write
   steps:
   - intent: inform_need_order
   - action: utter_ok
-  - action: find_supplier_form
+  - action: find_supplier_form #find supplier
   - active_loop: find_supplier_form
   - slot_was_set:
     - requested_slot: null
@@ -153,5 +159,5 @@ stories:
   - action: utter_ask_read
   - intent: ask_new_list
   - action: action_get_newlist
-  #- action: action_write_form
+  #- action: write_order_form
   ###

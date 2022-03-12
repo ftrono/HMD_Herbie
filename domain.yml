@@ -96,7 +96,6 @@ slots:
     values:
     - add
     - decrease
-    - unk
     mappings:
     - type: from_intent
       intent: inform_add_pieces
@@ -191,17 +190,61 @@ slots:
     mappings:
     - type: custom
 
-  #3.1) read/write order:
-  #green lights:
+  #3.1) read order:
   keep:
-    type: bool
+    type: categorical
     influence_conversation: False
+    values:
+    - ok
+    - add
+    - remove
     mappings:
-    - type: custom
+    - type: from_intent
+      intent: affirm
+      value: ok
+      conditions:
+        - active_loop: read_order_form
+          requested_slot: keep
+    - type: from_intent
+      intent: inform_num_pieces
+      value: ok
+      conditions:
+        - active_loop: read_order_form
+          requested_slot: keep
+    - type: from_intent
+      intent: inform_add_pieces
+      value: add
+      conditions:
+        - active_loop: read_order_form
+          requested_slot: keep
+    - type: from_intent
+      intent: inform_decr_pieces
+      value: remove
+      conditions:
+        - active_loop: read_order_form
+          requested_slot: keep
+    - type: from_intent
+      intent: deny
+      value: remove
+      conditions:
+        - active_loop: read_order_form
+          requested_slot: keep
+    - type: from_text
+      not_intent:
+        - affirm
+        - inform_add_pieces
+        - inform_num_pieces
+        - inform_decr_pieces
+        - deny
+        - stop
+      conditions:
+        - active_loop: read_order_form
+          requested_slot: keep
   
-  quantity:
-    type: bool
+  cur_quantity:
+    type: float
     influence_conversation: False
+    min_value: 0
     mappings:
     - type: custom
 
@@ -342,7 +385,13 @@ responses:
   - text: "Certo! Dimmi, uno alla volta, per quali prodotti vuoi aggiornare le giacenze. Iniziamo con il primo."
 
   utter_guidance_read:
-  - text: "Ti leggo i prodotti che abbiamo segnato in lista: dimmi se tenerli o rimuoverli e quanti pezzi vuoi ordinare!"
+  - text: "Ok! Ti leggo i prodotti che abbiamo segnato in lista: dimmi se tenerli o rimuoverli e quanti pezzi vuoi ordinare! Inizio col primo."
+  - text: "Ok! Ti leggo la lista che ho trovato: per ogni prodotto, dimmi se tenerlo o rimuoverlo e quanti pezzi vuoi ordinare! Iniziamo con il primo."
+
+  utter_ask_keep_piece:
+  - text: "Teniamo in lista?"
+  - text: "Tengo?"
+  - text: "Confermi?"
 
 
 #AGENT'S CUSTOM ACTIONS:
@@ -355,7 +404,7 @@ actions:
   - action_add_to_list
   - action_get_ordlist
   - action_get_newlist
-  - action_ask_quantity
+  - action_ask_keep
   #forms validation:
   - validate_find_prod_form
   - validate_find_supplier_form

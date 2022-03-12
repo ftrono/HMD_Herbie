@@ -1,11 +1,11 @@
 from typing import Any, Text, Dict, List
-from rasa_sdk import Tracker, Action, Action, ValidationAction, FormValidationAction
+from rasa_sdk import Tracker, Action, Action, FormValidationAction, ValidationAction
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.types import DomainDict
 from rasa_sdk.events import SlotSet, AllSlotsReset, FollowupAction
 from globals import *
 from db_tools import db_connect
-from db_interaction import get_pieces, update_pieces, delete_ordlist, get_existing_ordlist, get_new_ordlist
+from db_interaction import get_pieces, delete_ordlist, get_existing_ordlist, get_new_ordlist, edit_ord_list
 from common_actions import readable_date, disambiguate_prod, disambiguate_supplier, update_warehouse, read_ord_list, update_ord_list
 
 #CUSTOM ACTIONS & FORMS VALIDATION:
@@ -76,31 +76,38 @@ class ActionAddToList(Action):
         domain: Dict[Text, Any]
         ) -> List[Dict[Text, Any]]:
 
-        print("AGGIUNGO ALLA LISTA")
+        err = False
         slots = tracker.current_slot_values()
         if slots['add_to_order'] == True:
             #store number of pieces to add, if said:
             if slots['pieces'] == None:
                 slots['pieces'] = 1
+                message = "Segnato nella prossima lista ordini!"
+            else:
+                message = f"Segnàti {slots['pieces']} pezzi nella prossima lista ordini!"
             print("Pieces: ", slots['pieces'])
-            '''
+
             #add to order list in DB:
             try:
                 conn, cursor = db_connect()
-                latest_code, _, _ = get_orderlist(conn, cursor, slots['supplier']) #####################
-                if latest_code != None:
-                    query = f"INSERT INTO ListeOrdini (CodiceOrd, CodiceProd, Quantità) VALUES ({latest_code}, '{slots['p_code']}', {slots['pieces']})"
-
-                    ####### END UPDATE #######
-
-                conn.close()
+                #check if an open list exists:
+                ord_code, _, _, _ = get_existing_ordlist(conn, slots['supplier'])
+                #if no open lists -> create new list:
+                if ord_code == None:
+                    ord_code = get_new_ordlist(conn, cursor, slots['supplier'])
+                #add product to list:
+                ret = edit_ord_list(conn, cursor, ord_code, slots['p_code'], slots['pieces'], write_mode=True)
             except:
+                err = True
+
+            if err == True or ret == -1:
                 print("DB connection error.")
                 message = "C'è stato un problema con il mio database, ti chiedo scusa."
                 dispatcher.utter_message(text=message)
                 return [SlotSet('fail', True)]
-            '''
-            dispatcher.utter_message(response="utter_done")
+            else:
+                #product added:
+                dispatcher.utter_message(text=message)
         else:
             dispatcher.utter_message(response="utter_ok")
         dispatcher.utter_message(response="utter_available")
@@ -202,25 +209,25 @@ class ActionGetNewList(Action):
         return slots_set
 
 
-#Create Order -> read item in list and ask keep:
-class ActionAskQuantity(Action):
+#Create Order -> Read item in list and ask keep:
+class ActionAskKeep(Action):
     def name(self) -> Text:
-            return "action_ask_quantity"
+            return "action_ask_keep"
 
     def run(self, dispatcher: CollectingDispatcher,
         tracker: Tracker,
         domain: Dict[Text, Any]
         ) -> List[Dict[Text, Any]]:
 
-        #get list and positional index in reading:
+        #get JSON list to read:
         ord_list = tracker.get_slot('ord_list')
-        ind = tracker.get_slot('index')
-        if ind == None:
-            ind = 0
-        #extract p_code and reading message:
-        p_code, message = read_ord_list(ord_list, ind, read_quantity=False)
-        dispatcher.utter_message(text=message)
-        return [SlotSet('p_code', p_code)]
+        #extract p_code and read message:
+        slots = read_ord_list(dispatcher, ord_list)
+        #generate return:
+        slots_set = []
+        for key in slots.keys():
+            slots_set.append(SlotSet(key, slots[key]))
+        return slots_set
 
 
 #FORMS VALIDATION:
@@ -349,8 +356,7 @@ class ValidateReadOrderForm(FormValidationAction):
     def name(self) -> Text:
         return "validate_read_order_form"
 
-    ################
-    def validate_quantity(
+    def validate_keep(
         self, 
         value: Text,
         dispatcher: CollectingDispatcher,
@@ -358,43 +364,43 @@ class ValidateReadOrderForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
 
-        utts = {}
-        #extract needed info:
-        utts['pieces'] = next(tracker.get_latest_entity_values("pieces"), None)
-        utts['p_code'] = tracker.get_slot("p_code")
-        print(utts['p_code'])
+        slots = tracker.current_slot_values()
+        slots['pieces'] = next(tracker.get_latest_entity_values("pieces"), None)
+        #cases:
+        #a) not understood:
+        if slots['keep'] not in ['ok', 'add', 'remove']:
+            dispatcher.utter_message(response='utter_please_rephrase')
+            slots['keep'] = None
+        #b) no pieces given by user:
+        elif slots['pieces'] == None:
+            #if keep/add:
+            if slots['keep'] == 'ok' or slots['keep'] == 'add':
+                #skip next slot: mark no change to DB (pieces = 0):
+                if slots['cur_quantity'] != None and slots['cur_quantity'] > 1:
+                    slots['pieces'] = 0
+            #if remove:
+            else:
+                #skip next slot: the item will be then removed from the list:
+                slots['pieces'] = 0
+            slots = update_ord_list(dispatcher, slots)
+        return slots
 
-        #fallback 1:
-        if utts['pieces'] == None:
-            message = "Mmm, non ho capito bene."
-            dispatcher.utter_message(text=message)
-            return {"quantity": None, "pieces": None}
+    def validate_pieces(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
 
-        #db extraction:
-        if is_int(utts['pieces']) and int(utts['pieces']) > 0:
-            print("Write", utts['pieces'])
-            try:
-                conn, cursor = db_connect()
-                #######
-                ord_list = update_ord_list(slots['ord_code'], slots['index'], slots['p_code'], slots['pieces'])
-                #OR:
-                ret = update_pieces(conn, cursor, utts)
-                ##############
-                conn.close()
-                if ret == 0:
-                    if int(utts['pieces']) == 1:
-                        message = "Segnato un pezzo."
-                    else:
-                        message = f"Segnàti {utts['pieces']} pezzi"
-                else:
-                    message = "C'è stato un problema con il mio database, ti chiedo scusa."
-            except:
-                print("DB connection error")
-                message = "C'è stato un problema con il mio database, ti chiedo scusa."
-            dispatcher.utter_message(text=message)
-            return {"quantity": None, "pieces": None, 'requested_slot': None} ###################
+        slots = tracker.current_slot_values()
+        slots['pieces'] = next(tracker.get_latest_entity_values("pieces"), None)
+        if slots['pieces'] != None:
+            #update warehouse and reset form:
+            print("Ok", slots['keep'], slots['pieces'])
+            slots = update_ord_list(dispatcher, slots)
         else:
-            print(utts['var'], utts['pieces'])
-            message = f"Mmm, non ho capito il numero di pezzi."
+            message = f"Mmm, non ho capito bene."
             dispatcher.utter_message(text=message)
-            return {"quantity": None, "pieces": None}
+            slots['pieces'] = None
+        return slots

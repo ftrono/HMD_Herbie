@@ -193,7 +193,7 @@ def update_pieces(conn, cursor, utts):
         str1 = "- " + str(utts['pieces'])
     else:
         return -1
-    query = "UPDATE Prodotti SET Quantità = Quantità " + str1 + " WHERE CodiceProd = " + str(utts['p_code'])
+    query = f"UPDATE Prodotti SET Quantità = Quantità {str1} WHERE CodiceProd = {utts['p_code']}"
 
     #DB update:
     try: 
@@ -265,11 +265,47 @@ def get_new_ordlist(conn, cursor, supplier):
         query = f"INSERT INTO StoricoOrdini (CodiceOrd, Produttore, DataModifica) VALUES ({latest_code}, '{supplier}', '{latest_date}')"
         cursor.execute(query)
         conn.commit()
+        log.info(f"Success: created list ord_code {latest_code} into table StoricoOrdini.")
 
     except sqlite3.Error as e:
         log.error(f"Unable to perform get_new_ordlist for supplier {supplier}. {e}")
         
     return latest_code, latest_date
+
+
+#c) edit order list:
+def edit_ord_list(conn, cursor, ord_code, p_code, pieces, write_mode=False):
+    try:
+        #a) write_mode ("insert into"):
+        if write_mode == True:
+            #check first: avoid double inclusion of a product:
+            query = f"SELECT CodiceProd FROM ListeOrdini WHERE CodiceOrd = {ord_code} AND CodiceProd = {p_code}"
+            Prod = pd.read_sql(query, conn)
+            if Prod.empty == False:
+                #if product already there, update quantity:
+                query = f"UPDATE ListeOrdini SET Quantità = {pieces} WHERE CodiceOrd = {ord_code} AND CodiceProd = {p_code}"
+            else:
+                #insert new row with the product:
+                query = f"INSERT INTO ListeOrdini (CodiceOrd, CodiceProd, Quantità) VALUES ({ord_code}, '{p_code}', '{pieces}')"
+
+        #b) update mode ("update set" or "delete from"):
+        elif pieces == 0:
+            query = f"DELETE FROM ListeOrdini WHERE CodiceOrd = {ord_code} AND CodiceProd = {p_code}"
+        else:
+            query = f"UPDATE ListeOrdini SET Quantità = {pieces} WHERE CodiceOrd = {ord_code} AND CodiceProd = {p_code}"
+            
+        cursor.execute(query)
+        #update last_modified date:
+        dt = datetime.now(pytz.timezone('Europe/Rome'))
+        latest_date = str(dt.strftime('%Y-%m-%d')) #DataModifica initialized as current datetime
+        query = f"UPDATE StoricoOrdini SET DataModifica = '{latest_date}' WHERE CodiceOrd = {ord_code}"
+        cursor.execute(query)
+        conn.commit()
+        log.info(f"Success: updated list ord_code {ord_code} into table ListeOrdini.")
+    except sqlite3.Error as e:
+        log.error(f"Unable to edit ord_list {ord_code} for product {p_code}. {e}")
+        return -1
+    return 0
 
 
 #add a new product:

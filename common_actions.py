@@ -1,7 +1,8 @@
 from typing import Any, Text, Dict, List
+from urllib import response
 from globals import *
 from db_tools import db_connect
-from db_interaction import get_prodinfo, get_supplier, get_pieces, update_pieces
+from db_interaction import get_prodinfo, get_supplier, get_pieces, update_pieces, edit_ord_list
 from utils import readable_date
 
 #COMMON BACKBONES FOR CUSTOM ACTIONS / VALIDATION:
@@ -192,51 +193,105 @@ def update_warehouse(tracker, dispatcher, slots):
     return ret_slots
 
 
-#read order list:
-def read_ord_list(ord_list, ind, read_quantity=True):
+#READ order list:
+def read_ord_list(dispatcher, ord_list):
+    slots = {}
     #unpack JSON string to DataFrame:
     OrdList = json.loads(ord_list)
     OrdList = pd.DataFrame(OrdList)
-    #extract info:
-    try:
-        p_code = str(OrdList['CodiceProd'].iloc[ind])
-        p_name = str(OrdList['Nome'].iloc[ind])
-        if read_quantity == True:
-            quantity = str(OrdList['Quantità'].iloc[ind])
-            if quantity == 1:
-                str_q = f", un pezzo."
-            else:
-                str_q = f", {quantity} pezzi."
+    if OrdList.empty == False:
+        #read first row:
+        slots['p_code'] = str(OrdList['CodiceProd'].iloc[0])
+        slots['p_name'] = str(OrdList['Nome'].iloc[0])
+        slots['cur_quantity'] = int(OrdList['Quantità'].iloc[0])
+        if slots['cur_quantity'] == 1:
+            str_q = f", un pezzo."
         else:
-            str_q = ""
-        #compose message:
-        message = f"{p_name}{str_q}"
-    except:
-        p_code = None
+            str_q = f", {slots['cur_quantity']} pezzi."
+        message = f"{slots['p_name']}{str_q}"
+        dispatcher.utter_message(text=message)
+        dispatcher.utter_message(response='utter_ask_keep_piece')
+    else:
+        #empty_list:
         message = f"Ho esaurito la lista!"
-    return p_code, message
+        dispatcher.utter_message(text=message)
+        #deactivate form and keep stored only the slots to be used forward:
+        slots = reset_and_goto(slots, req_slot=None, keep_slots=['supplier', 'ord_code', 'new_list'])
+    return slots
 
 
-#read order list:
-def update_ord_list(ord_list, ind, read_quantity=True):
-    #unpack JSON string to DataFrame:
-    OrdList = json.loads(ord_list)
-    OrdList = pd.DataFrame(OrdList)
-    #extract info:
+#UPDATE order list:
+def update_ord_list(dispatcher, slots):
+    err = False
+    ret = 0
+    slots['pieces'] = int(slots['pieces'])
     try:
-        p_code = str(OrdList['CodiceProd'].iloc[ind])
-        p_name = str(OrdList['Nome'].iloc[ind])
-        if read_quantity == True:
-            quantity = str(OrdList['Quantità'].iloc[ind])
-            if quantity == 1:
-                str_q = f", un pezzo."
+        conn, cursor = db_connect()
+        #cases:
+        if slots['pieces'] == 0:
+            if slots['keep'] == 'remove':
+                q = 0
+                #delete row from DB:
+                message = f"Ok, ti ho rimosso {slots['p_name']} dalla lista."
+                ret = edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], q)
             else:
-                str_q = f", {quantity} pezzi."
+                #no change to DB:
+                message = f"Mantengo il prodotto!"
         else:
-            str_q = ""
-        #compose message:
-        message = f"{p_name}{str_q}"
+            #edit quantity:
+            if slots['keep'] == 'ok':
+                q = slots['pieces']
+            elif slots['keep'] == 'add':
+                q = slots['cur_quantity'] + slots['pieces']
+            else:
+                q = slots['cur_quantity'] - slots['pieces']
+                #lower limit:
+                if q < 0:
+                    q = 0
+
+            if q == 0:
+                message = f"Ti ho rimosso {slots['p_name']} dalla lista."
+            elif q == 1:
+                message = f"Ti ho segnato un pezzo."
+            else:
+                message = f"Ti ho segnato {q} pezzi totali."
+            #replace quantity to DB:
+            ret = edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], q)
+        conn.close()
     except:
-        p_code = None
-        message = f"Ho esaurito la lista!"
-    return p_code, message
+        err = True
+
+    if err == True or ret == -1:
+        print("DB connection error.")
+        message = "C'è stato un problema con il mio database, ti chiedo scusa. Riproviamo!"
+        dispatcher.utter_message(text=message)
+        slots = reset_and_goto(slots, req_slot='keep', keep_slots=['supplier', 'ord_code', 'ord_list', 'new_list'])
+        return slots
+    else:
+        #delete row from the reading slot ('ord_list'):
+        #unpack JSON:
+        OrdList = json.loads(slots['ord_list'])
+        OrdList = pd.DataFrame(OrdList)
+        #delete first row:
+        OrdList = OrdList.tail(OrdList.shape[0] -1)
+        dispatcher.utter_message(text=message)
+
+        if OrdList.empty == True:
+            #empty_list:
+            message = f"Ho esaurito la lista che avevo da leggere!"
+            dispatcher.utter_message(text=message)
+            #submit form:
+            slots['ord_list'] = None
+            slots['requested_slot'] = None
+        else:
+            #re-pack updated JSON:
+            ord_list = OrdList.to_dict()
+            ord_list = json.dumps(ord_list)
+            #utter messages:
+            dispatcher.utter_message(response='utter_ask_next')
+            #restart form, keeping stored only the slots to be used forward:
+            slots = reset_and_goto(slots, req_slot='keep', keep_slots=['supplier', 'ord_code', 'ord_list', 'new_list'])
+            #updated ord_list slot:
+            slots['ord_list'] = ord_list
+    return slots
+
