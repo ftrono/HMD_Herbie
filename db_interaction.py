@@ -17,19 +17,18 @@ from db_tools import db_connect
 #get basic product info:
 def get_prodinfo(conn, utts):
     #vars:
-    params = []
     resp = []
     buf = {}
     to_pop = []
+    suppl_tok = ''
 
     #if p_code is available:
     if utts['p_code'] != None:
         print(utts['p_code'])
         try:
             #directly extract the matching product (direct match):
-            query = "SELECT CodiceProd, Produttore, Nome, Categoria FROM Prodotti WHERE CodiceProd = ?"
-            params = [str(utts['p_code'])]
-            Prodotti = pd.read_sql(query, conn, params=params)
+            query = f"SELECT CodiceProd, Produttore, Nome, Categoria FROM Prodotti WHERE CodiceProd = {utts['p_code']}"
+            Prodotti = pd.read_sql(query, conn)
         except sqlite3.Error as e:
             log.error(f"DB query error for 'p_code'. {e}")
 
@@ -41,53 +40,52 @@ def get_prodinfo(conn, utts):
 
         if utts['supplier'] == None:
             #get list of suppliers:
-            suppl_tok = ''
             try:
-                query = "SELECT DISTINCT Produttore FROM Prodotti"
+                query = f"SELECT DISTINCT Produttore FROM Prodotti"
                 Suppliers = pd.read_sql(query, conn)
             except sqlite3.Error as e:
                 log.error(f"DB query error for 'supplier'. {e}")
+
+            #CASES:
+            #1) find the tokens for the supplier (if any - must be consecutive matches) and remove them from tokens list:
+            for token in tokens:
+                Suppl = Suppliers[Suppliers['Produttore'].str.contains(token, na=False)]
+                #if match found:
+                if Suppl.empty == False:
+                    #store tokens (keep appending while consecutive matches are found):
+                    if suppl_tok == '':
+                        suppl_tok = token
+                    else:
+                        suppl_tok = suppl_tok + " " + token
+                    to_pop.append(tokens.index(token))
+                elif suppl_tok != '':
+                    #break as soon as the consecutive matches end:
+                    break
+            
+            #reduce tokens list:
+            if to_pop != []:
+                for item in reversed(to_pop):
+                    tokens.pop(item)
+                to_pop = []
+            
+            #FALLBACK: if no words left:
+            if len(tokens) == 0:
+                return []
+
+        #prepare query:
+        if utts['supplier'] != None:
+            suppstr = f" AND Produttore = '{utts['supplier']}'"
+        elif suppl_tok != '':
+            suppstr = f" AND Produttore LIKE '%{suppl_tok}%'"
         else:
-            suppl_tok = utts['supplier']
-
-        #CASES:
-        #1) find the first token for the supplier (if any) and remove it from tokens list:
-        for token in tokens:
-            Suppl = Suppliers[Suppliers['Produttore'].str.contains(token, na=False)]
-            if Suppl.empty == False:
-                #store token:
-                suppl_tok = token
-                to_pop.append(tokens.index(token))
-                break
-        
-        #reduce tokens list:
-        if to_pop != []:
-            for item in reversed(to_pop):
-                tokens.pop(item)
-            to_pop = []
-        
-        #FALLBACK: if only supplier given:
-        if len(tokens) == 0:
-            return []
-
-        #prepare p_name query:
-        sel1 = "Nome LIKE ?"
-        sel2 = ""
-        if suppl_tok != '':
-            sel2 = " AND Produttore LIKE ?"
+            suppstr = ""
         
         #2) query DB for p_name (get first series of matches) and reduce residual tokens list:
         for token in tokens:
             try:
-                #filter by p_name only or also by supplier:
-                name = "%"+str(token)+"%"
-                if suppl_tok != '':
-                    params = [name, suppl_tok]
-                else:
-                    params = [name]
                 #DB extract:
-                query = "SELECT CodiceProd, Produttore, Nome, Categoria FROM Prodotti WHERE " + sel1 + sel2
-                Prodotti = pd.read_sql(query, conn, params=params)
+                query = f"SELECT CodiceProd, Produttore, Nome, Categoria FROM Prodotti WHERE Nome LIKE '%{token}%'{suppstr}"
+                Prodotti = pd.read_sql(query, conn)
                 to_pop.append(tokens.index(token))
                 #if matches found:
                 if Prodotti.empty == False:
@@ -136,7 +134,7 @@ def get_supplier(conn, s_text):
 
     #get full list of suppliers from DB:
     try:
-        query = "SELECT DISTINCT Produttore FROM Prodotti"
+        query = f"SELECT DISTINCT Produttore FROM Prodotti"
         Suppliers = pd.read_sql(query, conn)
     except sqlite3.Error as e:
         log.error(f"DB query error for 'supplier'. {e}")
@@ -310,9 +308,9 @@ def edit_ord_list(conn, cursor, ord_code, p_code, pieces, write_mode=False):
 
 #add a new product:
 def add_prod(conn, cursor, utts):
-    tup = (str(utts['p_code']), utts['supplier'], utts['p_name'], utts['category'])
     try:
-        cursor.execute("INSERT INTO Prodotti (CodiceProd, Produttore, Nome, Categoria) VALUES (?, ?, ?, ?)", tup)
+        query = f"INSERT INTO Prodotti (CodiceProd, Produttore, Nome, Categoria, Quantità) VALUES ({utts['p_code']}, '{utts['supplier']}', '{utts['p_name']}', '{utts['category']}', {utts['pieces']})"
+        cursor.execute(query)
         log.info(f"Added product {utts['p_name']} to table Prodotti.")
     except sqlite3.Error as e:
         log.error(f"Unable to add product {utts['p_name']} to table Prodotti. {e}")
@@ -345,6 +343,8 @@ if __name__ == '__main__':
     utts = {'p_code': 12348, 'p_name': 'pappa reale compresse', 'supplier': 'biosline', 'category': 'health', 'pieces': 10}
     add_prod(conn, cursor, utts)
     utts = {'p_code': 12349, 'p_name': 'penne integrali kamut', 'supplier': 'fior di loto', 'category': 'food', 'pieces': 5}
+    add_prod(conn, cursor, utts)
+    utts = {'p_code': 12350, 'p_name': 'miele millefiori', 'supplier': 'fior di loto', 'category': 'food', 'pieces': 5}
     add_prod(conn, cursor, utts)
     # utts = {'p_name': 'pappa reale'}
     # print(get_prodinfo(conn, utts))
