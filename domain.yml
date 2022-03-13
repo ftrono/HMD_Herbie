@@ -56,14 +56,8 @@ slots:
       conditions:
       - active_loop: find_prod_form
         requested_slot: p_code
-    - type: from_text
-      not_intent: stop
-      conditions:
       - active_loop: wh_update_form
         requested_slot: p_code
-    - type: from_text
-      not_intent: stop
-      conditions:
       - active_loop: write_order_form
         requested_slot: p_code
 
@@ -86,19 +80,10 @@ slots:
       conditions:
       - active_loop: find_prod_form
         requested_slot: check
-    - type: from_text
-      not_intent: stop
-      conditions:
       - active_loop: find_supplier_form
         requested_slot: check
-    - type: from_text
-      not_intent: stop
-      conditions:
       - active_loop: wh_update_form
         requested_slot: check
-    - type: from_text
-      not_intent: stop
-      conditions:
       - active_loop: write_order_form
         requested_slot: check
   
@@ -408,8 +393,8 @@ responses:
   - text: "Ok! Ti leggo la lista: per ogni prodotto, dimmi se tenerlo o rimuoverlo e quanti pezzi vuoi ordinare! Iniziamo con il primo."
 
   utter_guidance_write:
-  - text: "Dimmi, uno alla volta, il nome dei prodotti di {supplier} da ordinare. Ti chiederò dopo quanti pezzi. Iniziamo col primo!"
-  - text: "Dettami, uno alla volta, i prodotti di {supplier} che vuoi ordinare. Ti chiederò dopo il numero di pezzi. Iniziamo!"
+  - text: "Dettami tu, uno alla volta, il nome dei prodotti di {supplier} da ordinare. Dopo, ti chiederò quanti pezzi. Iniziamo col primo!"
+  - text: "Dettami tu, uno alla volta, i prodotti di {supplier} che vuoi ordinare. Dopo, ti chiederò il numero di pezzi. Iniziamo!"
 
   utter_ask_keep_piece:
   - text: "Teniamo in lista?"

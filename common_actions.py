@@ -140,7 +140,7 @@ def disambiguate_supplier(tracker, dispatcher):
     elif len(resp) > 1:
         message = f"Ho trovato più di un produttore con un nome simile:\n"
         for suppl in resp:
-            message = f"{message} {suppl}\n"
+            message = f"{message}{suppl}\n"
         dispatcher.utter_message(text=message)
         dispatcher.utter_message(response="utter_specify")
         return {"supplier": 0, "check": None}
