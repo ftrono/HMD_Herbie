@@ -6,7 +6,7 @@ from rasa_sdk.events import SlotSet, AllSlotsReset, FollowupAction
 from globals import *
 from db_tools import db_connect
 from db_interaction import get_pieces, delete_ordlist, get_existing_ordlist, get_new_ordlist, edit_ord_list
-from common_actions import readable_date, disambiguate_prod, disambiguate_supplier, update_warehouse, read_ord_list, update_ord_list
+from common_actions import readable_date, disambiguate_prod, disambiguate_supplier, update_warehouse, read_ord_list, update_ord_list, write_ord_list
 
 #CUSTOM ACTIONS & FORMS VALIDATION:
 
@@ -27,6 +27,24 @@ class ActionResetAllSlots(Action):
         ) -> List[Dict[Text, Any]]:
 
         return [AllSlotsReset()]
+
+
+#Create Order -> reset all slots except:
+class ActionResetOrdSlots(Action):
+    def name(self) -> Text:
+            return "action_reset_ord_slots"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        to_delete = ['p_code', 'check', 'pieces', 'keep']
+        slots_set = []
+
+        for sname in to_delete:
+            slots_set.append(SlotSet(sname, None))
+        return slots_set
 
 
 #Stock Info -> check pieces in DB and return need_order T/F:
@@ -375,14 +393,49 @@ class ValidateReadOrderForm(FormValidationAction):
         elif slots['pieces'] == None:
             #if keep/add:
             if slots['keep'] == 'ok' or slots['keep'] == 'add':
-                #skip next slot: mark no change to DB (pieces = 0):
+                #mark no change to DB (pieces = 0):
                 if slots['cur_quantity'] != None and slots['cur_quantity'] > 1:
                     slots['pieces'] = 0
             #if remove:
             else:
-                #skip next slot: the item will be then removed from the list:
+                #mark remove: the item will be removed from the list:
                 slots['pieces'] = 0
             slots = update_ord_list(dispatcher, slots)
+        #c) pieces given by user:
+        else:
+            #update warehouse and reset form:
+            print("Ok", slots['keep'], slots['pieces'])
+            slots = update_ord_list(dispatcher, slots)
+        return slots
+
+
+#Loopers -> write order list:
+class ValidateWriteOrderForm(FormValidationAction):
+    def name(self) -> Text:
+        return "validate_write_order_form"
+
+    def validate_p_code(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        supplier = tracker.get_slot("supplier")
+        slots = disambiguate_prod(tracker, dispatcher, supplier=supplier)
+        return slots
+
+    def validate_check(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        supplier = tracker.get_slot("supplier")
+        slots = disambiguate_prod(tracker, dispatcher, supplier=supplier)
         return slots
 
     def validate_pieces(
@@ -397,8 +450,8 @@ class ValidateReadOrderForm(FormValidationAction):
         slots['pieces'] = next(tracker.get_latest_entity_values("pieces"), None)
         if slots['pieces'] != None:
             #update warehouse and reset form:
-            print("Ok", slots['keep'], slots['pieces'])
-            slots = update_ord_list(dispatcher, slots)
+            print("Ok", slots['p_code'], slots['pieces'])
+            slots = write_ord_list(dispatcher, slots)
         else:
             message = f"Mmm, non ho capito bene."
             dispatcher.utter_message(text=message)

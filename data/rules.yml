@@ -79,9 +79,16 @@ rules:
   - intent: stop
   - action: action_deactivate_loop
   - active_loop: null
-  - action: utter_ok
-  - action: utter_available
-  - action: action_reset_all_slots
+  - action: action_reset_ord_slots
+
+- rule: early stop - write_order_form
+  condition:
+  - active_loop: write_order_form
+  steps:
+  - intent: stop
+  - action: action_deactivate_loop
+  - active_loop: null
+  - action: action_reset_ord_slots
 
 #general:
 - rule: early stop - general trigger

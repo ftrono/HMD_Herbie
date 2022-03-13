@@ -172,7 +172,7 @@ def get_supplier(conn, s_text):
 
 def get_pieces(cursor, p_code):
     #check products already in DB:
-        query = f"SELECT Quantità FROM Prodotti WHERE CodiceProd = {p_code}"
+        query = f"SELECT Quantita FROM Prodotti WHERE CodiceProd = {p_code}"
         try:
             cursor.execute(query)
             quant = int(cursor.fetchall()[0][0])
@@ -191,7 +191,7 @@ def update_pieces(conn, cursor, utts):
         str1 = "- " + str(utts['pieces'])
     else:
         return -1
-    query = f"UPDATE Prodotti SET Quantità = Quantità {str1} WHERE CodiceProd = {utts['p_code']}"
+    query = f"UPDATE Prodotti SET Quantita = Quantita {str1} WHERE CodiceProd = {utts['p_code']}"
 
     #DB update:
     try: 
@@ -237,7 +237,7 @@ def get_existing_ordlist(conn, supplier):
             latest_code = int(Latest['CodiceOrd'].iloc[0])
             latest_date = str(Latest['DataModifica'].iloc[0])
             #get full order list (if any) - inner join with table Prodotti:
-            query = f"SELECT ListeOrdini.CodiceProd, Prodotti.Nome, ListeOrdini.Quantità FROM ListeOrdini INNER JOIN Prodotti ON ListeOrdini.CodiceProd = Prodotti.CodiceProd WHERE ListeOrdini.CodiceOrd = {latest_code}"
+            query = f"SELECT ListeOrdini.CodiceProd, Prodotti.Nome, ListeOrdini.Quantita FROM ListeOrdini INNER JOIN Prodotti ON ListeOrdini.CodiceProd = Prodotti.CodiceProd WHERE ListeOrdini.CodiceOrd = {latest_code}"
             FullList = pd.read_sql(query, conn)
             if FullList.empty == False:
                 num_prods = int(len(FullList.index))
@@ -281,16 +281,16 @@ def edit_ord_list(conn, cursor, ord_code, p_code, pieces, write_mode=False):
             Prod = pd.read_sql(query, conn)
             if Prod.empty == False:
                 #if product already there, update quantity:
-                query = f"UPDATE ListeOrdini SET Quantità = {pieces} WHERE CodiceOrd = {ord_code} AND CodiceProd = {p_code}"
+                query = f"UPDATE ListeOrdini SET Quantita = {pieces} WHERE CodiceOrd = {ord_code} AND CodiceProd = {p_code}"
             else:
                 #insert new row with the product:
-                query = f"INSERT INTO ListeOrdini (CodiceOrd, CodiceProd, Quantità) VALUES ({ord_code}, '{p_code}', '{pieces}')"
+                query = f"INSERT INTO ListeOrdini (CodiceOrd, CodiceProd, Quantita) VALUES ({ord_code}, {p_code}, {pieces})"
 
         #b) update mode ("update set" or "delete from"):
         elif pieces == 0:
             query = f"DELETE FROM ListeOrdini WHERE CodiceOrd = {ord_code} AND CodiceProd = {p_code}"
         else:
-            query = f"UPDATE ListeOrdini SET Quantità = {pieces} WHERE CodiceOrd = {ord_code} AND CodiceProd = {p_code}"
+            query = f"UPDATE ListeOrdini SET Quantita = {pieces} WHERE CodiceOrd = {ord_code} AND CodiceProd = {p_code}"
             
         cursor.execute(query)
         #update last_modified date:
@@ -309,7 +309,7 @@ def edit_ord_list(conn, cursor, ord_code, p_code, pieces, write_mode=False):
 #add a new product:
 def add_prod(conn, cursor, utts):
     try:
-        query = f"INSERT INTO Prodotti (CodiceProd, Produttore, Nome, Categoria, Quantità) VALUES ({utts['p_code']}, '{utts['supplier']}', '{utts['p_name']}', '{utts['category']}', {utts['pieces']})"
+        query = f"INSERT INTO Prodotti (CodiceProd, Produttore, Nome, Categoria, Quantita) VALUES ({utts['p_code']}, '{utts['supplier']}', '{utts['p_name']}', '{utts['category']}', {utts['pieces']})"
         cursor.execute(query)
         log.info(f"Added product {utts['p_name']} to table Prodotti.")
     except sqlite3.Error as e:

@@ -16,7 +16,7 @@ from utils import readable_date
 
 
 #reset all slots and go to req_slot:
-def reset_and_goto(slots, req_slot=None, keep_slots=None):
+def reset_and_goto(slots, req_slot=None, keep_slots=None, del_slots=None):
     '''
     params:
     - slots = dict
@@ -28,10 +28,16 @@ def reset_and_goto(slots, req_slot=None, keep_slots=None):
         buf = {} #buffer
         for sname in keep_slots:
             buf[sname] = slots[sname]
-
-    #2) reset all slots:
-    for key in slots.keys():
-        slots[key] = None
+    
+    #2) reset:
+    #a. selected slots:
+    if del_slots:
+        for sname in del_slots:
+            slots[sname] = None
+    #b. all slots:
+    else:
+        for key in slots.keys():
+            slots[key] = None
 
     #3) restore slots to keep:
     if keep_slots:
@@ -47,9 +53,10 @@ def reset_and_goto(slots, req_slot=None, keep_slots=None):
 def disambiguate_prod(tracker, dispatcher, supplier=None):
     #extract needed info:
     str1 = "nome"
+    print(tracker.get_slot("p_code"))
     utts = {
         'p_code': next(tracker.get_latest_entity_values("p_code"), None), 
-        'p_text': str(tracker.latest_message.get("text")).lower(),
+        'p_text': str(tracker.get_slot("p_code")), #first value of p_code is populated "from_text"
         'supplier': supplier if supplier else None
         }
     print(utts)
@@ -62,7 +69,7 @@ def disambiguate_prod(tracker, dispatcher, supplier=None):
         return slots
 
     elif utts['p_code'] != None:
-        #entity p_code, if found, has priority over intent text:
+        #entity p_code, if found, has priority over full intent text:
         utts['p_code'] = str(utts['p_code']).lower()
         str1 = "codice"
     
@@ -76,7 +83,9 @@ def disambiguate_prod(tracker, dispatcher, supplier=None):
     
     #fallback b: not found:
     if resp == []:
-        message = f"Non ho trovato nessun prodotto con questo " + str1 + "."
+        if supplier:
+            suppstr = f"di {supplier} "
+        message = f"Non ho trovato nessun prodotto {suppstr}con questo {str1}."
         dispatcher.utter_message(text=message)
         slots = {"p_code": None, "check": None}
         return slots
@@ -85,7 +94,7 @@ def disambiguate_prod(tracker, dispatcher, supplier=None):
     elif len(resp) > 1:
         message = f"Ho trovato più di un prodotto simile:"
         for prod in resp:
-            message = message + "\nDi " + prod['supplier'] + ", " + prod['p_name'] + "."
+            message = f"{message}\nDi {prod['supplier']}, {prod['p_name']}."
         dispatcher.utter_message(text=message)
         dispatcher.utter_message(response="utter_specify")
         slots = {"p_code": 0, "check": None}
@@ -105,7 +114,9 @@ def disambiguate_supplier(tracker, dispatcher):
     #extract s_text:
     s_text = next(tracker.get_latest_entity_values("supplier"), None)
     if s_text == None:
-        s_text = tracker.latest_message.get("text")
+        s_text = str(tracker.get_slot("supplier")) #first value of supplier is populated "from_text"
+    else:
+        s_text = str(s_text)
     
     #process supplier name:
     s_text = s_text.lower()
@@ -129,7 +140,7 @@ def disambiguate_supplier(tracker, dispatcher):
     elif len(resp) > 1:
         message = f"Ho trovato più di un produttore con un nome simile:\n"
         for suppl in resp:
-            message = message + suppl + "\n"
+            message = f"{message} {suppl}\n"
         dispatcher.utter_message(text=message)
         dispatcher.utter_message(response="utter_specify")
         return {"supplier": 0, "check": None}
@@ -159,7 +170,7 @@ def update_warehouse(tracker, dispatcher, slots):
                     str1 = "un pezzo"
                 else:
                     str1 = f"{floor} pezzi"
-                message = "Ho trovato solo " + str1 + "."
+                message = f"Ho trovato solo {str1}."
                 dispatcher.utter_message(text=message)
                 slots['pieces'] = floor
 
@@ -203,7 +214,7 @@ def read_ord_list(dispatcher, ord_list):
         #read first row:
         slots['p_code'] = str(OrdList['CodiceProd'].iloc[0])
         slots['p_name'] = str(OrdList['Nome'].iloc[0])
-        slots['cur_quantity'] = int(OrdList['Quantità'].iloc[0])
+        slots['cur_quantity'] = int(OrdList['Quantita'].iloc[0])
         if slots['cur_quantity'] == 1:
             str_q = f", un pezzo."
         else:
@@ -216,7 +227,7 @@ def read_ord_list(dispatcher, ord_list):
         message = f"Ho esaurito la lista!"
         dispatcher.utter_message(text=message)
         #deactivate form and keep stored only the slots to be used forward:
-        slots = reset_and_goto(slots, req_slot=None, keep_slots=['supplier', 'ord_code', 'new_list'])
+        slots = reset_and_goto(slots, req_slot=None, del_slots=['keep', 'pieces', 'p_code', 'p_name', 'ord_list'])
     return slots
 
 
@@ -265,7 +276,7 @@ def update_ord_list(dispatcher, slots):
         print("DB connection error.")
         message = "C'è stato un problema con il mio database, ti chiedo scusa. Riproviamo!"
         dispatcher.utter_message(text=message)
-        slots = reset_and_goto(slots, req_slot='keep', keep_slots=['supplier', 'ord_code', 'ord_list', 'new_list'])
+        slots = reset_and_goto(slots, req_slot='keep', del_slots=['keep', 'pieces', 'p_code', 'p_name'])
         return slots
     else:
         #delete row from the reading slot ('ord_list'):
@@ -278,11 +289,10 @@ def update_ord_list(dispatcher, slots):
 
         if OrdList.empty == True:
             #empty_list:
-            message = f"Ho esaurito la lista che avevo da leggere!"
+            message = f"Ho esaurito la lista da leggere!"
             dispatcher.utter_message(text=message)
-            #submit form:
-            slots['ord_list'] = None
-            slots['requested_slot'] = None
+            #deactivate form and keep stored only the slots to be used forward:
+            slots = reset_and_goto(slots, req_slot=None, del_slots=['keep', 'pieces', 'p_code', 'p_name', 'ord_list'])
         else:
             #re-pack updated JSON:
             ord_list = OrdList.to_dict()
@@ -290,8 +300,34 @@ def update_ord_list(dispatcher, slots):
             #utter messages:
             dispatcher.utter_message(response='utter_ask_next')
             #restart form, keeping stored only the slots to be used forward:
-            slots = reset_and_goto(slots, req_slot='keep', keep_slots=['supplier', 'ord_code', 'ord_list', 'new_list'])
+            slots = reset_and_goto(slots, req_slot='keep', del_slots=['keep', 'pieces', 'p_code', 'p_name'])
             #updated ord_list slot:
             slots['ord_list'] = ord_list
     return slots
 
+
+#WRITE order list:
+def write_ord_list(dispatcher, slots):
+    err = False
+    try:
+        conn, cursor = db_connect()
+        ret = edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], slots['pieces'], write_mode=True)
+        conn.close()
+    except:
+        err = True
+    
+    if err == True or ret == -1:
+        print("DB connection error.")
+        message = "C'è stato un problema con il mio database, ti chiedo scusa. Riprova da capo!"
+        dispatcher.utter_message(text=message)
+    else:
+        if slots['pieces'] == 1:
+            message = f"Un pezzo, segnato!"
+        else:
+            message = f"{slots['pieces']} pezzi segnàti!"
+        dispatcher.utter_message(text=message)
+        dispatcher.utter_message(response='utter_ask_next')
+    
+    #restart form, keeping stored only the slots to be used forward:
+    slots = reset_and_goto(slots, req_slot='p_code', del_slots=['p_code', 'check', 'p_name', 'pieces'])
+    return slots

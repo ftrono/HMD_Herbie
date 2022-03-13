@@ -56,7 +56,15 @@ slots:
       conditions:
       - active_loop: find_prod_form
         requested_slot: p_code
+    - type: from_text
+      not_intent: stop
+      conditions:
       - active_loop: wh_update_form
+        requested_slot: p_code
+    - type: from_text
+      not_intent: stop
+      conditions:
+      - active_loop: write_order_form
         requested_slot: p_code
 
   supplier:
@@ -78,9 +86,20 @@ slots:
       conditions:
       - active_loop: find_prod_form
         requested_slot: check
+    - type: from_text
+      not_intent: stop
+      conditions:
+      - active_loop: find_supplier_form
+        requested_slot: check
+    - type: from_text
+      not_intent: stop
+      conditions:
       - active_loop: wh_update_form
         requested_slot: check
-      - active_loop: find_supplier_form
+    - type: from_text
+      not_intent: stop
+      conditions:
+      - active_loop: write_order_form
         requested_slot: check
   
   p_name:
@@ -385,8 +404,12 @@ responses:
   - text: "Certo! Dimmi, uno alla volta, per quali prodotti vuoi aggiornare le giacenze. Iniziamo con il primo."
 
   utter_guidance_read:
-  - text: "Ok! Ti leggo i prodotti che abbiamo segnato in lista: dimmi se tenerli o rimuoverli e quanti pezzi vuoi ordinare! Inizio col primo."
-  - text: "Ok! Ti leggo la lista che ho trovato: per ogni prodotto, dimmi se tenerlo o rimuoverlo e quanti pezzi vuoi ordinare! Iniziamo con il primo."
+  - text: "Ok! Ti leggo i prodotti che abbiamo segnato: dimmi se tenerli o rimuoverli e quanti pezzi vuoi ordinare! Inizio col primo."
+  - text: "Ok! Ti leggo la lista: per ogni prodotto, dimmi se tenerlo o rimuoverlo e quanti pezzi vuoi ordinare! Iniziamo con il primo."
+
+  utter_guidance_write:
+  - text: "Dimmi, uno alla volta, il nome dei prodotti di {supplier} da ordinare. Ti chiederò dopo quanti pezzi. Iniziamo col primo!"
+  - text: "Dettami, uno alla volta, i prodotti di {supplier} che vuoi ordinare. Ti chiederò dopo il numero di pezzi. Iniziamo!"
 
   utter_ask_keep_piece:
   - text: "Teniamo in lista?"
@@ -400,6 +423,7 @@ actions:
   #- action_validate_slot_mappings
   #custom actions:
   - action_reset_all_slots
+  - action_reset_ord_slots
   - action_check_wh
   - action_add_to_list
   - action_get_ordlist
@@ -440,14 +464,13 @@ forms:
   read_order_form:
     required_slots:
     - keep
-    - pieces
 
   #3.1.b. user-driven write:
   write_order_form:
     required_slots:
     - p_code
     - check
-    - quantity
+    - pieces
 
   #3.2. proactive order suggestions:
   proactive_form:

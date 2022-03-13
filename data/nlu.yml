@@ -28,6 +28,7 @@ nlu:
     - ti ringrazio
     - ottimo grazie
     - fatto grazie
+    - grazie Herbie
 
 - intent: affirm
   examples: |
@@ -151,12 +152,13 @@ nlu:
 #orders_list:
 - intent: inform_need_order
   examples: |
-    - ho bisogno di fare un ordine per [nome1](supplier)
-    - compiliamo una lista ordini per [nome1](supplier)
-    - devo fare un ordine per [nome1 nome2 nome3](supplier)
-    - dobbiamo preparare un ordine per [nome1](supplier)
-    - prepara una lista ordine per [nome1 nome2](supplier)
+    - ho bisogno di fare un ordine per [aboca](supplier)
+    - compiliamo una lista ordini per [biosline](supplier)
+    - devo fare un ordine per [fior di loto](supplier)
+    - dobbiamo preparare un ordine per [esi](supplier)
+    - prepara una lista ordine per [guam](supplier)
     - mi aiuti a fare un ordine?
+    - facciamo un ordine
 
 - intent: ask_new_list
   examples: |
