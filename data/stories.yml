@@ -142,7 +142,7 @@ stories:
   - action: action_get_newlist
   - checkpoint: start_write_order
 
-- story: create order - 2) read
+- story: create order - 2.a) read - full
   steps:
   - checkpoint: start_read_order
   - action: action_reset_ord_slots
@@ -152,7 +152,20 @@ stories:
   - active_loop: null
   - checkpoint: start_write_order
 
-- story: create order - 3) write
+- story: create order - 2.b) read - stopped
+  steps:
+  - checkpoint: start_read_order
+  - action: action_reset_ord_slots
+  - action: utter_guidance_read #read form
+  - action: read_order_form
+  - active_loop: read_order_form
+  - intent: stop
+  - action: action_deactivate_loop
+  - active_loop: null
+  - action: utter_ok
+  - checkpoint: start_write_order
+
+- story: create order - 3.a) write - full
   steps:
   - checkpoint: start_write_order
   - action: action_reset_ord_slots
@@ -160,5 +173,68 @@ stories:
   - action: write_order_form
   - active_loop: write_order_form
   - active_loop: null
+  - checkpoint: start_suggest_order
+
+- story: create order - 3.b) write - stopped
+  steps:
+  - checkpoint: start_write_order
+  - action: action_reset_ord_slots
+  - action: utter_guidance_write #write form
+  - action: write_order_form
+  - active_loop: write_order_form
+  - intent: stop
+  - action: action_deactivate_loop
+  - active_loop: null
+  - action: utter_ok
+  - checkpoint: start_suggest_order
+
+- story: create order - 4.a) suggest_order - full
+  steps:
+  - checkpoint: start_suggest_order
+  - action: utter_ask_suggest_ord
+  - intent: affirm
+  - action: action_get_suggestion_list
+  - slot_was_set:
+    - found: True
+  - action: action_reset_ord_slots
+  - action: suggest_order_form
+  - active_loop: suggest_order_form
+  - active_loop: null
+  - action: utter_order_ready
   - action: utter_available
-  #- action: proactive_form
+
+- story: create order - 4.b) suggest_order - stopped
+  steps:
+  - checkpoint: start_suggest_order
+  - action: utter_ask_suggest_ord
+  - intent: affirm
+  - action: action_get_suggestion_list
+  - slot_was_set:
+    - found: True
+  - action: action_reset_ord_slots
+  - action: suggest_order_form
+  - active_loop: suggest_order_form
+  - intent: stop
+  - action: action_deactivate_loop
+  - active_loop: null
+  - action: utter_order_ready
+  - action: utter_available
+
+- story: create order - 4.c) suggest_order - not found
+  steps:
+  - checkpoint: start_suggest_order
+  - action: utter_ask_suggest_ord
+  - intent: affirm
+  - action: action_get_suggestion_list
+  - slot_was_set:
+    - found: False
+  - action: utter_order_ready
+  - action: utter_available
+
+- story: create order - 4.d) suggest_order - don't suggest
+  steps:
+  - checkpoint: start_suggest_order
+  - action: utter_ask_suggest_ord
+  - intent: deny
+  - action: utter_order_ready
+  - action: utter_available

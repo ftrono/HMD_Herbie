@@ -10,6 +10,7 @@ from db_tools import db_connect
 # - delete_ordlist()
 # - get_existing_ordlist()
 # - get_new_ordlist()
+# - get_suggestion_list()
 # - add_prod()
 # - delete_prod()
 
@@ -304,6 +305,26 @@ def edit_ord_list(conn, cursor, ord_code, p_code, pieces, write_mode=False):
         log.error(f"Unable to edit ord_list {ord_code} for product {p_code}. {e}")
         return -1
     return 0
+
+
+#d) get list of suggestions from DB:
+def get_suggestion_list(conn, supplier, ord_code):
+    full_list = None
+    num_prods = 0
+    try:
+        #extract list of prods from the requested suppliers, with Quantità <= threshold and that have not been added yet to the order list under preparation:
+        query = f"SELECT Prodotti.CodiceProd, Prodotti.Nome, Prodotti.Quantita FROM Prodotti WHERE Prodotti.Produttore = '{supplier}' AND Prodotti.Quantita <= {THRESHOLD_TO_ORD} AND NOT EXISTS (SELECT ListeOrdini.CodiceProd FROM ListeOrdini WHERE ListeOrdini.CodiceOrd = {ord_code} AND ListeOrdini.CodiceProd = Prodotti.CodiceProd) ORDER BY Prodotti.Quantita"
+        FullList = pd.read_sql(query, conn)
+        if FullList.empty == False:
+            num_prods = int(len(FullList.index))
+            #convert to string:
+            full_list = FullList.to_dict()
+            full_list = json.dumps(full_list)
+
+    except sqlite3.Error as e:
+        log.error(f"Unable to perform get_suggestion_list for supplier {supplier}. {e}")
+        
+    return full_list, num_prods
 
 
 #add a new product:

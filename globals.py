@@ -6,7 +6,7 @@ import pandas as pd
 
 #globals:
 DB_FILE = "erb_copertino.db"
-THRESHOLD_TO_ORD = 10
+THRESHOLD_TO_ORD = 5
 MONTHS = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
 
 #Set logger:

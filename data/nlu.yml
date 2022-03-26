@@ -59,6 +59,9 @@ nlu:
     - no questo no
     - questo non lo voglio
     - toglilo dalla lista
+    - no ignora
+    - no questo ignoralo
+    - no salta
 
 - intent: bot_challenge
   examples: |
@@ -124,6 +127,8 @@ nlu:
     - facciamo [3](pieces) pezzi
     - fai [8](pieces)
     - segna [15](pieces)
+    - ordina [3](pieces) pezzi
+    - ordiniamo [30](pieces) pezzi
     - cambia, [2](pieces) pezzi
 
 - intent: inform_add_pieces

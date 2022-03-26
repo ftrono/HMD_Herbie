@@ -70,22 +70,6 @@ slots:
       conditions:
       - active_loop: find_supplier_form
         requested_slot: supplier
-
-  check:
-    type: bool
-    influence_conversation: False
-    mappings:
-    - type: from_text
-      not_intent: stop
-      conditions:
-      - active_loop: find_prod_form
-        requested_slot: check
-      - active_loop: find_supplier_form
-        requested_slot: check
-      - active_loop: wh_update_form
-        requested_slot: check
-      - active_loop: write_order_form
-        requested_slot: check
   
   p_name:
     type: text
@@ -252,21 +236,44 @@ slots:
     mappings:
     - type: custom
 
-  #3.2) proactive:
-  #green light:
-  proactive:
+  #3.3) suggest_order:
+  found:
     type: bool
-    influence_conversation: False
+    influence_conversation: True
     mappings:
     - type: custom
 
-  #container:
-  threshold:
-    type: float
+  add_sugg:
+    type: bool
     influence_conversation: False
-    min_value: 0
     mappings:
-    - type: custom
+    - type: from_intent
+      intent: inform_num_pieces
+      value: True
+      conditions:
+        - active_loop: suggest_order_form
+          requested_slot: add_sugg
+    - type: from_intent
+      intent: inform_add_pieces
+      value: True
+      conditions:
+        - active_loop: suggest_order_form
+          requested_slot: add_sugg
+    - type: from_intent
+      intent: deny
+      value: False
+      conditions:
+        - active_loop: suggest_order_form
+          requested_slot: add_sugg
+    - type: from_text
+      not_intent:
+        - inform_add_pieces
+        - inform_num_pieces
+        - deny
+        - stop
+      conditions:
+        - active_loop: suggest_order_form
+          requested_slot: add_sugg
 
 
 #AGENT'S RESPONSES:
@@ -274,8 +281,6 @@ responses:
   utter_greet:
   - text: "Ciao!"
   - text: "Ciao a te!"
-  #- text: "Hey, {name}! How is your day going?"
-  #can add more alternative responses (one will be selected randomly).
 
   utter_happy:
   - text: "Ottimo! Buon lavoro."
@@ -331,6 +336,10 @@ responses:
   - text: "A quale ti riferisci?"
   - text: "A quale di questi ti riferisci?"
 
+  utter_skip:
+  - text: "Ok, ignoro!"
+  - text: "Ok, salto!"
+
 #product info:
   utter_ask_p_code:
   - text: "Dimmi il prodotto!"
@@ -383,6 +392,20 @@ responses:
   - text: "Vuoi che te la rilegga prima di andare avanti?"
   - text: "Vuoi che io te la legga prima di andare avanti?"
 
+  utter_ask_keep_piece:
+  - text: "Teniamo in lista?"
+  - text: "Tengo?"
+  - text: "Confermi?"
+
+  utter_ask_add_piece:
+  - text: "Aggiungo alla lista?"
+  - text: "Aggiungo?"
+
+  utter_ask_sugg_pieces:
+  - text: "Quanti pezzi ordino?"
+  - text: "Quanti te ne ordino?"
+  - text: "Quanti pezzi ordiniamo?"
+
   #guidance:
   utter_guidance_wo:
   - text: "Ok! Dimmi, uno alla volta, per quali prodotti vuoi aggiornare le giacenze. Inizia col primo."
@@ -393,13 +416,16 @@ responses:
   - text: "Ok! Ti leggo la lista: per ogni prodotto, dimmi se tenerlo o rimuoverlo e quanti pezzi vuoi ordinare! Iniziamo con il primo."
 
   utter_guidance_write:
-  - text: "Dettami tu, uno alla volta, il nome dei prodotti di {supplier} da ordinare. Dopo, ti chiederò quanti pezzi. Iniziamo col primo!"
-  - text: "Dettami tu, uno alla volta, i prodotti di {supplier} che vuoi ordinare. Dopo, ti chiederò il numero di pezzi. Iniziamo!"
+  - text: "Dettami tu, uno alla volta, il nome dei prodotti di {supplier} da ordinare. Iniziamo col primo!"
+  - text: "Dettami tu, uno alla volta, i prodotti di {supplier} che vuoi ordinare. Iniziamo!"
 
-  utter_ask_keep_piece:
-  - text: "Teniamo in lista?"
-  - text: "Tengo?"
-  - text: "Confermi?"
+  utter_ask_suggest_ord:
+  - text: "Posso cercarti altri prodotti di {supplier} in esaurimento nel tuo magazzino. Vuoi che te li suggerisca?"
+  - text: "Vuoi che ti suggerisca altri prodotti di {supplier} in esaurimento nel tuo magazzino?"
+
+  utter_order_ready:
+  - text: "Il tuo ordine per {supplier} è pronto!"
+  - text: "Abbiamo completato la lista ordini per {supplier}!"
 
 
 #AGENT'S CUSTOM ACTIONS:
@@ -413,14 +439,16 @@ actions:
   - action_add_to_list
   - action_get_ordlist
   - action_get_newlist
+  - action_get_suggestion_list
   - action_ask_keep
+  - action_ask_add_sugg
   #forms validation:
   - validate_find_prod_form
   - validate_find_supplier_form
   - validate_wh_update_form
   - validate_read_order_form
   - validate_write_order_form
-  - validate_proactive_form
+  - validate_suggest_order_form
 
 
 #FORMS:
@@ -429,18 +457,15 @@ forms:
   find_prod_form:
     required_slots:
     - p_code
-    - check
   
   find_supplier_form:
     required_slots:
     - supplier
-    - check
 
   #loopers:
   wh_update_form:
     required_slots:
     - p_code
-    - check
     - variation
     - pieces
 
@@ -454,12 +479,10 @@ forms:
   write_order_form:
     required_slots:
     - p_code
-    - check
     - pieces
 
   #3.2. proactive order suggestions:
-  proactive_form:
+  suggest_order_form:
     required_slots:
-    - proactive
-    - threshold
+    - add_sugg
 

@@ -5,8 +5,8 @@ from rasa_sdk.types import DomainDict
 from rasa_sdk.events import SlotSet, AllSlotsReset, FollowupAction
 from globals import *
 from db_tools import db_connect
-from db_interaction import get_pieces, delete_ordlist, get_existing_ordlist, get_new_ordlist, edit_ord_list
-from common_actions import readable_date, disambiguate_prod, disambiguate_supplier, update_warehouse, read_ord_list, update_ord_list, write_ord_list
+from db_interaction import get_pieces, delete_ordlist, get_existing_ordlist, get_new_ordlist, get_suggestion_list, edit_ord_list
+from common_actions import convert_to_slotset, reset_and_goto, readable_date, disambiguate_prod, disambiguate_supplier, update_warehouse, read_ord_list, update_reading_list, update_ord_list, write_ord_list
 
 #CUSTOM ACTIONS & FORMS VALIDATION:
 
@@ -29,7 +29,7 @@ class ActionResetAllSlots(Action):
         return [AllSlotsReset()]
 
 
-#Create Order -> reset all slots except:
+#Create Order -> reset recurrent slots for order preparation:
 class ActionResetOrdSlots(Action):
     def name(self) -> Text:
             return "action_reset_ord_slots"
@@ -39,9 +39,8 @@ class ActionResetOrdSlots(Action):
         domain: Dict[Text, Any]
         ) -> List[Dict[Text, Any]]:
 
-        to_delete = ['p_code', 'check', 'pieces', 'keep']
+        to_delete = ['p_code', 'pieces', 'keep', 'add_sugg']
         slots_set = []
-
         for sname in to_delete:
             slots_set.append(SlotSet(sname, None))
         return slots_set
@@ -146,7 +145,6 @@ class ActionGetOrdList(Action):
         supplier = tracker.get_slot("supplier")
         dispatcher.utter_message(response="utter_ready_to_order")
         slots = {}
-        slots_set = []
         try:
             conn, cursor = db_connect()
             #check if an open list exists:
@@ -174,7 +172,7 @@ class ActionGetOrdList(Action):
                 if num_prods == 1:
                     num_str = "un prodotto"
                 read_date = readable_date(slots['ord_date'])
-                message = f"Abbiamo già una lista aperta, modificata per ultimo {read_date}, con {num_str}. Useremo questa lista!"
+                message = f"Abbiamo una lista aperta, modificata per ultimo {read_date}, con {num_str}."
                 dispatcher.utter_message(text=message)
                 slots['new_list'] = False
 
@@ -186,9 +184,7 @@ class ActionGetOrdList(Action):
             dispatcher.utter_message(text=message)
             slots['fail'] = True
         
-        #generate return:
-        for key in slots.keys():
-            slots_set.append(SlotSet(key, slots[key]))
+        slots_set = convert_to_slotset(slots)
         return slots_set
 
 
@@ -206,7 +202,6 @@ class ActionGetNewList(Action):
         supplier = tracker.get_slot("supplier")
         slots = {}
         slots['ord_code'] = tracker.get_slot("ord_code")
-        slots_set = []
         try:
             conn, cursor = db_connect()
             if slots['ord_code'] != None:
@@ -221,9 +216,49 @@ class ActionGetNewList(Action):
             dispatcher.utter_message(text=message)
             slots['fail'] = True
         
-        #generate return:
-        for key in slots.keys():
-            slots_set.append(SlotSet(key, slots[key]))
+        slots_set = convert_to_slotset(slots)
+        return slots_set
+
+#Create Order -> create suggestion list:
+class ActionGetSuggestionList(Action):
+    def name(self) -> Text:
+            return "action_get_suggestion_list"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        #get slots saved:
+        slots = tracker.current_slot_values()
+        #extract JSON list:
+        try:
+            conn, cursor = db_connect()
+            slots['ord_list'], num_prods = get_suggestion_list(conn, slots['supplier'], slots['ord_code'])
+            conn.close()
+            #if extracted suggestion list empty:
+            if slots['ord_list'] == None:
+                slots['found'] = False
+                message = f"Non ho trovato altri prodotti di {slots['supplier']} con meno di {THRESHOLD_TO_ORD} pezzi!"
+                dispatcher.utter_message(text=message)
+            #else: trigger start read:
+            else:
+                slots['found'] = True
+                if num_prods == 1:
+                    num_str = "un solo prodotto"
+                    start_str = ""
+                else:
+                    num_str = f"{num_prods} prodotti"
+                    start_str = " Inizio a leggere!"
+                message = f"Ti ho trovato {num_str} di {slots['supplier']} con meno di {THRESHOLD_TO_ORD} pezzi.{start_str}"
+                dispatcher.utter_message(text=message)
+        except:
+            print("DB connection error.")
+            message = "C'è stato un problema con il mio database, ti chiedo scusa."
+            dispatcher.utter_message(text=message)
+            slots['fail'] = True
+        
+        slots_set = convert_to_slotset(slots)
         return slots_set
 
 
@@ -241,10 +276,32 @@ class ActionAskKeep(Action):
         ord_list = tracker.get_slot('ord_list')
         #extract p_code and read message:
         slots = read_ord_list(dispatcher, ord_list)
-        #generate return:
-        slots_set = []
-        for key in slots.keys():
-            slots_set.append(SlotSet(key, slots[key]))
+        if slots['p_code'] != None:
+            dispatcher.utter_message(response='utter_ask_keep_piece')
+        
+        slots_set = convert_to_slotset(slots)
+        return slots_set
+
+
+#Create Order -> Read item in list and ask keep:
+class ActionAskAddSugg(Action):
+    def name(self) -> Text:
+            return "action_ask_add_sugg"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        #get slots saved:
+        slots = tracker.current_slot_values()
+        
+        #2) read next prod in JSON list: extract p_code and read message:
+        slots = read_ord_list(dispatcher, slots['ord_list'], suggest_mode=True)
+        if slots['p_code'] != None:
+            dispatcher.utter_message(response='utter_ask_sugg_pieces')
+        
+        slots_set = convert_to_slotset(slots)
         return slots_set
 
 
@@ -265,17 +322,6 @@ class ValidateFindProdForm(FormValidationAction):
         slots = disambiguate_prod(tracker, dispatcher)
         return slots
 
-    def validate_check(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
-        slots = disambiguate_prod(tracker, dispatcher)
-        return slots
-
 
 #Finders -> find a supplier in DB:
 class ValidateFindSupplierForm(FormValidationAction):
@@ -283,18 +329,6 @@ class ValidateFindSupplierForm(FormValidationAction):
         return "validate_find_supplier_form"
 
     def validate_supplier(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
-        #find and disambiguate supplier:
-        slots = disambiguate_supplier(tracker, dispatcher)
-        return slots
-
-    def validate_check(
         self, 
         value: Text,
         dispatcher: CollectingDispatcher,
@@ -320,17 +354,6 @@ class ValidateWhUpdateForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
         
-        slots = disambiguate_prod(tracker, dispatcher)
-        return slots
-
-    def validate_check(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
         slots = disambiguate_prod(tracker, dispatcher)
         return slots
 
@@ -361,7 +384,7 @@ class ValidateWhUpdateForm(FormValidationAction):
         if slots['pieces'] != None:
             #update warehouse and reset form:
             print("Ok", slots['variation'], slots['pieces'])
-            slots = update_warehouse(tracker, dispatcher, slots)
+            slots = update_warehouse(dispatcher, slots)
         else:
             message = f"Mmm, non ho capito il numero di pezzi."
             dispatcher.utter_message(text=message)
@@ -426,18 +449,6 @@ class ValidateWriteOrderForm(FormValidationAction):
         slots = disambiguate_prod(tracker, dispatcher, supplier=supplier)
         return slots
 
-    def validate_check(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
-        supplier = tracker.get_slot("supplier")
-        slots = disambiguate_prod(tracker, dispatcher, supplier=supplier)
-        return slots
-
     def validate_pieces(
         self, 
         value: Text,
@@ -451,9 +462,59 @@ class ValidateWriteOrderForm(FormValidationAction):
         if slots['pieces'] != None:
             #update warehouse and reset form:
             print("Ok", slots['p_code'], slots['pieces'])
-            slots = write_ord_list(dispatcher, slots)
+            slots = write_ord_list(dispatcher, slots, next_slot='p_code')
         else:
             message = f"Mmm, non ho capito bene."
             dispatcher.utter_message(text=message)
             slots['pieces'] = None
+        return slots
+
+
+#Loopers -> suggest order list:
+class ValidateSuggestOrderForm(FormValidationAction):
+    def name(self) -> Text:
+        return "validate_suggest_order_form"
+
+    def validate_add_sugg(
+        self, 
+        value: Text,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+        ) -> Dict[Text, Any]:
+
+        slots = tracker.current_slot_values()
+        slots['pieces'] = next(tracker.get_latest_entity_values("pieces"), None)
+
+        #cases:
+        #a) if no pieces given by user:
+        if slots['pieces'] == None:
+            #a.1) if intent is ignore product:
+            if slots['add_sugg'] == False:
+                dispatcher.utter_message(response='utter_skip')
+                #update JSON reading list only (no DB):
+                slots['ord_list'] = update_reading_list(slots['ord_list'])
+                #if empty list:
+                if slots['ord_list'] == None:
+                    message = f"Non ho trovato altri prodotti di {slots['supplier']} con meno di {THRESHOLD_TO_ORD} pezzi!"
+                    dispatcher.utter_message(text=message)
+                    next_slot = None
+                else:
+                    dispatcher.utter_message(response='utter_ask_next')
+                    next_slot = 'add_sugg'
+                #reset/deactivate form, keeping stored only the slots to be used forward:
+                slots = reset_and_goto(slots, req_slot=next_slot, del_slots=['p_code', 'p_name', 'pieces', 'add_sugg'])
+
+            else:
+                #a.2) not understood:
+                message = f"Mmm, non ho capito bene."
+                dispatcher.utter_message(text=message)
+                slots['add_sugg'] = None
+                slots['pieces'] = None
+                return slots
+
+        #b) update order list in DB, JSON reading list and reset form:
+        else:
+            print("Ok", slots['add_sugg'], slots['pieces'])
+            slots = write_ord_list(dispatcher, slots, next_slot='add_sugg', update_json=True)
         return slots
