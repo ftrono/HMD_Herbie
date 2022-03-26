@@ -1,6 +1,6 @@
 from globals import *
 
-#DB TOOLS:
+#DB TOOLS (BASICS):
 # - db_connect()
 # - create_tables()
 # - drop_all()

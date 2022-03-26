@@ -4,16 +4,12 @@ from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.types import DomainDict
 from rasa_sdk.events import SlotSet, AllSlotsReset, FollowupAction
 from globals import *
-from db_tools import db_connect
-from db_interaction import get_pieces, delete_ordlist, get_existing_ordlist, get_new_ordlist, get_suggestion_list, edit_ord_list
-from common_actions import convert_to_slotset, reset_and_goto, readable_date, disambiguate_prod, disambiguate_supplier, update_warehouse, read_ord_list, update_reading_list, update_ord_list, write_ord_list
+from database.db_tools import db_connect
+import database.db_interactor as db_interactor
+import actions.commons as commons
 
-#CUSTOM ACTIONS & FORMS VALIDATION:
 
-#GLOBAL SLOTS VALIDATION:
-#(when slots are used outside a form)
-#class ValidatePredefinedSlots(ValidationAction):
-
+#CUSTOM ACTIONS & FORMS VALIDATION
 
 #CUSTOM ACTIONS:
 #All -> reset all slots:
@@ -61,7 +57,7 @@ class ActionCheckWH(Action):
         if p_code != None:
             try:
                 conn, cursor = db_connect()
-                pieces = int(get_pieces(cursor, p_code))
+                pieces = int(db_interactor.get_pieces(cursor, p_code))
                 conn.close()
                 if pieces > THRESHOLD_TO_ORD:
                     message = f"Hai {pieces} pezzi in magazzino."
@@ -108,12 +104,12 @@ class ActionAddToList(Action):
             try:
                 conn, cursor = db_connect()
                 #check if an open list exists:
-                ord_code, _, _, _ = get_existing_ordlist(conn, slots['supplier'])
+                ord_code, _, _, _ = db_interactor.get_existing_ordlist(conn, slots['supplier'])
                 #if no open lists -> create new list:
                 if ord_code == None:
-                    ord_code = get_new_ordlist(conn, cursor, slots['supplier'])
+                    ord_code = db_interactor.get_new_ordlist(conn, cursor, slots['supplier'])
                 #add product to list:
-                ret = edit_ord_list(conn, cursor, ord_code, slots['p_code'], slots['pieces'], write_mode=True)
+                ret = db_interactor.edit_ord_list(conn, cursor, ord_code, slots['p_code'], slots['pieces'], write_mode=True)
             except:
                 err = True
 
@@ -148,19 +144,19 @@ class ActionGetOrdList(Action):
         try:
             conn, cursor = db_connect()
             #check if an open list exists:
-            slots['ord_code'], slots['ord_date'], slots['ord_list'], num_prods = get_existing_ordlist(conn, supplier)
+            slots['ord_code'], slots['ord_date'], slots['ord_list'], num_prods = db_interactor.get_existing_ordlist(conn, supplier)
 
             #if no open lists -> create new list:
             if slots['ord_code'] == None:
-                slots['ord_code'] = get_new_ordlist(conn, cursor, supplier)
+                slots['ord_code'] = db_interactor.get_new_ordlist(conn, cursor, supplier)
                 message = f"Ti ho creato una nuova lista!"
                 dispatcher.utter_message(text=message)
                 slots['new_list'] = True
                 
             #if open list but empty -> discard and create new list:
             elif num_prods == 0:
-                delete_ordlist(conn, cursor, slots['ord_code'])
-                slots['ord_code'] = get_new_ordlist(conn, cursor, supplier)
+                db_interactor.delete_ordlist(conn, cursor, slots['ord_code'])
+                slots['ord_code'] = db_interactor.get_new_ordlist(conn, cursor, supplier)
                 message = f"Ti ho creato una nuova lista!"
                 dispatcher.utter_message(text=message)
                 slots['new_list'] = True
@@ -171,7 +167,7 @@ class ActionGetOrdList(Action):
                 num_str = f"{num_prods} prodotti"
                 if num_prods == 1:
                     num_str = "un prodotto"
-                read_date = readable_date(slots['ord_date'])
+                read_date = commons.readable_date(slots['ord_date'])
                 message = f"Abbiamo una lista aperta, modificata per ultimo {read_date}, con {num_str}."
                 dispatcher.utter_message(text=message)
                 slots['new_list'] = False
@@ -184,7 +180,7 @@ class ActionGetOrdList(Action):
             dispatcher.utter_message(text=message)
             slots['fail'] = True
         
-        slots_set = convert_to_slotset(slots)
+        slots_set = commons.convert_to_slotset(slots)
         return slots_set
 
 
@@ -205,8 +201,8 @@ class ActionGetNewList(Action):
         try:
             conn, cursor = db_connect()
             if slots['ord_code'] != None:
-                delete_ordlist(conn, cursor, slots['ord_code'])
-            slots['ord_code'] = get_new_ordlist(conn, cursor, supplier)
+                db_interactor.delete_ordlist(conn, cursor, slots['ord_code'])
+            slots['ord_code'] = db_interactor.get_new_ordlist(conn, cursor, supplier)
             message = f"Ti ho creato una nuova lista, useremo questa!"
             dispatcher.utter_message(text=message)
             conn.close()
@@ -216,7 +212,7 @@ class ActionGetNewList(Action):
             dispatcher.utter_message(text=message)
             slots['fail'] = True
         
-        slots_set = convert_to_slotset(slots)
+        slots_set = commons.convert_to_slotset(slots)
         return slots_set
 
 #Create Order -> create suggestion list:
@@ -234,7 +230,7 @@ class ActionGetSuggestionList(Action):
         #extract JSON list:
         try:
             conn, cursor = db_connect()
-            slots['ord_list'], num_prods = get_suggestion_list(conn, slots['supplier'], slots['ord_code'])
+            slots['ord_list'], num_prods = db_interactor.get_suggestion_list(conn, slots['supplier'], slots['ord_code'])
             conn.close()
             #if extracted suggestion list empty:
             if slots['ord_list'] == None:
@@ -258,7 +254,7 @@ class ActionGetSuggestionList(Action):
             dispatcher.utter_message(text=message)
             slots['fail'] = True
         
-        slots_set = convert_to_slotset(slots)
+        slots_set = commons.convert_to_slotset(slots)
         return slots_set
 
 
@@ -275,11 +271,11 @@ class ActionAskKeep(Action):
         #get JSON list to read:
         ord_list = tracker.get_slot('ord_list')
         #extract p_code and read message:
-        slots = read_ord_list(dispatcher, ord_list)
+        slots = commons.read_ord_list(dispatcher, ord_list)
         if slots['p_code'] != None:
             dispatcher.utter_message(response='utter_ask_keep_piece')
         
-        slots_set = convert_to_slotset(slots)
+        slots_set = commons.convert_to_slotset(slots)
         return slots_set
 
 
@@ -297,11 +293,11 @@ class ActionAskAddSugg(Action):
         slots = tracker.current_slot_values()
         
         #2) read next prod in JSON list: extract p_code and read message:
-        slots = read_ord_list(dispatcher, slots['ord_list'], suggest_mode=True)
+        slots = commons.read_ord_list(dispatcher, slots['ord_list'], suggest_mode=True)
         if slots['p_code'] != None:
             dispatcher.utter_message(response='utter_ask_sugg_pieces')
         
-        slots_set = convert_to_slotset(slots)
+        slots_set = commons.convert_to_slotset(slots)
         return slots_set
 
 
@@ -319,7 +315,7 @@ class ValidateFindProdForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
         
-        slots = disambiguate_prod(tracker, dispatcher)
+        slots = commons.disambiguate_prod(tracker, dispatcher)
         return slots
 
 
@@ -337,7 +333,7 @@ class ValidateFindSupplierForm(FormValidationAction):
         ) -> Dict[Text, Any]:
 
         #find and disambiguate supplier:
-        slots = disambiguate_supplier(tracker, dispatcher)
+        slots = commons.disambiguate_supplier(tracker, dispatcher)
         return slots
 
 
@@ -354,7 +350,7 @@ class ValidateWhUpdateForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
         
-        slots = disambiguate_prod(tracker, dispatcher)
+        slots = commons.disambiguate_prod(tracker, dispatcher)
         return slots
 
     def validate_variation(
@@ -384,7 +380,7 @@ class ValidateWhUpdateForm(FormValidationAction):
         if slots['pieces'] != None:
             #update warehouse and reset form:
             print("Ok", slots['variation'], slots['pieces'])
-            slots = update_warehouse(dispatcher, slots)
+            slots = commons.update_warehouse(dispatcher, slots)
         else:
             message = f"Mmm, non ho capito il numero di pezzi."
             dispatcher.utter_message(text=message)
@@ -421,7 +417,7 @@ class ValidateReadOrderForm(FormValidationAction):
         
         #update warehouse and reset form:
         print("Ok", slots['keep'], slots['pieces'])
-        slots = update_ord_list(dispatcher, slots)
+        slots = commons.update_ord_list(dispatcher, slots)
         return slots
 
 
@@ -439,7 +435,7 @@ class ValidateWriteOrderForm(FormValidationAction):
         ) -> Dict[Text, Any]:
 
         supplier = tracker.get_slot("supplier")
-        slots = disambiguate_prod(tracker, dispatcher, supplier=supplier)
+        slots = commons.disambiguate_prod(tracker, dispatcher, supplier=supplier)
         return slots
 
     def validate_pieces(
@@ -455,7 +451,7 @@ class ValidateWriteOrderForm(FormValidationAction):
         if slots['pieces'] != None:
             #update warehouse and reset form:
             print("Ok", slots['p_code'], slots['pieces'])
-            slots = write_ord_list(dispatcher, slots, next_slot='p_code')
+            slots = commons.write_ord_list(dispatcher, slots, next_slot='p_code')
         else:
             message = f"Mmm, non ho capito bene."
             dispatcher.utter_message(text=message)
@@ -486,7 +482,7 @@ class ValidateSuggestOrderForm(FormValidationAction):
             if slots['add_sugg'] == False:
                 dispatcher.utter_message(response='utter_skip')
                 #update JSON reading list only (no DB):
-                slots['ord_list'] = update_reading_list(slots['ord_list'])
+                slots['ord_list'] = commons.update_reading_list(slots['ord_list'])
                 #if empty list:
                 if slots['ord_list'] == None:
                     message = f"Non ho trovato altri prodotti di {slots['supplier']} con meno di {THRESHOLD_TO_ORD} pezzi!"
@@ -496,7 +492,7 @@ class ValidateSuggestOrderForm(FormValidationAction):
                     dispatcher.utter_message(response='utter_ask_next')
                     next_slot = 'add_sugg'
                 #reset/deactivate form, keeping stored only the slots to be used forward:
-                slots = reset_and_goto(slots, req_slot=next_slot, del_slots=['p_code', 'p_name', 'pieces', 'add_sugg'])
+                slots = commons.reset_and_goto(slots, req_slot=next_slot, del_slots=['p_code', 'p_name', 'pieces', 'add_sugg'])
 
             else:
                 #a.2) not understood:
@@ -509,5 +505,5 @@ class ValidateSuggestOrderForm(FormValidationAction):
         #b) update order list in DB, JSON reading list and reset form:
         else:
             print("Ok", slots['add_sugg'], slots['pieces'])
-            slots = write_ord_list(dispatcher, slots, next_slot='add_sugg', update_json=True)
+            slots = commons.write_ord_list(dispatcher, slots, next_slot='add_sugg', update_json=True)
         return slots

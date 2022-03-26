@@ -1,11 +1,11 @@
 from rasa_sdk.events import SlotSet
 from globals import *
-from db_tools import db_connect
-from db_interaction import get_prodinfo, get_supplier, get_pieces, update_pieces, edit_ord_list
+from database.db_tools import db_connect
+import database.db_interactor as db_interactor
 from utils import readable_date
 
-#COMMON BACKBONES FOR CUSTOM ACTIONS / VALIDATION:
-#High-level dialogue-DB interfaces that are used across multiple custom actions / forms:
+#COMMONS:
+#Python functions that are used across multiple custom actions / forms:
 # - convert_to_slotset()
 # - reset_and_goto()
 # - disambiguate_prod()
@@ -88,7 +88,7 @@ def disambiguate_prod(tracker, dispatcher, supplier=None):
     #db extraction:
     try:
         conn, cursor = db_connect()   
-        resp = get_prodinfo(conn, utts)
+        resp = db_interactor.get_prodinfo(conn, utts)
         conn.close()
     except:
         resp = []
@@ -136,7 +136,7 @@ def disambiguate_supplier(tracker, dispatcher):
     #db extraction:
     try:
         conn, cursor = db_connect()   
-        resp = get_supplier(conn, s_text)
+        resp = db_interactor.get_supplier(conn, s_text)
         conn.close()
     except:
         resp = []
@@ -167,7 +167,7 @@ def update_warehouse(dispatcher, slots):
         conn, cursor = db_connect()
         #check lower boundary:
         if slots['variation'] == 'decrease':
-            floor = get_pieces(cursor, slots['p_code'])
+            floor = db_interactor.get_pieces(cursor, slots['p_code'])
 
             if floor == 0:
                 message = f"La tua scorta era a zero, non ho potuto fare nulla. Proviamo con un altro prodotto!"
@@ -186,7 +186,7 @@ def update_warehouse(dispatcher, slots):
                 slots['pieces'] = floor
 
         #update DB:
-        ret = update_pieces(conn, cursor, slots)
+        ret = db_interactor.update_pieces(conn, cursor, slots)
         conn.close()
     except:
         ret = -1
@@ -279,7 +279,7 @@ def update_ord_list(dispatcher, slots):
             if slots['keep'] == False:
                 #delete row from DB:
                 message = f"Ok, ti ho rimosso {slots['p_name']} dalla lista."
-                ret = edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], slots['pieces'])
+                ret = db_interactor.edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], slots['pieces'])
             else:
                 #no change to DB:
                 message = f"Mantengo il prodotto!"
@@ -289,7 +289,7 @@ def update_ord_list(dispatcher, slots):
             else:
                 message = f"Ti ho segnato {slots['pieces']} pezzi totali."
             #replace quantity to DB:
-            ret = edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], slots['pieces'])
+            ret = db_interactor.edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], slots['pieces'])
         conn.close()
     except:
         err = True
@@ -325,7 +325,7 @@ def write_ord_list(dispatcher, slots, next_slot, update_json=False):
     #1) update order list in DB:
     try:
         conn, cursor = db_connect()
-        ret = edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], slots['pieces'], write_mode=True)
+        ret = db_interactor.edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], slots['pieces'], write_mode=True)
         conn.close()
     except:
         err = True

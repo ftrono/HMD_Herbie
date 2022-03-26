@@ -1,7 +1,7 @@
 from globals import *
-from db_tools import db_connect
+from database.db_tools import db_connect
 
-#DB_INTERACTIONS:
+#DB_INTERACTOR:
 #Low-level DB interfaces:
 # - get_prodinfo()
 # - get_supplier()

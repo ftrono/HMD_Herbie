@@ -4,8 +4,8 @@ import pandas as pd
 
 #GLOBAL IMPORTS, PARAMETERS & INSTANTIATIONS:
 
-#globals:
-DB_FILE = "erb_copertino.db"
+#GLOBALS:
+DB_FILE = "database/erboristeria.db"
 THRESHOLD_TO_ORD = 5
 MONTHS = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
 
