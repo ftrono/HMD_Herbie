@@ -55,8 +55,7 @@ stories:
   - action: utter_ask_add_to_order
   - or:
     - intent: affirm
-    - intent: inform_add_pieces
-    - intent: inform_num_pieces
+    - intent: inform_pieces
   - slot_was_set:
     - add_to_order: True
   - action: action_add_to_list

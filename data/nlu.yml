@@ -116,7 +116,7 @@ nlu:
     - puoi aggiornarmi i dati al magazzino?
     - mi aggiorneresti i dati al magazzino?
 
-- intent: inform_num_pieces
+- intent: inform_pieces
   examples: |
     - [6](pieces) pezzi
     - [26](pieces) pezzi
@@ -130,17 +130,9 @@ nlu:
     - ordina [3](pieces) pezzi
     - ordiniamo [30](pieces) pezzi
     - cambia, [2](pieces) pezzi
-
-- intent: inform_add_pieces
-  examples: |
-    - più [6](pieces) pezzi
-    - più [5](pieces)
-    - [6](pieces) pezzi in più
-    - [16](pieces) pezzi da aggiungere
     - aggiungi [10](pieces) pezzi
-    - aggiungimi [2](pieces) pezzi
-    - aggiungine [5](pieces)
-    - inserisci [15](pieces)
+    - inserisci [15](pieces) pezzi
+    - più [4](pieces) pezzi
 
 - intent: inform_decr_pieces
   examples: |

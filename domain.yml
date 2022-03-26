@@ -21,8 +21,7 @@ intents:
   - ask_add_to_order
   #warehouse:
   - ask_wh_update
-  - inform_num_pieces
-  - inform_add_pieces
+  - inform_pieces
   - inform_decr_pieces
   #orders:
   - inform_need_order
@@ -86,13 +85,7 @@ slots:
     - decrease
     mappings:
     - type: from_intent
-      intent: inform_add_pieces
-      value: add
-      conditions:
-        - active_loop: wh_update_form
-          requested_slot: variation
-    - type: from_intent
-      intent: inform_num_pieces
+      intent: inform_pieces
       value: add
       conditions:
         - active_loop: wh_update_form
@@ -105,8 +98,7 @@ slots:
           requested_slot: variation
     - type: from_text
       not_intent:
-        - inform_add_pieces
-        - inform_num_pieces
+        - inform_pieces
         - inform_decr_pieces
         - stop
       conditions:
@@ -135,20 +127,18 @@ slots:
     influence_conversation: True
     mappings:
     - type: from_intent
-      intent: deny
-      value: False
-    - type: from_intent
       intent: affirm
       value: True
     - type: from_intent
-      intent: inform_add_pieces
+      intent: inform_pieces
       value: True
     - type: from_intent
-      intent: inform_num_pieces
-      value: True
+      intent: deny
+      value: False
     - type: from_text
       not_intent:
         - affirm
+        - inform_pieces
         - deny
         - stop
 
@@ -180,49 +170,31 @@ slots:
 
   #3.1) read order:
   keep:
-    type: categorical
+    type: bool
     influence_conversation: False
-    values:
-    - ok
-    - add
-    - remove
     mappings:
     - type: from_intent
       intent: affirm
-      value: ok
+      value: True
       conditions:
         - active_loop: read_order_form
           requested_slot: keep
     - type: from_intent
-      intent: inform_num_pieces
-      value: ok
-      conditions:
-        - active_loop: read_order_form
-          requested_slot: keep
-    - type: from_intent
-      intent: inform_add_pieces
-      value: add
-      conditions:
-        - active_loop: read_order_form
-          requested_slot: keep
-    - type: from_intent
-      intent: inform_decr_pieces
-      value: remove
+      intent: inform_pieces
+      value: True
       conditions:
         - active_loop: read_order_form
           requested_slot: keep
     - type: from_intent
       intent: deny
-      value: remove
+      value: False
       conditions:
         - active_loop: read_order_form
           requested_slot: keep
     - type: from_text
       not_intent:
         - affirm
-        - inform_add_pieces
-        - inform_num_pieces
-        - inform_decr_pieces
+        - inform_pieces
         - deny
         - stop
       conditions:
@@ -248,13 +220,7 @@ slots:
     influence_conversation: False
     mappings:
     - type: from_intent
-      intent: inform_num_pieces
-      value: True
-      conditions:
-        - active_loop: suggest_order_form
-          requested_slot: add_sugg
-    - type: from_intent
-      intent: inform_add_pieces
+      intent: inform_pieces
       value: True
       conditions:
         - active_loop: suggest_order_form
@@ -267,8 +233,7 @@ slots:
           requested_slot: add_sugg
     - type: from_text
       not_intent:
-        - inform_add_pieces
-        - inform_num_pieces
+        - inform_pieces
         - deny
         - stop
       conditions:

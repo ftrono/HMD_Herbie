@@ -407,28 +407,21 @@ class ValidateReadOrderForm(FormValidationAction):
 
         slots = tracker.current_slot_values()
         slots['pieces'] = next(tracker.get_latest_entity_values("pieces"), None)
+
         #cases:
         #a) not understood:
-        if slots['keep'] not in ['ok', 'add', 'remove']:
+        if slots['keep'] != True and slots['keep'] != False:
             dispatcher.utter_message(response='utter_please_rephrase')
             slots['keep'] = None
+            return slots
+
         #b) no pieces given by user:
         elif slots['pieces'] == None:
-            #if keep/add:
-            if slots['keep'] == 'ok' or slots['keep'] == 'add':
-                #mark no change to DB (pieces = 0):
-                if slots['cur_quantity'] != None and slots['cur_quantity'] > 1:
-                    slots['pieces'] = 0
-            #if remove:
-            else:
-                #mark remove: the item will be removed from the list:
-                slots['pieces'] = 0
-            slots = update_ord_list(dispatcher, slots)
-        #c) pieces given by user:
-        else:
-            #update warehouse and reset form:
-            print("Ok", slots['keep'], slots['pieces'])
-            slots = update_ord_list(dispatcher, slots)
+            slots['pieces'] = 0
+        
+        #update warehouse and reset form:
+        print("Ok", slots['keep'], slots['pieces'])
+        slots = update_ord_list(dispatcher, slots)
         return slots
 
 

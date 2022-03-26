@@ -276,34 +276,20 @@ def update_ord_list(dispatcher, slots):
         conn, cursor = db_connect()
         #cases:
         if slots['pieces'] == 0:
-            if slots['keep'] == 'remove':
-                q = 0
+            if slots['keep'] == False:
                 #delete row from DB:
                 message = f"Ok, ti ho rimosso {slots['p_name']} dalla lista."
-                ret = edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], q)
+                ret = edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], slots['pieces'])
             else:
                 #no change to DB:
                 message = f"Mantengo il prodotto!"
         else:
-            #edit quantity:
-            if slots['keep'] == 'ok':
-                q = slots['pieces']
-            elif slots['keep'] == 'add':
-                q = slots['cur_quantity'] + slots['pieces']
-            else:
-                q = slots['cur_quantity'] - slots['pieces']
-                #lower limit:
-                if q < 0:
-                    q = 0
-
-            if q == 0:
-                message = f"Ti ho rimosso {slots['p_name']} dalla lista."
-            elif q == 1:
+            if slots['pieces'] == 1:
                 message = f"Ti ho segnato un pezzo."
             else:
-                message = f"Ti ho segnato {q} pezzi totali."
+                message = f"Ti ho segnato {slots['pieces']} pezzi totali."
             #replace quantity to DB:
-            ret = edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], q)
+            ret = edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], slots['pieces'])
         conn.close()
     except:
         err = True
