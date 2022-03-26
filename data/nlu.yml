@@ -68,10 +68,17 @@ nlu:
     - chi sei?
     - come ti chiami?
     - qual è il tuo nome?
-    - sei un umano?
-    - sei digitale?
     - sei un bot?
+    - con chi parlo?
+
+- intent: ask_capabilities
+  examples: |
     - cosa sai fare?
+    - quali sono le tue abilità?
+    - quali sono le tue capacità?
+    - cosa sei capace di fare?
+    - cosa sei in grado di fare?
+    - cosa puoi fare?
 
 #product info:
 - intent: inform_p_code

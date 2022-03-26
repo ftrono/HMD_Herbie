@@ -6,9 +6,11 @@ stories:
 - story: basics
   steps:
   - intent: greet
-  - action: utter_greet
+  - action: action_utter_greet
   - intent: bot_challenge
   - action: utter_iamabot
+  - intent: ask_capabilities
+  - action: utter_mycapabilities
   - intent: thanks
   - action: utter_welcome
   - action: action_reset_all_slots

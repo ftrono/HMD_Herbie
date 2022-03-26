@@ -7,6 +7,7 @@ from globals import *
 from database.db_tools import db_connect
 import database.db_interactor as db_interactor
 import actions.commons as commons
+import utils
 
 
 #CUSTOM ACTIONS & FORMS VALIDATION
@@ -40,6 +41,21 @@ class ActionResetOrdSlots(Action):
         for sname in to_delete:
             slots_set.append(SlotSet(sname, None))
         return slots_set
+
+
+#adapt greet depending on the time of the day:
+class ActionUtterGreet(Action):
+    def name(self) -> Text:
+            return "action_utter_greet"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        message = utils.adapt_greeting()
+        dispatcher.utter_message(text=message)
+        return []
 
 
 #Stock Info -> check pieces in DB and return need_order T/F:

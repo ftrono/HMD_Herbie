@@ -13,6 +13,7 @@ intents:
   - affirm
   - deny
   - bot_challenge
+  - ask_capabilities
   #product info:
   - inform_p_code
   - inform_text
@@ -243,10 +244,6 @@ slots:
 
 #AGENT'S RESPONSES:
 responses:
-  utter_greet:
-  - text: "Ciao!"
-  - text: "Ciao a te!"
-
   utter_happy:
   - text: "Ottimo! Buon lavoro."
 
@@ -278,7 +275,11 @@ responses:
   - text: "Va benissimo!"
 
   utter_iamabot:
-  - text: "Sono Herbie, il tuo shop manager digitale. Sono qui per aiutarti!"
+  - text: "Sono Herbie, il tuo shop manager digitale. Sono qui per aiutarti a gestire il negozio!"
+  - text: "Mi chiamo Herbie! Sono il tuo shop manager digitale. La mia missione è di aiutarti a gestire il negozio!"
+
+  utter_mycapabilities:
+  - text: "Posso aiutarti a creare un inventario dei tuoi prodotti! Ti guiderò a catalogarli e potrai chiedermi informazioni su quantitativi, giacenze e caratteristiche. Posso anche aiutarti a compilare una lista ordini, suggerirti prodotti in esaurimento e offrirti viste del magazzino!"
 
   utter_done:
   - text: "Fatto!"
@@ -400,6 +401,7 @@ actions:
   #custom actions:
   - action_reset_all_slots
   - action_reset_ord_slots
+  - action_utter_greet
   - action_check_wh
   - action_add_to_list
   - action_get_ordlist

@@ -1,7 +1,29 @@
+import random
 from globals import *
 
 #COMMON UTILITY FUNCTIONS:
+# - adapt_greeting()
 # - readable_date()
+
+
+#answer "ciao" or adapted greet depending on random prob:
+def adapt_greeting():
+    pick = random.randint(0, 10)
+    if pick <= 5:
+        #simple greet:
+        message = "Ciao!"
+    else:
+        #get current time of the day:
+        now = datetime.now(pytz.timezone('Europe/Rome'))
+        hour = int(now.hour)
+        #adapt greet:
+        if hour < 13:
+            message = f"Buongiorno!"
+        elif hour >= 13 and hour < 18:
+            message = "Buon pomeriggio!"
+        else:
+            message = "Buonasera!"
+    return message
 
 
 #convert date to readable:

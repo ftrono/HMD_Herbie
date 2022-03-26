@@ -4,15 +4,14 @@ import pandas as pd
 
 #GLOBAL IMPORTS, PARAMETERS & INSTANTIATIONS:
 
-#GLOBALS:
+#Globals:
 DB_FILE = "database/erboristeria.db"
 THRESHOLD_TO_ORD = 5
 MONTHS = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
 
-#Set logger:
+#Set DB logger:
 log=logging.getLogger('db_interactions')
 hdl=logging.FileHandler('./logs/db_interactions.log',mode='a')
 hdl.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 log.setLevel(logging.INFO)
 log.addHandler(hdl)
-
