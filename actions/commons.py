@@ -87,7 +87,7 @@ def disambiguate_prod(tracker, dispatcher, supplier=None):
     
     #db extraction:
     try:
-        conn, cursor = db_connect()   
+        conn, cursor = db_connect()
         resp = db_interactor.get_prodinfo(conn, utts)
         conn.close()
     except:
