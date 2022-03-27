@@ -2,5 +2,7 @@ __pycache__
 .rasa
 */__pycache__
 models/notes.txt
-logs/db_interactions.log
+logs/*
 models/*
+t_credentials.ini
+telegram_bot/data_cache/*
