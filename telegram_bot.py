@@ -9,7 +9,7 @@ from globals import *
 
 #HERBIE TELEGRAM BOT
 #GLOBALS:
-START, ASK_PCODE, PROCESS_PCODE, PROCESS_SUPPLIER, PROCESS_PNAME, PROCESS_CATEGORY, PROCESS_PIECES, SAVE = range(8)
+START, ASK_PCODE, PROCESS_PCODE, PROCESS_SUPPLIER, PROCESS_PNAME, PROCESS_CATEGORY, PROCESS_PIECES, SAVE, ASK_REWRITE = range(9)
 CONV_END = -1 #value of ConversationHandler.END
 
 #START:
@@ -29,8 +29,8 @@ def echo(update, context):
 #1) p_code: text or photo:
 def nuovo(update: Update, context: CallbackContext) -> int:
     msg = "Ciao! Registriamo un nuovo prodotto al tuo magazzino.\n\nPer prima cosa, mi serve il <b>codice a barre</b>: puoi trascrivermelo via <i>testo</i>, oppure inviarmi una <i>foto</i>.\nCosa preferisci?\n\nOppure scrivi /esci per uscire."
-    keyboard = [[InlineKeyboardButton('Trascrivo', callback_data='Trascrivo')],
-                [InlineKeyboardButton('Invio foto', callback_data='Invio foto')]]
+    keyboard = [[InlineKeyboardButton('Trascrivo', callback_data='Trascrivo'),
+                InlineKeyboardButton('Invio foto', callback_data='Invio foto')]]
     context.bot.send_message(chat_id=update.effective_chat.id, text=msg,
         parse_mode=ParseMode.HTML,
         reply_markup=InlineKeyboardMarkup(keyboard))
@@ -67,9 +67,9 @@ def pcode_process_photo(update: Update, context: CallbackContext) -> int:
         tlog.info(f"Letto codice {p_code}, type {type(p_code)}.")
         msg = f"Ho letto il codice {p_code}! Ora dimmi il nome del <b>produttore</b>.\n\nOppure scrivi /esci per uscire."
     except:
-        msg = f"Non ho trovato codici."
+        msg = f"Non ho trovato codici.\n\nProva con un'altra foto, o in alternativa trascrivimi il codice a barre.\n\nOppure scrivi /esci per uscire."
         message.edit_text(text=msg)
-        return CONV_END
+        return PROCESS_PCODE
     #supplier picker:
     keyboard = bot_functions.inline_picker('Produttore')
     reply_markup = InlineKeyboardMarkup(keyboard) if keyboard != [] else None
@@ -183,16 +183,28 @@ def process_category(update: Update, context: CallbackContext) -> int:
 
 #7) process pieces:
 def process_pieces(update: Update, context: CallbackContext) -> int:
-    #get prod name sent by user:
-    try:
-        pieces = int(update.message.text)
-    except ValueError:
-        msg = "Re-inviami soltanto il numero in cifre (es. 1, 10, ...).\n\nOppure scrivi /esci per uscire."
-        update.message.reply_text(msg)
-        return PROCESS_PIECES
-    #store in bot memory:
-    context.user_data['pieces'] = pieces
-    tlog.info(f"Letti {pieces} pezzi.")
+    #1) check caller function:
+    to_edit = context.user_data.get('to_edit')
+    if (to_edit == None) or (to_edit == 'Quantita'):
+        #a) if pieces:
+        try:
+            pieces = int(update.message.text)
+        except:
+            msg = "Re-inviami soltanto il numero in cifre (es. 1, 10, ...).\n\nOppure scrivi /esci per uscire."
+            update.message.reply_text(msg)
+            return PROCESS_PIECES
+        #store in bot memory:
+        context.user_data['pieces'] = pieces
+        tlog.info(f"Letti {pieces} pezzi.")
+        msg = f"Segnato {pieces} pezzi. "
+    else:
+        #b) if to_edit (no pieces):
+        mapping = {'Produttore': 'supplier', 'Nome': 'p_name', 'Categoria': 'category', 'Quantita': 'pieces'}
+        context.user_data[mapping[to_edit]] = update.message.text.lower()
+        context.user_data['to_edit'] = None
+        msg = f"Aggiornato. "
+    
+    #prepare product recap:
     utts = {
         'p_code': int(context.user_data['p_code']),
         'supplier': context.user_data['supplier'],
@@ -200,15 +212,15 @@ def process_pieces(update: Update, context: CallbackContext) -> int:
         'category': context.user_data['category'],
         'pieces': int(context.user_data['pieces']),
     }
-    msg = f"Segnato {pieces} pezzi. Ti invio il recap del prodotto da aggiungere:\n"+\
+    msg = f"{msg}Ti invio il recap del prodotto da aggiungere:\n"+\
             f"- Codice: {utts['p_code']}\n"+\
             f"- Produttore: {utts['supplier']}\n"+\
             f"- Nome: {utts['p_name']}\n"+\
             f"- Categoria: {utts['category']}\n"+\
             f"- Numero di pezzi: {utts['pieces']}\n"+\
             f"\nPosso salvare nel magazzino?"
-    keyboard = [[InlineKeyboardButton('Sì', callback_data='Sì')],
-                [InlineKeyboardButton('No', callback_data='No')]]
+    keyboard = [[InlineKeyboardButton('Sì', callback_data='Sì'),
+                InlineKeyboardButton('No', callback_data='No')]]
     update.message.reply_text(msg,
         parse_mode=ParseMode.HTML,
         reply_markup=InlineKeyboardMarkup(keyboard))
@@ -246,15 +258,45 @@ def save_to_db(update: Update, context: CallbackContext) -> int:
             return CONV_END
         else:
             msg = f"Ti ho salvato il prodotto nel magazzino!\n\nVuoi che ti faccia qualche altra domanda per categorizzare meglio il prodotto?"
-            keyboard = [[InlineKeyboardButton('Sì', callback_data='Sì')],
-                        [InlineKeyboardButton('No', callback_data='No')]]
+            keyboard = [[InlineKeyboardButton('Sì', callback_data='Sì'),
+                        InlineKeyboardButton('No', callback_data='No')]]
             context.bot.send_message(chat_id=update.effective_chat.id, text=msg,
                 reply_markup=InlineKeyboardMarkup(keyboard))
+            return CONV_END
     else:
-        msg = f"Ok!"
-        context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
-    return CONV_END
+        #trigger edit:
+        keyboard = [[InlineKeyboardButton('Produttore', callback_data='Produttore'),
+                InlineKeyboardButton('Nome', callback_data='Nome')],
+                [InlineKeyboardButton('Categoria', callback_data='Categoria'),
+                InlineKeyboardButton('Quantita', callback_data='Quantita')],
+                [InlineKeyboardButton('Esci', callback_data='Esci')]]
+        msg = f"Cosa vuoi modificare?"
+        context.bot.send_message(chat_id=update.effective_chat.id, text=msg,
+                reply_markup=InlineKeyboardMarkup(keyboard))
+        return ASK_REWRITE
 
+def ask_rewrite(update: Update, context: CallbackContext) -> int:
+    #get open query:
+    query = update.callback_query
+    choice = query.data
+    tlog.info(choice)
+    #if end:
+    if choice == 'Esci':
+        query.edit_message_reply_markup(reply_markup=None)
+        query.answer()
+        msg = f"Ok. A presto!"
+        context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
+        return CONV_END
+    #else: prepare edit:
+    context.user_data['to_edit'] = choice
+    query.delete_message()
+    query.answer()
+    if choice == 'Quantita':
+        msg = f"Riscrivi qui il <b>numero</b> corretto di pezzi (nota: solo cifre)."
+    else:
+        msg = f"Riscrivi qui il testo corretto per il campo <b>{choice}</b>"
+    context.bot.send_message(chat_id=update.effective_chat.id, text=msg, parse_mode=ParseMode.HTML)
+    return PROCESS_PIECES
 
 #CANCEL AND END:
 def esci(update: Update, context: CallbackContext) -> int:
@@ -324,6 +366,7 @@ def main() -> None:
                 MessageHandler(Filters.text, process_category)],
             PROCESS_PIECES: [MessageHandler(Filters.text, process_pieces)],
             SAVE: [CallbackQueryHandler(save_to_db, pattern='.*')],
+            ASK_REWRITE: [CallbackQueryHandler(ask_rewrite, pattern='.*')],
         },
         fallbacks=[
             CommandHandler('esci', esci),
