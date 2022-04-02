@@ -5,4 +5,4 @@ models/notes.txt
 logs/*
 models/*
 t_credentials.ini
-telegram_bot/data_cache/*
+telegram_support/data_cache/*

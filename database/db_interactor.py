@@ -15,6 +15,20 @@ from database.db_tools import db_connect
 # - delete_prod()
 
 
+#get all items in a column of Produttore table:
+def get_column(column_name):
+    try:
+        conn, cursor = db_connect()
+        query = f"SELECT DISTINCT {column_name} FROM Prodotti"
+        items = pd.read_sql(query, conn)
+        items = items[column_name].to_list()
+        conn.close()
+    except sqlite3.Error as e:
+        items = []
+        log.error(f"DB query error for all '{column_name}' items. {e}")
+    return items
+
+
 #get basic product info:
 def get_prodinfo(conn, utts):
     #vars:
@@ -350,6 +364,20 @@ def delete_prod(conn, cursor, utts):
         log.error(f"Unable to delete product {utts['p_name']} from DB. {e}")
     conn.commit()
     return 0
+
+
+#get list of products from DB:
+def get_view_prodotti(conn, supplier=None):
+    suppstr = ""
+    FullList = pd.DataFrame()
+    try:
+        if supplier:
+            suppstr = f" WHERE Produttore = {supplier}"
+        query = f"SELECT * FROM Prodotti{suppstr}"
+        FullList = pd.read_sql(query, conn)
+    except sqlite3.Error as e:
+        log.error(f"Unable to perform get_suggestion_list for supplier {supplier}. {e}")
+    return FullList
 
 
 #MAIN:
