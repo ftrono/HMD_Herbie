@@ -71,6 +71,7 @@ def process_pcode(update: Update, context: CallbackContext) -> int:
         conn.close()
         #a) if product not found -> new product:
         if prod == []:
+            context.user_data['in_db'] = False
             msg = f"{msg} Questo prodotto non è nel mio magazzino. Lo inseriamo ora?"
             keyboard = [[InlineKeyboardButton('Sì', callback_data='Sì'),
                         InlineKeyboardButton('No', callback_data='No')]]
@@ -82,6 +83,7 @@ def process_pcode(update: Update, context: CallbackContext) -> int:
         #b) if product found -> edit info / add info:
         else:
             prod = prod[0]
+            context.user_data['in_db'] = True
             #store additional info in bot memory:
             context.user_data['supplier'] = prod['supplier']
             context.user_data['p_name'] = prod['p_name']
@@ -273,8 +275,9 @@ def save_to_db(update: Update, context: CallbackContext) -> int:
 
     #trigger STORE TO DB:
     if choice == 'Sì':
+        p_code = int(context.user_data['p_code'])
         utts = {
-            'p_code': int(context.user_data['p_code']),
+            'p_code': p_code,
             'supplier': context.user_data['supplier'],
             'p_name': context.user_data['p_name'],
             'category': context.user_data['category'],
@@ -282,6 +285,8 @@ def save_to_db(update: Update, context: CallbackContext) -> int:
         }
         try:
             conn, cursor = db_connect()
+            if context.user_data.get('in_db') == True:
+                ret = db_interactor.delete_prod(conn, cursor, p_code)
             ret = db_interactor.add_prod(conn, cursor, utts)
             conn.close()
         except:
@@ -301,14 +306,12 @@ def save_to_db(update: Update, context: CallbackContext) -> int:
 
     #trigger ADD INFO:
     elif choice == "Aggiungi info":
-        #trigger edit:
         msg = f"Aggiungeremo info." ###
         context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
         return CONV_END
     
     #trigger EXIT:
     elif choice == "Annulla":
-        #trigger edit:
         msg = f"Ok. A presto!"
         context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
         return CONV_END

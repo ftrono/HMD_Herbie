@@ -347,24 +347,25 @@ def add_prod(conn, cursor, utts):
     try:
         query = f"INSERT INTO Prodotti (CodiceProd, Produttore, Nome, Categoria, Quantita) VALUES ({utts['p_code']}, '{utts['supplier']}', '{utts['p_name']}', '{utts['category']}', {utts['pieces']})"
         cursor.execute(query)
-        log.info(f"Added product {utts['p_name']} to table Prodotti.")
+        conn.commit()
+        log.info(f"Added product {utts['p_code']} to table Prodotti.")
+        return 0
     except sqlite3.Error as e:
-        log.error(f"Unable to add product {utts['p_name']} to table Prodotti. {e}")
-
-    conn.commit()
-    return 0
+        log.error(f"Unable to add product {utts['p_code']} to table Prodotti. {e}")
+        return -1
 
 
 #delete a product:
-def delete_prod(conn, cursor, utts):
-    p_name = utts['p_name']
+def delete_prod(conn, cursor, p_code):
     try:
-        cursor.execute("DELETE FROM Prodotti WHERE Nome = ?", [p_name])
-        log.info(f"Deleted product {utts['p_name']} from DB.")
+        query = f"DELETE FROM Prodotti WHERE CodiceProd = {p_code}"
+        cursor.execute(query)
+        conn.commit()
+        log.info(f"Deleted product {p_code} from DB.")
+        return 0
     except sqlite3.Error as e:
-        log.error(f"Unable to delete product {utts['p_name']} from DB. {e}")
-    conn.commit()
-    return 0
+        log.error(f"Unable to delete product {p_code} from DB. {e}")
+        return -1
 
 
 #get list of products from DB:
