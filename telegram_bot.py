@@ -9,13 +9,12 @@ from globals import *
 
 #HERBIE TELEGRAM BOT
 #GLOBALS:
-START, ASK_PCODE, PROCESS_PCODE, PROCESS_SUPPLIER, PROCESS_PNAME, PROCESS_CATEGORY, PROCESS_PIECES, SAVE, ASK_REWRITE = range(9)
+PROCESS_PCODE, INIT_ADD, PROCESS_SUPPLIER, PROCESS_PNAME, PROCESS_CATEGORY, PROCESS_PIECES, SAVE_EDIT, ASK_REWRITE = range(8)
 CONV_END = -1 #value of ConversationHandler.END
 
 #START:
 def start(update: Update, context: CallbackContext) -> int:
     update.message.reply_text("Ciao!")
-    return START
 
 def help(update, context):
     """Send a message when the command /help is issued."""
@@ -26,82 +25,117 @@ def echo(update, context):
     update.message.reply_text(update.message.text)
 
 #ADD NEW PRODUCT TO DB:
-#1) p_code: text or photo:
-def nuovo(update: Update, context: CallbackContext) -> int:
-    msg = "Ciao! Registriamo un nuovo prodotto al tuo magazzino.\n\nPer prima cosa, mi serve il <b>codice a barre</b>: puoi trascrivermelo via <i>testo</i>, oppure inviarmi una <i>foto</i>.\nCosa preferisci?\n\nOppure scrivi /esci per uscire."
-    keyboard = [[InlineKeyboardButton('Trascrivo', callback_data='Trascrivo'),
-                InlineKeyboardButton('Invio foto', callback_data='Invio foto')]]
+#1) ask p_code mode: text or photo:
+def prodotto(update: Update, context: CallbackContext) -> int:
+    msg = f"Ciao! Per iniziare, mi serve un <b>codice a barre</b>. Puoi:\n"+\
+            f"- Inviarmi una <b>FOTO</b> del codice, oppure\n"+\
+            f"- Trascrivermelo via <b>TESTO</b> (SENZA spazi)."
     context.bot.send_message(chat_id=update.effective_chat.id, text=msg,
-        parse_mode=ParseMode.HTML,
-        reply_markup=InlineKeyboardMarkup(keyboard))
-    return ASK_PCODE
+        parse_mode=ParseMode.HTML)
+    return PROCESS_PCODE
 
-#2) ask for p_code (photo or text):
-def ask_pcode(update: Update, context: CallbackContext) -> int:
+#3) process p_code:
+def process_pcode(update: Update, context: CallbackContext) -> int:
+    p_code = None
+    msg = f"Sto estraendo i dati..."
+    message = context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
+    #1) check if message sent by usercontains a photo:
+    if update.message.photo != []:
+        #a) extract and store barcode from image:
+        try:
+            image = update.message.photo[-1].get_file()
+            p_code = bot_functions.extract_barcode(image)
+        except:
+            msg = f"Non ho trovato codici.\n\nProva con un'altra foto, o in alternativa trascrivimi il codice a barre.\n\nOppure scrivi /esci per uscire."
+            message.edit_text(text=msg)
+            return PROCESS_PCODE
+    else:
+        #b) get code from the text sent by user:
+        p_code = update.message.text
+        try:
+            p_code = int(p_code)
+        except:
+            msg = f"Il codice deve essere una sequenza di cifre. Prova a reinviarmelo!"
+            message.edit_text(text=msg)
+            return PROCESS_PCODE
+
+    #2) store barcode in bot memory:
+    context.user_data['p_code'] = p_code
+    tlog.info(f"Letto codice {p_code}.")
+    msg = f"Ho letto il codice {p_code}. "
+
+    #3) check if prod in DB:
+    try:
+        conn, cursor = db_connect()
+        prod = db_interactor.get_prodinfo(conn, {'p_code': p_code})
+        conn.close()
+        #a) if product not found -> new product:
+        if prod == []:
+            msg = f"{msg} Questo prodotto non è nel mio magazzino. Lo inseriamo ora?"
+            keyboard = [[InlineKeyboardButton('Sì', callback_data='Sì'),
+                        InlineKeyboardButton('No', callback_data='No')]]
+            message.edit_text(msg,
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(keyboard))
+            return INIT_ADD
+
+        #b) if product found -> edit info / add info:
+        else:
+            prod = prod[0]
+            #store additional info in bot memory:
+            context.user_data['supplier'] = prod['supplier']
+            context.user_data['p_name'] = prod['p_name']
+            context.user_data['category'] = prod['category']
+            context.user_data['pieces'] = prod['pieces']
+            #ask what to do:
+            msg = f"{msg}Ti invio il recap del prodotto:\n"+\
+                f"- Produttore: {prod['supplier']}\n"+\
+                f"- Nome: {prod['p_name']}\n"+\
+                f"- Categoria: {prod['category']}\n"+\
+                f"- Numero di pezzi: {prod['pieces']}\n"+\
+                f"\nCosa vuoi fare?"
+            keyboard = [[InlineKeyboardButton('Modifica info', callback_data='Modifica info')],
+                        [InlineKeyboardButton('Aggiungi info', callback_data='Aggiungi info')],
+                        [InlineKeyboardButton('Annulla', callback_data='Annulla')]]
+            message.edit_text(msg,
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(keyboard))
+            return SAVE_EDIT
+
+    except:
+        #c) DB error:
+        msg = f"C'è stato un problema col mio DB, ti chiedo scusa!"
+        context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
+        return CONV_END
+
+#ADD 1) init:
+def init_add(update: Update, context: CallbackContext) -> int:
     #get open query:
     query = update.callback_query
     choice = query.data
     tlog.info(choice)
-    #answer query:
     query.edit_message_reply_markup(reply_markup=None)
     query.answer()
-    #next message:
-    if choice == 'Invio foto':
-        msg = "Inviami una <b>FOTO</b> del codice a barre del prodotto.\n\nOppure scrivi /esci per uscire."
+    if choice == 'No':
+        msg = f"Ok. A presto!"
+        context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
+        return CONV_END
     else:
-        msg = "Trascrivimi il <b>codice a barre</b> del prodotto.\n\nSolo numeri, senza spazi.\n\nOppure scrivi /esci per uscire."
-    context.bot.send_message(chat_id=update.effective_chat.id, text=msg, 
-        parse_mode=ParseMode.HTML, 
-        reply_markup=None)
-    return PROCESS_PCODE
+        #supplier picker:
+        keyboard = bot_functions.inline_picker('Produttore')
+        msg = f"Iniziamo. Dimmi il nome del <b>produttore</b>.\n\nOppure scrivi /esci per uscire."
+        context.bot.send_message(chat_id=update.effective_chat.id, text=msg, 
+            parse_mode=ParseMode.HTML, 
+            reply_markup=InlineKeyboardMarkup(keyboard))
+        return PROCESS_SUPPLIER
 
-#3.a) process p_code from barcode photo:
-def pcode_process_photo(update: Update, context: CallbackContext) -> int:
-    msg = f"Sto estraendo i dati..."
-    message = context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
-    try:
-        #extract and store barcode from image:
-        image = update.message.photo[-1].get_file()
-        p_code = bot_functions.extract_barcode(image)
-        context.user_data['p_code'] = p_code
-        tlog.info(f"Letto codice {p_code}, type {type(p_code)}.")
-        msg = f"Ho letto il codice {p_code}! Ora dimmi il nome del <b>produttore</b>.\n\nOppure scrivi /esci per uscire."
-    except:
-        msg = f"Non ho trovato codici.\n\nProva con un'altra foto, o in alternativa trascrivimi il codice a barre.\n\nOppure scrivi /esci per uscire."
-        message.edit_text(text=msg)
-        return PROCESS_PCODE
-    #supplier picker:
-    keyboard = bot_functions.inline_picker('Produttore')
-    reply_markup = InlineKeyboardMarkup(keyboard) if keyboard != [] else None
-    message.edit_text(text=msg,
-        parse_mode=ParseMode.HTML,
-        reply_markup=reply_markup)
-    return PROCESS_SUPPLIER
-
-#3.b) process p_code from text:
-def pcode_process_text(update: Update, context: CallbackContext) -> int:
-    #get code sent by user:
-    p_code = update.message.text
-    #store barcode in bot memory:
-    context.user_data['p_code'] = p_code
-    tlog.info(f"Letto codice {p_code}, type {type(p_code)}.")
-    msg = f"Ho letto il codice {p_code}! Ora dimmi il nome del <b>produttore</b>.\n\nOppure scrivi /esci per uscire."
-    #supplier picker:
-    keyboard = bot_functions.inline_picker('Produttore')
-    update.message.reply_text(msg, 
-        parse_mode=ParseMode.HTML, 
-        reply_markup=InlineKeyboardMarkup(keyboard))
-    return PROCESS_SUPPLIER
-
-#4.a) new supplier:
+#ADD 2.a) new supplier:
 def new_supplier(update: Update, context: CallbackContext) -> int:
     #get open query:
     query = update.callback_query
     choice = query.data
-    #store choice:
     context.user_data['supplier'] = 'NEW'
     tlog.info(choice)
-    #answer query:
     query.delete_message()
     query.answer()
     #ask new:
@@ -109,7 +143,7 @@ def new_supplier(update: Update, context: CallbackContext) -> int:
     context.bot.send_message(chat_id=update.effective_chat.id, text=msg, parse_mode=ParseMode.HTML)
     return PROCESS_SUPPLIER
 
-#4.b) process supplier and ask p_name:
+#ADD 2.b) process supplier and ask p_name:
 def process_supplier(update: Update, context: CallbackContext) -> int:
     if context.user_data.get('supplier') == 'NEW':
         supplier = update.message.text.lower()
@@ -128,7 +162,7 @@ def process_supplier(update: Update, context: CallbackContext) -> int:
     context.bot.send_message(chat_id=update.effective_chat.id, text=msg, parse_mode=ParseMode.HTML)
     return PROCESS_PNAME
 
-#5) process p_name and ask_category:
+#ADD 3) process p_name and ask_category:
 def process_pname(update: Update, context: CallbackContext) -> int:
     #get prod name sent by user:
     p_name = update.message.text.lower()
@@ -146,7 +180,7 @@ def process_pname(update: Update, context: CallbackContext) -> int:
     return PROCESS_CATEGORY
 
 
-#6.a) new category:
+#ADD 4.a) new category:
 def new_category(update: Update, context: CallbackContext) -> int:
     #get open query:
     query = update.callback_query
@@ -162,7 +196,7 @@ def new_category(update: Update, context: CallbackContext) -> int:
     context.bot.send_message(chat_id=update.effective_chat.id, text=msg, parse_mode=ParseMode.HTML)
     return PROCESS_CATEGORY
 
-#6.b) process category and ask p_name:
+#ADD 4.b) process category and ask p_name:
 def process_category(update: Update, context: CallbackContext) -> int:
     if context.user_data.get('category') == 'NEW':
         category = update.message.text.lower()
@@ -181,7 +215,7 @@ def process_category(update: Update, context: CallbackContext) -> int:
     context.bot.send_message(chat_id=update.effective_chat.id, text=msg, parse_mode=ParseMode.HTML)
     return PROCESS_PIECES
 
-#7) process pieces:
+#ADD 5) process pieces:
 def process_pieces(update: Update, context: CallbackContext) -> int:
     #1) check caller function:
     to_edit = context.user_data.get('to_edit')
@@ -212,7 +246,7 @@ def process_pieces(update: Update, context: CallbackContext) -> int:
         'category': context.user_data['category'],
         'pieces': int(context.user_data['pieces']),
     }
-    msg = f"{msg}Ti invio il recap del prodotto da aggiungere:\n"+\
+    msg = f"{msg}Ti invio il recap del prodotto:\n"+\
             f"- Codice: {utts['p_code']}\n"+\
             f"- Produttore: {utts['supplier']}\n"+\
             f"- Nome: {utts['p_name']}\n"+\
@@ -224,7 +258,7 @@ def process_pieces(update: Update, context: CallbackContext) -> int:
     update.message.reply_text(msg,
         parse_mode=ParseMode.HTML,
         reply_markup=InlineKeyboardMarkup(keyboard))
-    return SAVE
+    return SAVE_EDIT
 
 
 #6) process category and ask_quantity:
@@ -236,8 +270,9 @@ def save_to_db(update: Update, context: CallbackContext) -> int:
     query.edit_message_reply_markup(reply_markup=None)
     query.answer()
     err = False
+
+    #trigger STORE TO DB:
     if choice == 'Sì':
-        #store all in DB:
         utts = {
             'p_code': int(context.user_data['p_code']),
             'supplier': context.user_data['supplier'],
@@ -263,8 +298,23 @@ def save_to_db(update: Update, context: CallbackContext) -> int:
             context.bot.send_message(chat_id=update.effective_chat.id, text=msg,
                 reply_markup=InlineKeyboardMarkup(keyboard))
             return CONV_END
-    else:
+
+    #trigger ADD INFO:
+    elif choice == "Aggiungi info":
         #trigger edit:
+        msg = f"Aggiungeremo info." ###
+        context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
+        return CONV_END
+    
+    #trigger EXIT:
+    elif choice == "Annulla":
+        #trigger edit:
+        msg = f"Ok. A presto!"
+        context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
+        return CONV_END
+    
+    #trigger EDIT INFO:
+    else:
         keyboard = [[InlineKeyboardButton('Produttore', callback_data='Produttore'),
                 InlineKeyboardButton('Nome', callback_data='Nome')],
                 [InlineKeyboardButton('Categoria', callback_data='Categoria'),
@@ -347,13 +397,12 @@ def main() -> None:
     #add new product ("/nuovo"):
     conv_handler = ConversationHandler(
         entry_points=[
-                CommandHandler('nuovo', nuovo),
-                MessageHandler(Filters.regex("^(Nuovo|nuovo)$|^Aggiungi nuovo$|^(Nuovo|nuovo) prodotto$|^Aggiungi nuovo prodotto$"), nuovo)],
+                CommandHandler('prodotto', prodotto),
+                MessageHandler(Filters.regex("^(Prodotto|prodotto)$"), prodotto)],
         states={
-            ASK_PCODE: [CallbackQueryHandler(ask_pcode, pattern='.*')],
-            PROCESS_PCODE: [
-                MessageHandler(Filters.photo, pcode_process_photo),
-                MessageHandler(Filters.text, pcode_process_text)],
+            PROCESS_PCODE: [MessageHandler(Filters.photo, process_pcode),
+                MessageHandler(Filters.text, process_pcode)],
+            INIT_ADD: [CallbackQueryHandler(init_add, pattern='.*')],
             PROCESS_SUPPLIER: [
                 CallbackQueryHandler(new_supplier, pattern='^NUOVO$'),
                 CallbackQueryHandler(process_supplier, pattern='.*'),
@@ -365,7 +414,7 @@ def main() -> None:
                 CallbackQueryHandler(process_category, pattern='.*'),
                 MessageHandler(Filters.text, process_category)],
             PROCESS_PIECES: [MessageHandler(Filters.text, process_pieces)],
-            SAVE: [CallbackQueryHandler(save_to_db, pattern='.*')],
+            SAVE_EDIT: [CallbackQueryHandler(save_to_db, pattern='.*')],
             ASK_REWRITE: [CallbackQueryHandler(ask_rewrite, pattern='.*')],
         },
         fallbacks=[

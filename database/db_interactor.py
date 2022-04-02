@@ -42,7 +42,7 @@ def get_prodinfo(conn, utts):
         print(utts['p_code'])
         try:
             #directly extract the matching product (direct match):
-            query = f"SELECT CodiceProd, Produttore, Nome, Categoria FROM Prodotti WHERE CodiceProd = {utts['p_code']}"
+            query = f"SELECT CodiceProd, Produttore, Nome, Categoria, Quantita FROM Prodotti WHERE CodiceProd = {utts['p_code']}"
             Prodotti = pd.read_sql(query, conn)
         except sqlite3.Error as e:
             log.error(f"DB query error for 'p_code'. {e}")
@@ -99,7 +99,7 @@ def get_prodinfo(conn, utts):
         for token in tokens:
             try:
                 #DB extract:
-                query = f"SELECT CodiceProd, Produttore, Nome, Categoria FROM Prodotti WHERE Nome LIKE '%{token}%'{suppstr}"
+                query = f"SELECT CodiceProd, Produttore, Nome, Categoria, Quantita FROM Prodotti WHERE Nome LIKE '%{token}%'{suppstr}"
                 Prodotti = pd.read_sql(query, conn)
                 to_pop.append(tokens.index(token))
                 #if matches found:
@@ -130,6 +130,7 @@ def get_prodinfo(conn, utts):
             buf['supplier'] = Prodotti['Produttore'][ind]
             buf['p_name'] = Prodotti['Nome'][ind]
             buf['category'] = Prodotti['Categoria'][ind]
+            buf['pieces'] = Prodotti['Quantita'][ind]
             resp.append(buf)
             buf = {}
 
