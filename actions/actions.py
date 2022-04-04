@@ -72,9 +72,7 @@ class ActionCheckWH(Action):
         print("CHECKING: ", p_code)
         if p_code != None:
             try:
-                conn, cursor = db_connect()
-                pieces = int(db_interactor.get_pieces(cursor, p_code))
-                conn.close()
+                pieces = int(tracker.get_slot("cur_quantity"))
                 if pieces > THRESHOLD_TO_ORD:
                     message = f"Hai {pieces} pezzi in magazzino."
                     dispatcher.utter_message(text=message)
@@ -508,7 +506,7 @@ class ValidateSuggestOrderForm(FormValidationAction):
                     dispatcher.utter_message(response='utter_ask_next')
                     next_slot = 'add_sugg'
                 #reset/deactivate form, keeping stored only the slots to be used forward:
-                slots = commons.reset_and_goto(slots, req_slot=next_slot, del_slots=['p_code', 'p_name', 'pieces', 'add_sugg'])
+                slots = commons.reset_and_goto(slots, del_slots=['p_code', 'p_name', 'pieces', 'add_sugg'], req_slot=next_slot)
 
             else:
                 #a.2) not understood:

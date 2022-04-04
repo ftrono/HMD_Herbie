@@ -156,11 +156,11 @@ nlu:
 #orders_list:
 - intent: inform_need_order
   examples: |
-    - ho bisogno di fare un ordine per [aboca](supplier)
-    - compiliamo una lista ordini per [biosline](supplier)
-    - devo fare un ordine per [fior di loto](supplier)
-    - dobbiamo preparare un ordine per [esi](supplier)
-    - prepara una lista ordine per [guam](supplier)
+    - ho bisogno di fare un ordine
+    - compiliamo una lista ordini
+    - devo fare un ordine
+    - dobbiamo preparare un ordine
+    - prepara una lista ordine
     - mi aiuti a fare un ordine?
     - facciamo un ordine
 

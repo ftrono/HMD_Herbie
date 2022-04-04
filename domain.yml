@@ -33,7 +33,6 @@ intents:
 #to be captured by NLU:
 entities:
   - p_code
-  - supplier
   - pieces
 
 

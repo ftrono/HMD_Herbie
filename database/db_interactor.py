@@ -3,203 +3,121 @@ from database.db_tools import db_connect
 
 #DB_INTERACTOR:
 #Low-level DB interfaces:
-# - get_prodinfo()
-# - get_supplier()
-# - get_pieces()
+# - match_product()
+# - match_supplier()
 # - update_pieces()
 # - delete_ordlist()
 # - get_existing_ordlist()
 # - get_new_ordlist()
 # - get_suggestion_list()
-# - add_prod()
-# - delete_prod()
+# - get_view_prodotti()
 
 
-#get all items in a column of Prodotti table:
-def get_column(column_name):
+#find matching product and get info (ret -> DataFrame):
+def match_product(p_code=None, p_text=None, supplier=None):
+    Prodotti = pd.DataFrame()
+    if not p_code and not p_text:
+        log.error("match_product: no args for query.")
+        return Prodotti
+        
+    #a) if p_code is available -> directly extract the matching product (direct match):
+    if p_code != None:
+        p_code = int(p_code)
+        try:
+            conn, cursor = db_connect()
+            query = f"SELECT * FROM {SCHEMA}.prodotti WHERE codiceprod = {p_code}"
+            Prodotti = pd.read_sql(query, conn)
+            conn.close()
+        except Exception as e:
+            log.error(f"DB query error for 'p_code'. {e}")
+        return Prodotti
+    
+    #b) tokenize p_text to extract p_name and find best matches in DB:
+    else:
+        suppl = ""
+        if supplier:
+            suppl = f" WHERE produttore = '{supplier}'"
+        try:
+            conn, cursor = db_connect()
+            query = f"SELECT * FROM {SCHEMA}.prodotti{suppl}"
+            Prodotti = pd.read_sql(query, conn)
+            conn.close()
+        except Exception as e:
+            log.error(f"DB query error for 'p_code'.")
+            return Prodotti
+        
+        #count matches for each name:
+        p_text = p_text.strip()
+        tokens = p_text.split()
+        matches = {}
+        for ind in Prodotti.index:
+            cnt = 0
+            missed = 0
+            name = []
+            #if supplier not passed as arg -> search jointly in columns supplier and name:
+            if not supplier:
+                name = Prodotti['produttore'].iloc[ind].split()
+            name = name + Prodotti['nome'].iloc[ind].split()
+            for tok in tokens:
+                if tok in name:
+                    cnt = cnt+1
+                else:
+                    missed = missed+1
+                    #max 3 consecutive missed:
+                    if cnt <=1 and missed == 3:
+                        break
+            if cnt >= 1:
+                matches[ind] = cnt
+        
+        #fiter the dict keeping only the 5 items with the maximum frequency found:
+        matches = dict(filter(lambda elem: elem[1] == max(matches.values()), matches.items()))
+        Matches = Prodotti.iloc[list(matches.keys())[0:5]]
+        Matches.reset_index(drop=True, inplace=True)
+        return Matches
+
+
+#find matching supplier (ret -> List):
+def match_supplier(s_text):
+    #tokenize s_text to extract supplier name and find best matches in DB:
     try:
         conn, cursor = db_connect()
-        query = f"SELECT DISTINCT {column_name} FROM {SCHEMA}.prodotti"
-        items = pd.read_sql(query, conn)
-        items = items[column_name].to_list()
+        query = f"SELECT produttore FROM {SCHEMA}.produttori"
+        suppliers = pd.read_sql(query, conn)
+        suppliers = suppliers['produttore'].to_list()
         conn.close()
-    except psycopg2.Error as e:
-        items = []
-        log.error(f"DB query error for all '{column_name}' items. {e}")
-    return items
-
-
-#get basic product info:
-def get_prodinfo(conn, utts):
-    #vars:
-    resp = []
-    buf = {}
-    to_pop = []
-    suppl_tok = ''
-
-    #if p_code is available:
-    if utts['p_code'] != None:
-        print(utts['p_code'])
-        try:
-            #directly extract the matching product (direct match):
-            query = f"SELECT codiceprod, produttore, nome, categoria, quantita FROM {SCHEMA}.prodotti WHERE codiceprod = {utts['p_code']}"
-            Prodotti = pd.read_sql(query, conn)
-        except psycopg2.Error as e:
-            log.error(f"DB query error for 'p_code'. {e}")
-
-    else:
-        #tokenize p_text to extract p_name:
-        p_text = utts['p_text'].strip()
-        tokens = p_text.split()
-        print(tokens)
-
-        if utts['supplier'] == None:
-            #get list of suppliers:
-            try:
-                query = f"SELECT DISTINCT produttore FROM {SCHEMA}.prodotti"
-                Suppliers = pd.read_sql(query, conn)
-            except psycopg2.Error as e:
-                log.error(f"DB query error for 'supplier'. {e}")
-
-            #CASES:
-            #1) find the tokens for the supplier (if any - must be consecutive matches) and remove them from tokens list:
-            for token in tokens:
-                Suppl = Suppliers[Suppliers['produttore'].str.contains(token, na=False)]
-                #if match found:
-                if Suppl.empty == False:
-                    #store tokens (keep appending while consecutive matches are found):
-                    if suppl_tok == '':
-                        suppl_tok = token
-                    else:
-                        suppl_tok = suppl_tok + " " + token
-                    to_pop.append(tokens.index(token))
-                elif suppl_tok != '':
-                    #break as soon as the consecutive matches end:
-                    break
-            
-            #reduce tokens list:
-            if to_pop != []:
-                for item in reversed(to_pop):
-                    tokens.pop(item)
-                to_pop = []
-            
-            #FALLBACK: if no words left:
-            if len(tokens) == 0:
-                return []
-
-        #prepare query:
-        if utts['supplier'] != None:
-            suppstr = f" AND produttore = '{utts['supplier']}'"
-        elif suppl_tok != '':
-            suppstr = f" AND produttore LIKE '%{suppl_tok}%'"
-        else:
-            suppstr = ""
-        
-        #2) query DB for p_name (get first series of matches) and reduce residual tokens list:
-        for token in tokens:
-            try:
-                #DB extract:
-                query = f"SELECT codiceprod, produttore, nome, categoria, quantita FROM {SCHEMA}.prodotti WHERE nome LIKE '%{token}%'{suppstr}"
-                Prodotti = pd.read_sql(query, conn)
-                to_pop.append(tokens.index(token))
-                #if matches found:
-                if Prodotti.empty == False:
-                    break
-            except psycopg2.Error as e:
-                log.error(f"DB query error for p_name. {e}")
-
-        #reduce tokens list:
-        if to_pop != []:
-            for item in reversed(to_pop):
-                tokens.pop(item)
-            to_pop = []
-
-        #3) if first matching word found, progressively refine search in Pandas (word by word):
-        if Prodotti.empty == False and len(tokens) != 0:
-            #refine extraction:
-            for token in tokens:
-                Extr = Prodotti[Prodotti['nome'].str.contains(token, na=False)]
-                #replace with refined table:
-                if Extr.empty == False:
-                    Prodotti = Extr
-        
-    #COMMON: extract needed prod info to return:
-    if Prodotti.empty == False:
-        for ind in Prodotti.index:
-            buf['p_code'] = Prodotti['codiceprod'][ind]
-            buf['supplier'] = Prodotti['produttore'][ind]
-            buf['p_name'] = Prodotti['nome'][ind]
-            buf['category'] = Prodotti['categoria'][ind]
-            buf['pieces'] = Prodotti['quantita'][ind]
-            resp.append(buf)
-            buf = {}
-
-    return resp
-
-
-#look for supplier:
-def get_supplier(conn, s_text):
-    #vars:
-    resp = []
-    to_pop = []
-
-    #tokenize p_text to extract supplier:
+    except Exception as e:
+        suppliers = []
+        log.error(f"DB query error for 'p_code'. {e}")
+        return suppliers
+    
+    #count matches for each name:
     s_text = s_text.strip()
     tokens = s_text.split()
-    print(tokens)
-
-    #get full list of suppliers from DB:
-    try:
-        query = f"SELECT produttore FROM {SCHEMA}.produttori"
-        Suppliers = pd.read_sql(query, conn)
-    except psycopg2.Error as e:
-        log.error(f"DB query error for 'supplier'. {e}")
-
-    #CASES:
-    #1) query DB for supplier (get first series of matches) and reduce residual tokens list:
-    for token in tokens:
-        Suppl = Suppliers[Suppliers['produttore'].str.contains(token, na=False)]
-        to_pop.append(tokens.index(token))
-        if Suppl.empty == False:
-            break
-
-    #reduce tokens list:
-    if to_pop != []:
-        for item in reversed(to_pop):
-            tokens.pop(item)
-        to_pop = []
+    matches = {}
+    for ind in range(len(suppliers)):
+        cnt = 0
+        missed = 0
+        name = suppliers[ind].split()
+        for tok in tokens:
+            if tok in name:
+                cnt = cnt+1
+            else:
+                missed = missed+1
+                #max 3 consecutive missed:
+                if cnt <=1 and missed == 3:
+                    break
+        if cnt >= 1:
+            matches[ind] = cnt
     
-    #2) if first matching word found, progressively refine search in Pandas (word by word):
-    if Suppl.empty == False and len(tokens) != 0:
-        #refine extraction:
-        for token in tokens:
-            Extr = Suppl[Suppl['produttore'].str.contains(token, na=False)]
-            #replace with refined table:
-            if Extr.empty == False:
-                Suppl = Extr
-        
-    #3) extract full matching supplier name(s) to return:
-    if Suppl.empty == False:
-        for ind in Suppl.index:
-            resp.append(str(Suppl['produttore'][ind]))
-
-    return resp
+    #fiter the dict keeping only the 3 items with the maximum frequency found:
+    matches = dict(filter(lambda elem: elem[1] == max(matches.values()), matches.items()))
+    results = []
+    for ind in list(matches.keys())[0:3]:
+        results.append(suppliers[ind])
+    return results
 
 
-def get_pieces(cursor, p_code):
-    #check products already in DB:
-        query = f"SELECT quantita FROM {SCHEMA}.prodotti WHERE codiceprod = {p_code}"
-        try:
-            cursor.execute(query)
-            quant = int(cursor.fetchall()[0][0])
-            return quant
-                        
-        except psycopg2.Error as e:
-            log.error(f"Unable to check quantity boundary for product code {p_code}. {e}")
-            return -1
-
-
-def update_pieces(conn, cursor, utts):
+def update_pieces(utts):
     #compose query:
     if utts['variation'] == 'add':
         str1 = "+ " + str(utts['pieces'])
@@ -210,17 +128,20 @@ def update_pieces(conn, cursor, utts):
     query = f"UPDATE {SCHEMA}.prodotti SET quantita = quantita {str1} WHERE codiceprod = {utts['p_code']}"
 
     #DB update:
-    try: 
+    try:
+        conn, cursor = db_connect()
         cursor.execute(query)
         changes = cursor.rowcount
         if changes != 0:
             conn.commit()
+            conn.close()
             log.info(f"Success: {utts['variation']} {utts['pieces']} pieces to product code {utts['p_code']}.")
             return 0
         else:
+            conn.close()
             log.error(f"DB: No match for p_code {utts['p_code']}.")
             return -1
-    except psycopg2.Error as e:
+    except Exception as e:
         log.error(f"Unable to perform operation {utts['variation']} to product code {utts['p_code']}. {e}")
         return -1
 
@@ -234,7 +155,7 @@ def delete_ordlist(conn, cursor, ord_code):
         cursor.execute(query)
         conn.commit()
         log.info(f"Success: deleted ord_list code {ord_code} from both tables listeordini and storicoordini.")
-    except psycopg2.Error as e:
+    except Exception as e:
         log.error(f"Unable to delete ord_list code {ord_code}. {e}")
     return 0
 
@@ -261,7 +182,7 @@ def get_existing_ordlist(conn, supplier):
                 full_list = FullList.to_dict()
                 full_list = json.dumps(full_list)
 
-    except psycopg2.Error as e:
+    except Exception as e:
         log.error(f"Unable to perform get_existing_ordlist for supplier {supplier}. {e}")
         
     return latest_code, latest_date, full_list, num_prods
@@ -281,7 +202,7 @@ def get_new_ordlist(conn, cursor, supplier):
         conn.commit()
         log.info(f"Success: created list ord_code {latest_code} into table storicoordini.")
 
-    except psycopg2.Error as e:
+    except Exception as e:
         log.error(f"Unable to perform get_new_ordlist for supplier {supplier}. {e}")
         
     return latest_code, latest_date
@@ -316,7 +237,7 @@ def edit_ord_list(conn, cursor, ord_code, p_code, pieces, write_mode=False):
         cursor.execute(query)
         conn.commit()
         log.info(f"Success: updated list ord_code {ord_code} into table listeordini.")
-    except psycopg2.Error as e:
+    except Exception as e:
         log.error(f"Unable to edit ord_list {ord_code} for product {p_code}. {e}")
         return -1
     return 0
@@ -336,48 +257,23 @@ def get_suggestion_list(conn, supplier, ord_code):
             full_list = FullList.to_dict()
             full_list = json.dumps(full_list)
 
-    except psycopg2.Error as e:
+    except Exception as e:
         log.error(f"Unable to perform get_suggestion_list for supplier {supplier}. {e}")
         
     return full_list, num_prods
 
 
-#add a new product:
-def add_prod(conn, cursor, utts):
-    try:
-        query = f"INSERT INTO {SCHEMA}.prodotti (codiceprod, produttore, nome, categoria, quantita) VALUES ({utts['p_code']}, '{utts['supplier']}', '{utts['p_name']}', '{utts['category']}', {utts['pieces']})"
-        cursor.execute(query)
-        conn.commit()
-        log.info(f"Added product {utts['p_code']} to table prodotti.")
-        return 0
-    except psycopg2.Error as e:
-        log.error(f"Unable to add product {utts['p_code']} to table prodotti. {e}")
-        return -1
-
-
-#delete a product:
-def delete_prod(conn, cursor, p_code):
-    try:
-        query = f"DELETE FROM {SCHEMA}.prodotti WHERE codiceprod = {p_code}"
-        cursor.execute(query)
-        conn.commit()
-        log.info(f"Deleted product {p_code} from DB.")
-        return 0
-    except psycopg2.Error as e:
-        log.error(f"Unable to delete product {p_code} from DB. {e}")
-        return -1
-
-
 #get list of products from DB:
-def get_view_prodotti(conn, supplier=None):
+def get_view_prodotti(supplier=None):
     suppstr = ""
     FullList = pd.DataFrame()
     try:
+        conn, cursor = db_connect()
         if supplier:
             suppstr = f" WHERE produttore = {supplier}"
         query = f"SELECT * FROM {SCHEMA}.prodotti{suppstr}"
         FullList = pd.read_sql(query, conn)
-    except psycopg2.Error as e:
+        conn.close()
+    except Exception as e:
         log.error(f"Unable to perform get_suggestion_list for supplier {supplier}. {e}")
     return FullList
-
