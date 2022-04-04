@@ -1,8 +1,6 @@
 __pycache__
 .rasa
 */__pycache__
-models/notes.txt
 logs/*
 models/*
-t_credentials.ini
-telegram_support/data_cache/*
+database/db_credentials.ini

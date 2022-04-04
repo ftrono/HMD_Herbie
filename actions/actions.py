@@ -366,7 +366,7 @@ class ValidateWhUpdateForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
         
-        slots = commons.disambiguate_prod(tracker, dispatcher)
+        slots = commons.disambiguate_prod(tracker, dispatcher, pieces=True)
         return slots
 
     def validate_variation(

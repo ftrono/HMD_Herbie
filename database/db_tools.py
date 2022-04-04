@@ -5,116 +5,143 @@ from globals import *
 # - create_tables()
 # - drop_all()
 # - empty_table()
+# - drop_table()
 
 
 #open DB connection:
 def db_connect():
     try:
-        conn = sqlite3.connect(DB_FILE)
-        conn.execute("PRAGMA foreign_keys = 1")
+        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
         cursor = conn.cursor()
-    except sqlite3.Error as e:
+    except psycopg2.Error as e:
         log.error(e)
     return conn, cursor
 
 
 #create tables:
-def create_tables(conn, cursor):
+def create_tables(conn, cursor, schema):
     #dict of queries:
     queries = {
-        'Prodotti': '''CREATE TABLE Prodotti (
-            CodiceProd INTEGER PRIMARY KEY, 
-            Produttore TEXT NOT NULL,
+        'Utenti': f'''CREATE TABLE Utenti (
+            ID SERIAL NOT NULL,
+            ChatID VARCHAR(20) NOT NULL,
+            NomeUtente TEXT NOT NULL,
+            Autorizzazione VARCHAR(20) NOT NULL,
+            PRIMARY KEY (ID)
+            )''',
+
+        'Produttori': f'''CREATE TABLE {schema}.Produttori (
+            Produttore VARCHAR(50) NOT NULL,
+            ScontoMedio SMALLINT NOT NULL DEFAULT 0,
+            PRIMARY KEY (Produttore)
+            )''',
+
+        'Categorie': f'''CREATE TABLE {schema}.Categorie (
+            Categoria VARCHAR(50) NOT NULL,
+            Aliquota NUMERIC(3,1) NOT NULL DEFAULT 22,
+            PRIMARY KEY (Categoria)
+            )''',
+
+        'Prodotti': f'''CREATE TABLE {schema}.Prodotti (
+            CodiceProd BIGINT NOT NULL, 
+            Produttore VARCHAR(50) NOT NULL,
             Nome TEXT NOT NULL, 
-            Categoria TEXT NOT NULL,
-            Quantita INTEGER NOT NULL DEFAULT 0,
-            Prezzo REAL NOT NULL DEFAULT 0,
-            ScontoMedio REAL NOT NULL DEFAULT 0,
-            Aliquota REAL NOT NULL DEFAULT 0.22,
-            Scaffale TEXT,
-            DispMedico INTEGER NOT NULL DEFAULT 0,
-            EtaMinima INTEGER NOT NULL DEFAULT 18,
-            Bio INTEGER NOT NULL DEFAULT 0,
-            Vegano INTEGER NOT NULL DEFAULT 0,
-            SenzaGlutine INTEGER NOT NULL DEFAULT 0,
-            SenzaLattosio INTEGER NOT NULL DEFAULT 0,
-            SenzaZucchero INTEGER NOT NULL DEFAULT 0
+            Categoria VARCHAR(50) NOT NULL,
+            Quantita SMALLINT NOT NULL DEFAULT 0,
+            Prezzo NUMERIC(5,2) NOT NULL DEFAULT 0,
+            DispMedico BOOLEAN NOT NULL DEFAULT FALSE,
+            EtaMinima SMALLINT NOT NULL DEFAULT 18,
+            Bio BOOLEAN NOT NULL DEFAULT FALSE,
+            Vegano BOOLEAN NOT NULL DEFAULT FALSE,
+            SenzaGlutine BOOLEAN NOT NULL DEFAULT FALSE,
+            SenzaLattosio BOOLEAN NOT NULL DEFAULT FALSE,
+            SenzaZucchero BOOLEAN NOT NULL DEFAULT FALSE,
+            PRIMARY KEY (CodiceProd),
+            FOREIGN KEY (Produttore) REFERENCES {schema}.Produttori (Produttore) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (Categoria) REFERENCES {schema}.Categorie (Categoria) ON DELETE CASCADE ON UPDATE CASCADE
             )''',
         
-        'StoricoOrdini': '''CREATE TABLE StoricoOrdini (
-            CodiceOrd INTEGER PRIMARY KEY,
-            Produttore TEXT NOT NULL,
+        'StoricoOrdini': f'''CREATE TABLE {schema}.StoricoOrdini (
+            CodiceOrd BIGINT NOT NULL,
+            Produttore VARCHAR(50) NOT NULL,
             Riferimento TEXT,
-            DataModifica TEXT NOT NULL,
-            DataInoltro TEXT,
-            DataRicezione TEXT
+            DataModifica VARCHAR(10) NOT NULL,
+            DataInoltro VARCHAR(10),
+            DataRicezione VARCHAR(10),
+            PRIMARY KEY (CodiceOrd)
             )''',
             
-        'ListeOrdini': '''CREATE TABLE ListeOrdini (
-            ID INTEGER PRIMARY KEY,
-            CodiceOrd INTEGER NOT NULL, 
-            CodiceProd INTEGER NOT NULL, 
-            Quantita INTEGER NOT NULL DEFAULT 1,
-            FOREIGN KEY (CodiceOrd) REFERENCES StoricoOrdini (CodiceOrd) ON DELETE CASCADE ON UPDATE CASCADE
-            )''',
-
-        'ComponentiAmbiti': '''CREATE TABLE ComponentiAmbiti (
-            ID INTEGER PRIMARY KEY,
-            Componente TEXT NOT NULL,
-            AmbitoUtilizzo TEXT NOT NULL,
-            DettaglioAmbito TEXT
-            )''',
-
-        'ComponentiProdotto': '''CREATE TABLE ComponentiProdotto (
-            ID INTEGER PRIMARY KEY,
-            CodiceProd INTEGER NOT NULL, 
-            Componente TEXT NOT NULL,
-            FOREIGN KEY (CodiceProd) REFERENCES Prodotti (CodiceProd) ON DELETE CASCADE ON UPDATE CASCADE
-            )''',
+        'ListeOrdini': f'''CREATE TABLE {schema}.ListeOrdini (
+            ID SERIAL NOT NULL,
+            CodiceOrd BIGINT NOT NULL, 
+            CodiceProd BIGINT NOT NULL,
+            Quantita SMALLINT NOT NULL DEFAULT 1,
+            PRIMARY KEY (ID),
+            FOREIGN KEY (CodiceOrd) REFERENCES {schema}.StoricoOrdini (CodiceOrd) ON DELETE CASCADE ON UPDATE CASCADE
+            )'''
     }
 
     #execute:
+    #1) create schema:
+    try:
+        cursor.execute(f"CREATE SCHEMA {schema}")
+        conn.commit()
+        log.info(f"Created schema {schema}.")
+    except psycopg2.Error as e:
+        log.error(f"Unable to create schema {schema}. {e}")
+        return -1
+
     for t in queries.keys():
         try:
             cursor.execute(queries[t])
             conn.commit()
             log.info(f"Created table {t}.")
-        except:
-            log.error(f"Unable to create table {t}.")
+        except psycopg2.Error as e:
+            log.error(f"Unable to create table {t}. {e}")
     return 0
 
 
-#drop all tables:
-def drop_all(conn, cursor):
-    #ordered list of tables:
-    tables = ['ComponentiProdotto', 'ComponentiAmbiti', 'ListeOrdini', 'StoricoOrdini', 'Prodotti']
-    #execute:
-    for t in tables:
-        try:
-            query = 'DROP TABLE '+ t
-            cursor.execute(query)
-            conn.commit()
-            log.info(f"Dropped table {t}.")
-        except:
-            log.error(f"Unable to drop table {t}.")
-    return 0
+#drop all tables in the schema (in globals):
+def drop_all(conn, cursor, schema):
+    try:
+        query = f"DROP SCHEMA {schema} CASCADE"
+        cursor.execute(query)
+        conn.commit()
+        log.info(f"Dropped schema {schema}.")
+        return 0
+    except psycopg2.Error as e:
+        log.error(f"Unable to drop schema {schema}.")
+        return -1
 
 
 #empty a specific table:
-def empty_table(tablename, conn, cursor):
+def empty_table(conn, cursor, tablename, schema=None):
+    if schema:
+        loc = f"{schema}."
+    else:
+        loc = ""
     try:
-        query = "DELETE FROM "+tablename
+        query = f"DELETE FROM {loc}{tablename}"
         cursor.execute(query)
         conn.commit()
-        log.info("Table "+tablename+" successfully reset.")
-    except:
-        log.error("ERROR: unable to reset "+tablename+" table.")
-    return 0
+        log.info(f"Table {loc}{tablename} successfully reset.")
+        return 0
+    except psycopg2.Error as e:
+        log.error(f"ERROR: unable to reset {loc}{tablename} table.")
+        return -1
 
-
-#MAIN:
-if __name__ == '__main__':
-    conn, cursor = db_connect()
-    drop_all(conn, cursor)
-    create_tables(conn, cursor)
-    conn.close()
+#drop a specific table:
+def drop_table(conn, cursor, tablename, schema=None):
+    if schema:
+        loc = f"{schema}."
+    else:
+        loc = ""
+    try:
+        query = f"DROP TABLE {loc}{tablename}"
+        cursor.execute(query)
+        conn.commit()
+        log.info(f"Dropped table {loc}{tablename}.")
+        return 0
+    except psycopg2.Error as e:
+        log.error(f"Unable to drop table {loc}{tablename}.")
+        return -1

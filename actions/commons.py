@@ -60,7 +60,7 @@ def reset_and_goto(slots, req_slot=None, keep_slots=None, del_slots=None):
 
 
 #Disambiguate product reference from DB:
-def disambiguate_prod(tracker, dispatcher, supplier=None):
+def disambiguate_prod(tracker, dispatcher, supplier=None, pieces=None):
     #extract needed info:
     str1 = "nome"
     suppstr = ""
@@ -115,6 +115,11 @@ def disambiguate_prod(tracker, dispatcher, supplier=None):
     else:
         prod = resp[0]
         message = f"Trovato! Di {prod['supplier']}, {prod['p_name']}."
+        if pieces == True:
+            if prod['pieces'] == 1:
+                message = f"{message} Hai un solo pezzo."
+            else:
+                message = f"{message} Hai {prod['pieces']} pezzi."
         dispatcher.utter_message(text=message)
         slots = {"p_code": str(prod['p_code']), "p_name": str(prod['p_name']), "supplier": str(prod['supplier'])}
         return slots
@@ -223,9 +228,9 @@ def read_ord_list(dispatcher, ord_list, suggest_mode=False):
     OrdList = pd.DataFrame(OrdList)
     if OrdList.empty == False:
         #read first row:
-        slots['p_code'] = str(OrdList['CodiceProd'].iloc[0])
-        slots['p_name'] = str(OrdList['Nome'].iloc[0])
-        slots['cur_quantity'] = int(OrdList['Quantita'].iloc[0])
+        slots['p_code'] = str(OrdList['codiceprod'].iloc[0])
+        slots['p_name'] = str(OrdList['nome'].iloc[0])
+        slots['cur_quantity'] = int(OrdList['quantita'].iloc[0])
         #build string:
         if suggest_mode == True:
             str_have = "hai "
@@ -335,6 +340,9 @@ def write_ord_list(dispatcher, slots, next_slot, update_json=False):
         print("DB connection error.")
         message = "C'è stato un problema con il mio database, ti chiedo scusa. Riprova da capo!"
         dispatcher.utter_message(text=message)
+        #reset:
+        slots = reset_and_goto(slots, req_slot=next_slot, del_slots=['p_code', 'p_name', 'pieces', 'add_sugg'])
+        return slots
     else:
         #3) utter update message:
         if slots['pieces'] == 1:
