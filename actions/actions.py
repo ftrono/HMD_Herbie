@@ -4,7 +4,7 @@ from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.types import DomainDict
 from rasa_sdk.events import SlotSet, AllSlotsReset, FollowupAction
 from globals import *
-from database.db_tools import db_connect
+from database.db_tools import db_connect, db_disconnect
 import database.db_interactor as db_interactor
 import actions.commons as commons
 import utils
@@ -186,7 +186,7 @@ class ActionGetOrdList(Action):
                 dispatcher.utter_message(text=message)
                 slots['new_list'] = False
 
-            conn.close()
+            db_disconnect(conn, cursor)
 
         except:
             print("DB connection error.")
@@ -219,7 +219,7 @@ class ActionGetNewList(Action):
             slots['ord_code'] = db_interactor.get_new_ordlist(conn, cursor, supplier)
             message = f"Ti ho creato una nuova lista, useremo questa!"
             dispatcher.utter_message(text=message)
-            conn.close()
+            db_disconnect(conn, cursor)
         except:
             print("DB connection error.")
             message = "C'è stato un problema con il mio database, ti chiedo scusa."
@@ -245,7 +245,7 @@ class ActionGetSuggestionList(Action):
         try:
             conn, cursor = db_connect()
             slots['ord_list'], num_prods = db_interactor.get_suggestion_list(conn, slots['supplier'], slots['ord_code'])
-            conn.close()
+            db_disconnect(conn, cursor)
             #if extracted suggestion list empty:
             if slots['ord_list'] == None:
                 slots['found'] = False

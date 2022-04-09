@@ -1,6 +1,6 @@
 from rasa_sdk.events import SlotSet
 from globals import *
-from database.db_tools import db_connect
+from database.db_tools import db_connect, db_disconnect
 import database.db_interactor as db_interactor
 from utils import readable_date
 
@@ -241,7 +241,7 @@ def update_ord_list(dispatcher, slots):
                 message = f"Ti ho segnato {slots['pieces']} pezzi totali."
             #replace quantity to DB:
             ret = db_interactor.edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], slots['pieces'])
-        conn.close()
+        db_disconnect(conn, cursor)
     except:
         err = True
 
@@ -277,7 +277,7 @@ def write_ord_list(dispatcher, slots, next_slot, update_json=False):
     try:
         conn, cursor = db_connect()
         ret = db_interactor.edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], slots['pieces'], write_mode=True)
-        conn.close()
+        db_disconnect(conn, cursor)
     except:
         err = True
     

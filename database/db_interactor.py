@@ -1,5 +1,5 @@
 from globals import *
-from database.db_tools import db_connect
+from database.db_tools import db_connect, db_disconnect
 
 #DB_INTERACTOR:
 #Low-level DB interfaces:
@@ -27,7 +27,7 @@ def match_product(p_code=None, p_text=None, supplier=None):
             conn, cursor = db_connect()
             query = f"SELECT * FROM {SCHEMA}.prodotti WHERE codiceprod = {p_code}"
             Prodotti = pd.read_sql(query, conn)
-            conn.close()
+            db_disconnect(conn, cursor)
         except Exception as e:
             log.error(f"DB query error for 'p_code'. {e}")
         return Prodotti
@@ -41,7 +41,7 @@ def match_product(p_code=None, p_text=None, supplier=None):
             conn, cursor = db_connect()
             query = f"SELECT * FROM {SCHEMA}.prodotti{suppl}"
             Prodotti = pd.read_sql(query, conn)
-            conn.close()
+            db_disconnect(conn, cursor)
         except Exception as e:
             log.error(f"DB query error for 'p_code'.")
             return Prodotti
@@ -84,7 +84,7 @@ def match_supplier(s_text):
         query = f"SELECT produttore FROM {SCHEMA}.produttori"
         suppliers = pd.read_sql(query, conn)
         suppliers = suppliers['produttore'].to_list()
-        conn.close()
+        db_disconnect(conn, cursor)
     except Exception as e:
         suppliers = []
         log.error(f"DB query error for 'p_code'. {e}")
@@ -134,11 +134,11 @@ def update_pieces(utts):
         changes = cursor.rowcount
         if changes != 0:
             conn.commit()
-            conn.close()
+            db_disconnect(conn, cursor)
             log.info(f"Success: {utts['variation']} {utts['pieces']} pieces to product code {utts['p_code']}.")
             return 0
         else:
-            conn.close()
+            db_disconnect(conn, cursor)
             log.error(f"DB: No match for p_code {utts['p_code']}.")
             return -1
     except Exception as e:
@@ -273,7 +273,7 @@ def get_view_prodotti(supplier=None):
             suppstr = f" WHERE produttore = {supplier}"
         query = f"SELECT * FROM {SCHEMA}.prodotti{suppstr}"
         FullList = pd.read_sql(query, conn)
-        conn.close()
+        db_disconnect(conn, cursor)
     except Exception as e:
         log.error(f"Unable to perform get_suggestion_list for supplier {supplier}. {e}")
     return FullList
