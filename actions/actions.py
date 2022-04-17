@@ -69,7 +69,7 @@ class ActionCheckWH(Action):
         ) -> List[Dict[Text, Any]]:
 
         p_code = tracker.get_slot("p_code")
-        print("CHECKING: ", p_code)
+        elog.info(f"CHECKING: {p_code}")
         if p_code != None:
             try:
                 pieces = int(tracker.get_slot("cur_quantity"))
@@ -87,7 +87,7 @@ class ActionCheckWH(Action):
                     dispatcher.utter_message(text=message)
                     return [SlotSet('need_order', True)]
             except:
-                print("DB connection error.")
+                elog.info("DB connection error.")
                 message = "C'è stato un problema con il mio database, ti chiedo scusa."
                 dispatcher.utter_message(text=message)
             return [SlotSet('fail', True)]
@@ -112,7 +112,7 @@ class ActionAddToList(Action):
                 message = "Segnato nella prossima lista ordini!"
             else:
                 message = f"Segnàti {slots['pieces']} pezzi nella prossima lista ordini!"
-            print("Pieces: ", slots['pieces'])
+            elog.info(f"Pieces: {slots['pieces']}")
 
             #add to order list in DB:
             try:
@@ -128,7 +128,7 @@ class ActionAddToList(Action):
                 err = True
 
             if err == True or ret == -1:
-                print("DB connection error.")
+                elog.info("DB connection error.")
                 message = "C'è stato un problema con il mio database, ti chiedo scusa."
                 dispatcher.utter_message(text=message)
                 return [SlotSet('fail', True)]
@@ -137,8 +137,7 @@ class ActionAddToList(Action):
                 dispatcher.utter_message(text=message)
         else:
             dispatcher.utter_message(response="utter_ok")
-        dispatcher.utter_message(response="utter_available")
-        return [AllSlotsReset()]
+        return [AllSlotsReset(), SlotSet('ord_code', None)]
 
 
 #Create Order -> get latest order list from DB:
@@ -189,7 +188,7 @@ class ActionGetOrdList(Action):
             db_disconnect(conn, cursor)
 
         except:
-            print("DB connection error.")
+            elog.info("DB connection error.")
             message = "C'è stato un problema con il mio database, ti chiedo scusa."
             dispatcher.utter_message(text=message)
             slots['fail'] = True
@@ -221,7 +220,7 @@ class ActionGetNewList(Action):
             dispatcher.utter_message(text=message)
             db_disconnect(conn, cursor)
         except:
-            print("DB connection error.")
+            elog.info("DB connection error.")
             message = "C'è stato un problema con il mio database, ti chiedo scusa."
             dispatcher.utter_message(text=message)
             slots['fail'] = True
@@ -263,7 +262,7 @@ class ActionGetSuggestionList(Action):
                 message = f"Ti ho trovato {num_str} di {slots['supplier']} con meno di {THRESHOLD_TO_ORD} pezzi.{start_str}"
                 dispatcher.utter_message(text=message)
         except:
-            print("DB connection error.")
+            elog.info("DB connection error.")
             message = "C'è stato un problema con il mio database, ti chiedo scusa."
             dispatcher.utter_message(text=message)
             slots['fail'] = True
@@ -393,7 +392,7 @@ class ValidateWhUpdateForm(FormValidationAction):
         slots['pieces'] = next(tracker.get_latest_entity_values("pieces"), None)
         if slots['pieces'] != None:
             #update warehouse and reset form:
-            print("Ok", slots['variation'], slots['pieces'])
+            elog.info(f"Ok, {slots['variation']}, {slots['pieces']}")
             slots = commons.update_warehouse(dispatcher, slots)
         else:
             message = f"Mmm, non ho capito il numero di pezzi."
@@ -430,7 +429,7 @@ class ValidateReadOrderForm(FormValidationAction):
             slots['pieces'] = 0
         
         #update warehouse and reset form:
-        print("Ok", slots['keep'], slots['pieces'])
+        elog.info(f"Ok, {slots['keep']}, {slots['pieces']}")
         slots = commons.update_ord_list(dispatcher, slots)
         return slots
 
@@ -464,7 +463,7 @@ class ValidateWriteOrderForm(FormValidationAction):
         slots['pieces'] = next(tracker.get_latest_entity_values("pieces"), None)
         if slots['pieces'] != None:
             #update warehouse and reset form:
-            print("Ok", slots['p_code'], slots['pieces'])
+            elog.info(f"Ok, {slots['p_code']}, {slots['pieces']}")
             slots = commons.write_ord_list(dispatcher, slots, next_slot='p_code')
         else:
             message = f"Mmm, non ho capito bene."
@@ -518,6 +517,6 @@ class ValidateSuggestOrderForm(FormValidationAction):
 
         #b) update order list in DB, JSON reading list and reset form:
         else:
-            print("Ok", slots['add_sugg'], slots['pieces'])
+            elog.info(f"Ok, {slots['add_sugg']}, {slots['pieces']}")
             slots = commons.write_ord_list(dispatcher, slots, next_slot='add_sugg', update_json=True)
         return slots

@@ -10,7 +10,7 @@ def db_connect():
         conn = psycopg2.connect(DATABASE_URL, sslmode='require')
         cursor = conn.cursor()
     except psycopg2.Error as e:
-        log.error(e)
+        dlog.error(e)
     return conn, cursor
 
 #close DB connection:
@@ -19,4 +19,4 @@ def db_disconnect(conn, cursor):
         cursor.close()
         conn.close()
     except psycopg2.Error as e:
-        log.error(e)
+        dlog.error(e)

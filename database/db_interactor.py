@@ -26,7 +26,7 @@ def match_product(p_text, supplier=None):
         Prodotti = pd.read_sql(query, conn)
         db_disconnect(conn, cursor)
     except Exception as e:
-        log.error(f"DB query error for 'p_text'. {e}")
+        dlog.error(f"DB query error for 'p_text'. {e}")
         return Prodotti
     
     #count matches for each name:
@@ -70,7 +70,7 @@ def match_supplier(s_text):
         db_disconnect(conn, cursor)
     except Exception as e:
         suppliers = []
-        log.error(f"DB query error for 'supplier'. {e}")
+        dlog.error(f"DB query error for 'supplier'. {e}")
         return suppliers
     
     #count matches for each name:
@@ -118,14 +118,14 @@ def update_pieces(utts):
         if changes != 0:
             conn.commit()
             db_disconnect(conn, cursor)
-            log.info(f"Success: {utts['variation']} {utts['pieces']} pieces to product code {utts['p_code']}.")
+            dlog.info(f"Success: {utts['variation']} {utts['pieces']} pieces to product code {utts['p_code']}.")
             return 0
         else:
             db_disconnect(conn, cursor)
-            log.error(f"DB: No match for p_code {utts['p_code']}.")
+            dlog.error(f"DB: No match for p_code {utts['p_code']}.")
             return -1
     except Exception as e:
-        log.error(f"Unable to perform operation {utts['variation']} to product code {utts['p_code']}. {e}")
+        dlog.error(f"Unable to perform operation {utts['variation']} to product code {utts['p_code']}. {e}")
         return -1
 
 
@@ -137,9 +137,9 @@ def delete_ordlist(conn, cursor, ord_code):
         query = f"DELETE FROM {SCHEMA}.storicoordini WHERE codiceord = {ord_code}"
         cursor.execute(query)
         conn.commit()
-        log.info(f"Success: deleted ord_list code {ord_code} from both tables listeordini and storicoordini.")
+        dlog.info(f"Success: deleted ord_list code {ord_code} from both tables listeordini and storicoordini.")
     except Exception as e:
-        log.error(f"Unable to delete ord_list code {ord_code}. {e}")
+        dlog.error(f"Unable to delete ord_list code {ord_code}. {e}")
     return 0
 
 
@@ -166,7 +166,7 @@ def get_existing_ordlist(conn, supplier):
                 full_list = json.dumps(full_list)
 
     except Exception as e:
-        log.error(f"Unable to perform get_existing_ordlist for supplier {supplier}. {e}")
+        dlog.error(f"Unable to perform get_existing_ordlist for supplier {supplier}. {e}")
         
     return latest_code, latest_date, full_list, num_prods
 
@@ -183,10 +183,10 @@ def get_new_ordlist(conn, cursor, supplier):
         query = f"INSERT INTO {SCHEMA}.storicoordini (codiceord, produttore, datamodifica) VALUES ({latest_code}, '{supplier}', '{latest_date}')"
         cursor.execute(query)
         conn.commit()
-        log.info(f"Success: created list ord_code {latest_code} into table storicoordini.")
+        dlog.info(f"Success: created list ord_code {latest_code} into table storicoordini.")
 
     except Exception as e:
-        log.error(f"Unable to perform get_new_ordlist for supplier {supplier}. {e}")
+        dlog.error(f"Unable to perform get_new_ordlist for supplier {supplier}. {e}")
         
     return latest_code, latest_date
 
@@ -219,9 +219,9 @@ def edit_ord_list(conn, cursor, ord_code, p_code, pieces, write_mode=False):
         query = f"UPDATE {SCHEMA}.storicoordini SET datamodifica = '{latest_date}' WHERE codiceord = {ord_code}"
         cursor.execute(query)
         conn.commit()
-        log.info(f"Success: updated list ord_code {ord_code} into table listeordini.")
+        dlog.info(f"Success: updated list ord_code {ord_code} into table listeordini.")
     except Exception as e:
-        log.error(f"Unable to edit ord_list {ord_code} for product {p_code}. {e}")
+        dlog.error(f"Unable to edit ord_list {ord_code} for product {p_code}. {e}")
         return -1
     return 0
 
@@ -241,7 +241,7 @@ def get_suggestion_list(conn, supplier, ord_code):
             full_list = json.dumps(full_list)
 
     except Exception as e:
-        log.error(f"Unable to perform get_suggestion_list for supplier {supplier}. {e}")
+        dlog.error(f"Unable to perform get_suggestion_list for supplier {supplier}. {e}")
         
     return full_list, num_prods
 
@@ -258,5 +258,5 @@ def get_view_prodotti(supplier=None):
         FullList = pd.read_sql(query, conn)
         db_disconnect(conn, cursor)
     except Exception as e:
-        log.error(f"Unable to perform get_suggestion_list for supplier {supplier}. {e}")
+        dlog.error(f"Unable to perform get_suggestion_list for supplier {supplier}. {e}")
     return FullList

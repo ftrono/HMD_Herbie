@@ -58,7 +58,10 @@ def check_intent(tracker, dispatcher, p_text):
                 elif tok == 'second' or tok == 'du':
                     pos = 2
                     break
-                elif tok == 'terz' or tok == 'tr' or tok == 'ultim':
+                elif tok == 'terz' or tok == 'tr':
+                    pos = 3
+                    break
+                elif tok == 'ultim':
                     pos = -1
                     break
     return pos
@@ -69,7 +72,7 @@ def disambiguate_prod(tracker, dispatcher, supplier=None, pieces=None):
     #p_text -> the intent text is temporarily saved by Rasa into "p_code" slot before validation:
     p_text = str(tracker.get_slot("p_code")) 
     supplier = supplier if supplier else None
-    print(p_text, supplier)
+    elog.info(f"{p_text}, {supplier}")
 
     #fallback a: no info:
     if p_text == None:
@@ -140,7 +143,7 @@ def disambiguate_prod(tracker, dispatcher, supplier=None, pieces=None):
 def disambiguate_supplier(tracker, dispatcher):
     #s_text -> the intent text is temporarily saved by Rasa into "supplier" slot before validation:
     supplier = tracker.get_slot("supplier").lower()
-    print(supplier)
+    elog.info(supplier)
 
     #db extraction:
     results = db_interactor.match_supplier(supplier)
@@ -286,7 +289,7 @@ def update_ord_list(dispatcher, slots):
 
     #2) if error:
     if err == True or ret == -1:
-        print("DB connection error.")
+        elog.info("DB connection error.")
         message = "C'è stato un problema con il mio database, ti chiedo scusa. Riproviamo!"
         dispatcher.utter_message(text=message)
 
@@ -322,7 +325,7 @@ def write_ord_list(dispatcher, slots, next_slot, update_json=False):
     
     #2) if error:
     if err == True or ret == -1:
-        print("DB connection error.")
+        elog.info("DB connection error.")
         message = "C'è stato un problema con il mio database, ti chiedo scusa. Riprova da capo!"
         dispatcher.utter_message(text=message)
         #reset:

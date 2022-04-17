@@ -17,8 +17,16 @@ DATABASE_URL = t_conf.get('database_url')
 SCHEMA = t_conf.get('schema')
 
 #LOGS:
-log=logging.getLogger('db_events')
+#db log:
+dlog=logging.getLogger('db_events')
 hdl=logging.FileHandler('./logs/db_events.log',mode='a')
 hdl.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-log.setLevel(logging.INFO)
-log.addHandler(hdl)
+dlog.setLevel(logging.INFO)
+dlog.addHandler(hdl)
+
+#events log:
+elog=logging.getLogger('bot_events')
+hdl=logging.FileHandler('./logs/bot_events.log',mode='a')
+hdl.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+elog.setLevel(logging.INFO)
+elog.addHandler(hdl)
