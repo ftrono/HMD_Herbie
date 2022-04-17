@@ -14,66 +14,49 @@ from database.db_tools import db_connect, db_disconnect
 
 
 #find matching product and get info (ret -> DataFrame):
-def match_product(p_code=None, p_text=None, supplier=None):
+def match_product(p_text, supplier=None):
     Prodotti = pd.DataFrame()
-    if not p_code and not p_text:
-        log.error("match_product: no args for query.")
-        return Prodotti
-        
-    #a) if p_code is available -> directly extract the matching product (direct match):
-    if p_code != None:
-        p_code = int(p_code)
-        try:
-            conn, cursor = db_connect()
-            query = f"SELECT * FROM {SCHEMA}.prodotti WHERE codiceprod = {p_code}"
-            Prodotti = pd.read_sql(query, conn)
-            db_disconnect(conn, cursor)
-        except Exception as e:
-            log.error(f"DB query error for 'p_code'. {e}")
+    #tokenize p_text to extract p_name and find best matches in DB:
+    suppl = ""
+    if supplier:
+        suppl = f" WHERE produttore = '{supplier}'"
+    try:
+        conn, cursor = db_connect()
+        query = f"SELECT * FROM {SCHEMA}.prodotti{suppl}"
+        Prodotti = pd.read_sql(query, conn)
+        db_disconnect(conn, cursor)
+    except Exception as e:
+        log.error(f"DB query error for 'p_text'. {e}")
         return Prodotti
     
-    #b) tokenize p_text to extract p_name and find best matches in DB:
-    else:
-        suppl = ""
-        if supplier:
-            suppl = f" WHERE produttore = '{supplier}'"
-        try:
-            conn, cursor = db_connect()
-            query = f"SELECT * FROM {SCHEMA}.prodotti{suppl}"
-            Prodotti = pd.read_sql(query, conn)
-            db_disconnect(conn, cursor)
-        except Exception as e:
-            log.error(f"DB query error for 'p_code'.")
-            return Prodotti
-        
-        #count matches for each name:
-        p_text = p_text.strip()
-        tokens = p_text.split()
-        matches = {}
-        for ind in Prodotti.index:
-            cnt = 0
-            missed = 0
-            name = []
-            #if supplier not passed as arg -> search jointly in columns supplier and name:
-            if not supplier:
-                name = Prodotti['produttore'].iloc[ind].split()
-            name = name + Prodotti['nome'].iloc[ind].split()
-            for tok in tokens:
-                if tok in name:
-                    cnt = cnt+1
-                else:
-                    missed = missed+1
-                    #max 3 consecutive missed:
-                    if cnt <=1 and missed == 3:
-                        break
-            if cnt >= 1:
-                matches[ind] = cnt
-        
-        #fiter the dict keeping only the 5 items with the maximum frequency found:
-        matches = dict(filter(lambda elem: elem[1] == max(matches.values()), matches.items()))
-        Matches = Prodotti.iloc[list(matches.keys())[0:5]]
-        Matches.reset_index(drop=True, inplace=True)
-        return Matches
+    #count matches for each name:
+    p_text = p_text.strip()
+    tokens = p_text.split()
+    matches = {}
+    for ind in Prodotti.index:
+        cnt = 0
+        missed = 0
+        name = []
+        #if supplier not passed as arg -> search jointly in columns supplier and name:
+        if not supplier:
+            name = Prodotti['produttore'].iloc[ind].split()
+        name = name + Prodotti['nome'].iloc[ind].split()
+        for tok in tokens:
+            if tok in name:
+                cnt = cnt+1
+            else:
+                missed = missed+1
+                #max 3 consecutive missed:
+                if cnt <=1 and missed == 3:
+                    break
+        if cnt >= 1:
+            matches[ind] = cnt
+    
+    #fiter the dict keeping only the 3 items with the maximum frequency found:
+    matches = dict(filter(lambda elem: elem[1] == max(matches.values()), matches.items()))
+    Matches = Prodotti.iloc[list(matches.keys())[0:3]]
+    Matches.reset_index(drop=True, inplace=True)
+    return Matches
 
 
 #find matching supplier (ret -> List):
@@ -87,7 +70,7 @@ def match_supplier(s_text):
         db_disconnect(conn, cursor)
     except Exception as e:
         suppliers = []
-        log.error(f"DB query error for 'p_code'. {e}")
+        log.error(f"DB query error for 'supplier'. {e}")
         return suppliers
     
     #count matches for each name:

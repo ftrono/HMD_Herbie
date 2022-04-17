@@ -41,16 +41,24 @@ stories:
   - active_loop: null
   #reset and last sentences handled by custom action
 
-#stock info:
-- story: ask stock info - a) full path (need to order, add to order)
+#MAIN: find a product
+- story: ask find a product
   steps:
-  - intent: ask_stock_info
+  - intent: ask_find_product
   - action: utter_ok
   - action: find_prod_form #find prod
   - active_loop: find_prod_form
   - slot_was_set:
     - requested_slot: null
   - active_loop: null
+  - action: utter_ask_what
+  - checkpoint: product_found
+
+#ask stock info:
+- story: ask stock info - a) need to order -> add to order
+  steps:
+  - checkpoint: product_found
+  - intent: ask_stock_info
   - action: action_check_wh
   - slot_was_set:
     - need_order: True
@@ -63,28 +71,28 @@ stories:
   - action: action_add_to_list
   #reset and last sentences handled by custom action
 
-- story: ask stock info - b.1) sufficient stock
+- story: ask stock info - b) need to order -> don't order
   steps:
+  - checkpoint: product_found
   - intent: ask_stock_info
-  - action: utter_ok
-  - action: find_prod_form #find prod
-  - active_loop: find_prod_form
-  - slot_was_set:
-    - requested_slot: null
-  - active_loop: null
   - action: action_check_wh
   - slot_was_set:
-    - need_order: False
-  - action: action_reset_all_slots
-
-- story: ask stock info - b.2) don't order
-  steps:
+    - need_order: True
   - action: utter_ask_add_to_order
   - intent: deny
   - slot_was_set:
     - add_to_order: False
   - action: utter_ok
   - action: utter_available
+  - action: action_reset_all_slots
+
+- story: ask stock info - c) sufficient stock
+  steps:
+  - checkpoint: product_found
+  - intent: ask_stock_info
+  - action: action_check_wh
+  - slot_was_set:
+    - need_order: False
   - action: action_reset_all_slots
 
 #create order list:

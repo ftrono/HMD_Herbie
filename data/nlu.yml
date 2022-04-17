@@ -81,11 +81,13 @@ nlu:
     - cosa puoi fare?
 
 #product info:
-- intent: inform_p_code
+- intent: ask_find_product
   examples: |
-    - [91436804](p_code)
-    - [123456789143680](p_code)
-    - [12345678914368067930](p_code)
+    - trovami un prodotto
+    - cercami un prodotto
+    - cerca un prodotto nel magazzino
+    - fammi una ricerca
+    - ricerca prodotto
 
 - intent: inform_text
   examples: |
@@ -98,13 +100,33 @@ nlu:
     - esi
     - bio2
 
+- intent: inform_ordinal
+  examples: |
+    - il primo
+    - il secondo
+    - il terzo
+    - l'ultimo
+    - uno
+    - due
+    - tre
+    - il primo di questi
+    - il secondo della lista
+    - il terzo della lista
+    - l'ultimo di questi
+
+
 #inventory & orders:
 - intent: ask_stock_info
   examples: |
-    - herbie controllami una giacenza
-    - mi controlli i pezzi in magazzino di un prodotto?
-    - mi controlli una giacenza?
-    - fammi un controllo dei pezzi
+    - quanti pezzi abbiamo?
+    - quanti pezzi ci sono in magazzino?
+    - mi dici il numero dei pezzi?
+    - quante scorte ho?
+    - mi dici la quantità?
+    - mi controlli i pezzi in magazzino?
+    - mi controlli la giacenza?
+    - mi dici la giacenza?
+    - controllami la quantità
 
 - intent: ask_add_to_order
   examples: |
@@ -173,7 +195,3 @@ nlu:
     - no facciamone una da capo
     - facciamone una nuova
     - facciamone una da zero
-
-    
-# - lookup: countries
-#   - path/to/countries.txt

@@ -40,61 +40,100 @@ def reset_and_goto(slots, del_slots, req_slot=None):
     slots['requested_slot'] = req_slot
     return slots
 
+#check if user is referring to a previous match or has changed his mind:
+def check_intent(tracker, dispatcher, p_text):
+    intent = tracker.latest_message['intent'].get('name')
+    pos = 0
+    #if ordinal and previous list:
+    if intent == 'inform_ordinal':
+        p_text = p_text.replace("'", " ")
+        toks = p_text.split()
+        #check position:
+        for tok in toks:
+            if len(tok) > 1:
+                tok = tok[:-1]
+                if tok == 'prim' or tok == 'un':
+                    pos = 1
+                    break
+                elif tok == 'second' or tok == 'du':
+                    pos = 2
+                    break
+                elif tok == 'terz' or tok == 'tr' or tok == 'ultim':
+                    pos = -1
+                    break
+    return pos
+
 
 #Disambiguate product reference from DB:
 def disambiguate_prod(tracker, dispatcher, supplier=None, pieces=None):
-    #p_code -> from entity (numbers only):
-    p_code = next(tracker.get_latest_entity_values("p_code"), None)
     #p_text -> the intent text is temporarily saved by Rasa into "p_code" slot before validation:
     p_text = str(tracker.get_slot("p_code")) 
     supplier = supplier if supplier else None
-    print(p_code, p_text, supplier)
+    print(p_text, supplier)
 
     #fallback a: no info:
-    if p_code == None and p_text == None:
-        message = f"Mmm, mi manca qualche informazione. Puoi leggermi il codice a barre, oppure dirmi produttore e nome, o anche solo il nome!"
+    if p_text == None:
+        message = f"Mmm, mi manca qualche informazione. Dimmi produttore e nome del prodotto, o anche solo il nome!"
         dispatcher.utter_message(text=message)
         slots = {"p_code": None}
         return slots
     
-    #db extraction:
-    Matches = db_interactor.match_product(p_code, p_text, supplier)
-    
-    #fallback b: not found:
-    if Matches.empty == True:
-        suppstr = f"di {supplier} " if supplier else ""
-        given = "codice" if p_code != None else "nome"
-        message = f"Non ho trovato nessun prodotto {suppstr}con questo {given}."
-        dispatcher.utter_message(text=message)
-        slots = {"p_code": None}
-        return slots
+    #check if user uttered an ordinal:
+    matches = tracker.get_slot("matches")
+    pos = check_intent(tracker, dispatcher, p_text)
+    #a) if yes:
+    if matches != None and pos != 0:
+        #unpack JSON string to DataFrame:
+        Matches = json.loads(matches)
+        Matches = pd.DataFrame(Matches)
+        #get the reference row and proceed to edit info / add info:
+        if pos != -1:
+            pos = pos-1
+        Matches = Matches.iloc[[pos]]
+        Matches.reset_index(drop=True, inplace=True)
 
-    #fallback c: multiple found:
-    elif len(Matches.index) > 1:
-        message = f"Ho trovato più di un prodotto simile:"
-        for ind in Matches.index:
-            message = f"{message}\nDi {Matches['produttore'].iloc[ind]}, {Matches['nome'].iloc[ind]}."
-        dispatcher.utter_message(text=message)
-        slots = {"p_code": None}
-        return slots
-
-    #success: match found:
+    #b) else -> extract from DB:
     else:
-        p_code = Matches['codiceprod'].iloc[0]
-        supplier = Matches['produttore'].iloc[0]
-        p_name = Matches['nome'].iloc[0]
-        quantity = Matches['quantita'].iloc[0]
-        slots = {"p_code": str(p_code), "p_name": p_name, "supplier": supplier, "cur_quantity": str(quantity)}
-        message = f"Trovato! Di {supplier}, {p_name}."
-        #additional info on pieces:
-        if pieces == True:
-            if quantity == 1:
-                message = f"{message} Hai un solo pezzo."
-            else:
-                message = f"{message} Hai {quantity} pezzi."
-        #utter message:
-        dispatcher.utter_message(text=message)
-        return slots
+        Matches = db_interactor.match_product(p_text, supplier)
+    
+        #fallback b: not found:
+        if Matches.empty == True:
+            suppstr = f"di {supplier} " if supplier else ""
+            message = f"Non ho trovato nessun prodotto {suppstr}con questo nome."
+            dispatcher.utter_message(text=message)
+            slots = {"p_code": None, "matches": None}
+            return slots
+
+        #fallback c: multiple found:
+        elif len(Matches.index) > 1:
+            message = f"Ho trovato più di un prodotto simile:"
+            for ind in Matches.index:
+                message = f"{message}\nDi {Matches['produttore'].iloc[ind]}, {Matches['nome'].iloc[ind]}."
+            message = f"{message} Puoi dirmi se è uno di questi o riprovare."
+            dispatcher.utter_message(text=message)
+            #pack matches list to JSON:
+            matches = Matches.to_dict()
+            matches = json.dumps(matches)
+            #ret slots:
+            slots = {"p_code": None, "matches": matches}
+            return slots
+
+    #common success: match found:
+    p_code = Matches['codiceprod'].iloc[0]
+    supplier = Matches['produttore'].iloc[0]
+    p_name = Matches['nome'].iloc[0]
+    quantity = Matches['quantita'].iloc[0]
+    slots = {"p_code": str(p_code), "p_name": p_name, "supplier": supplier, "cur_quantity": str(quantity), "matches": None}
+    message = f"Trovato! Di {supplier}, {p_name}."
+    #additional info on pieces:
+    if pieces == True:
+        if quantity == 1:
+            message = f"{message} Hai un solo pezzo."
+        else:
+            message = f"{message} Hai {quantity} pezzi."
+    #utter message:
+    dispatcher.utter_message(text=message)
+    return slots
 
 
 #Get supplier reference from DB:

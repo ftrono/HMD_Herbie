@@ -15,8 +15,9 @@ intents:
   - bot_challenge
   - ask_capabilities
   #product info:
-  - inform_p_code
+  - ask_find_product
   - inform_text
+  - inform_ordinal
   #inventory & orders:
   - ask_stock_info
   - ask_add_to_order
@@ -32,7 +33,6 @@ intents:
 #ENTITIES:
 #to be captured by NLU:
 entities:
-  - p_code
   - pieces
 
 
@@ -71,6 +71,12 @@ slots:
         requested_slot: supplier
   
   p_name:
+    type: text
+    influence_conversation: False
+    mappings:
+    - type: custom
+  
+  matches:
     type: text
     influence_conversation: False
     mappings:
@@ -333,9 +339,10 @@ responses:
   - text: "Cos'altro posso fare?"
 
   utter_ask_what:
-  - text: "Ok! Cosa vuoi che faccia?"
-  - text: "Ok! Cosa ti può servire?"
-  - text: "Ok! Dimmi cosa posso fare!"
+  - text: "Cosa vuoi che faccia?"
+  - text: "Cosa ti serve?"
+  - text: "Cosa ti può servire?"
+  - text: "Dimmi cosa posso fare!"
 
   utter_ask_add_to_order:
   - text: "Vuoi che te lo segni come da ordinare?"
