@@ -1,3 +1,4 @@
+from fuzzywuzzy import fuzz
 from globals import *
 from database.db_tools import db_connect, db_disconnect
 
@@ -16,7 +17,7 @@ from database.db_tools import db_connect, db_disconnect
 #find matching product and get info (ret -> DataFrame):
 def match_product(p_text, supplier=None):
     Prodotti = pd.DataFrame()
-    #tokenize p_text to extract p_name and find best matches in DB:
+    #extract data from DB:
     suppl = ""
     if supplier:
         suppl = f" WHERE produttore = '{supplier}'"
@@ -29,39 +30,35 @@ def match_product(p_text, supplier=None):
         dlog.error(f"DB query error for 'p_text'. {e}")
         return Prodotti
     
-    #count matches for each name:
+    #analyze string similarity for each name:
     p_text = p_text.strip()
-    tokens = p_text.split()
     matches = {}
     for ind in Prodotti.index:
-        cnt = 0
-        missed = 0
-        name = []
+        name = ""
         #if supplier not passed as arg -> search jointly in columns supplier and name:
         if not supplier:
-            name = Prodotti['produttore'].iloc[ind].split()
-        name = name + Prodotti['nome'].iloc[ind].split()
-        for tok in tokens:
-            if tok in name:
-                cnt = cnt+1
-            else:
-                missed = missed+1
-                #max 3 consecutive missed:
-                if cnt <=1 and missed == 3:
-                    break
-        if cnt >= 1:
-            matches[ind] = cnt
+            name = f"{Prodotti['produttore'].iloc[ind]} "
+        name = f"{name}{Prodotti['nome'].iloc[ind]}"
+        #set similarity ratio:
+        matches[ind] = fuzz.token_set_ratio(p_text, name)
     
-    #fiter the dict keeping only the 3 items with the maximum frequency found:
-    matches = dict(filter(lambda elem: elem[1] == max(matches.values()), matches.items()))
-    Matches = Prodotti.iloc[list(matches.keys())[0:3]]
+    #fiter the dict keeping only the 3 items with the highest similarity:
+    matches = dict(sorted(matches.items(), key=lambda item: item[1], reverse=True)[:3])
+    inds = list(matches.keys())
+    if len(inds) < 2:
+        Matches = Prodotti.iloc[inds]
+        return Matches
+    #apply similarity threshold (delta > 10%):
+    elif matches[inds[0]] > matches[inds[1]]+10:
+        inds = [inds[0]]
+    Matches = Prodotti.iloc[inds]
     Matches.reset_index(drop=True, inplace=True)
     return Matches
 
 
 #find matching supplier (ret -> List):
 def match_supplier(s_text):
-    #tokenize s_text to extract supplier name and find best matches in DB:
+    #extract data from DB:
     try:
         conn, cursor = db_connect()
         query = f"SELECT produttore FROM {SCHEMA}.produttori"
@@ -73,29 +70,17 @@ def match_supplier(s_text):
         dlog.error(f"DB query error for 'supplier'. {e}")
         return suppliers
     
-    #count matches for each name:
+    #analyze string similarity for each name:
     s_text = s_text.strip()
-    tokens = s_text.split()
     matches = {}
     for ind in range(len(suppliers)):
-        cnt = 0
-        missed = 0
-        name = suppliers[ind].split()
-        for tok in tokens:
-            if tok in name:
-                cnt = cnt+1
-            else:
-                missed = missed+1
-                #max 3 consecutive missed:
-                if cnt <=1 and missed == 3:
-                    break
-        if cnt >= 1:
-            matches[ind] = cnt
+        #set similarity ratio:
+        matches[ind] = fuzz.token_set_ratio(s_text, suppliers[ind])
     
     #fiter the dict keeping only the 3 items with the maximum frequency found:
     matches = dict(filter(lambda elem: elem[1] == max(matches.values()), matches.items()))
     results = []
-    for ind in list(matches.keys())[0:3]:
+    for ind in list(matches.keys()):
         results.append(suppliers[ind])
     return results
 
@@ -188,7 +173,7 @@ def get_new_ordlist(conn, cursor, supplier):
     except Exception as e:
         dlog.error(f"Unable to perform get_new_ordlist for supplier {supplier}. {e}")
         
-    return latest_code, latest_date
+    return latest_code
 
 
 #c) edit order list:

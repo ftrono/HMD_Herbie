@@ -109,7 +109,7 @@ def disambiguate_prod(tracker, dispatcher, supplier=None, pieces=None):
 
         #fallback c: multiple found:
         elif len(Matches.index) > 1:
-            message = f"Ho trovato più di un prodotto simile:"
+            message = f"Ecco cosa ho trovato:"
             for ind in Matches.index:
                 message = f"{message}\nDi {Matches['produttore'].iloc[ind]}, {Matches['nome'].iloc[ind]}."
             message = f"{message} Puoi dirmi se è uno di questi o riprovare."
@@ -127,7 +127,7 @@ def disambiguate_prod(tracker, dispatcher, supplier=None, pieces=None):
     p_name = Matches['nome'].iloc[0]
     quantity = Matches['quantita'].iloc[0]
     slots = {"p_code": str(p_code), "p_name": p_name, "supplier": supplier, "cur_quantity": str(quantity), "matches": None}
-    message = f"Trovato! Di {supplier}, {p_name}."
+    message = f"Ok, di {supplier}, {p_name}."
     #additional info on pieces:
     if pieces == True:
         if quantity == 1:
