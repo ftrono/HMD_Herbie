@@ -39,33 +39,33 @@ rules:
 
 #STOP RULES:
 #during forms:
-- rule: early stop - find_prod_form
+- rule: completed - find_prod_form
   condition:
   - active_loop: find_prod_form
   steps:
-  - intent: stop
+  - intent: completed
   - action: action_deactivate_loop
   - active_loop: null
   - action: utter_ok
   - action: utter_available
   - action: action_reset_all_slots
 
-- rule: early stop - find_supplier_form
+- rule: completed - find_supplier_form
   condition:
   - active_loop: find_supplier_form
   steps:
-  - intent: stop
+  - intent: completed
   - action: action_deactivate_loop
   - active_loop: null
   - action: utter_ok
   - action: utter_available
   - action: action_reset_all_slots
 
-- rule: early stop - wh_update_form
+- rule: completed - wh_update_form
   condition:
   - active_loop: wh_update_form
   steps:
-  - intent: stop
+  - intent: completed
   - action: action_deactivate_loop
   - active_loop: null
   - action: utter_ok

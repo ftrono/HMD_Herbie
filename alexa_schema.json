@@ -1,7 +1,7 @@
 {
     "interactionModel": {
         "languageModel": {
-            "invocationName": "assistente erbi",
+            "invocationName": "assistente negozio",
             "intents": [
                 {
                     "name": "ReturnUserInput",

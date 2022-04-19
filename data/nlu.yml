@@ -11,15 +11,14 @@ nlu:
     - ciao herbie
     - hey herbie
 
-- intent: stop
+- intent: completed
   examples: |
-    - basta così
-    - no basta
-    - basta basta
-    - fermati qui
-    - fermiamoci
-    - va bene così
-    - ok stop
+    - finito
+    - ho finito
+    - completato
+    - è tutto
+    - detto tutto
+    - fatto
 
 - intent: thanks
   examples: |
@@ -80,15 +79,62 @@ nlu:
     - cosa sei in grado di fare?
     - cosa puoi fare?
 
-#product info:
+- intent: ask_guidance
+  examples: |
+    - come funzioni?
+    - cosa devo dire?
+    - cosa posso chiederti?
+    - cosa ti devo dire?
+    - cosa ti posso dire?
+    - cosa vuoi che ti dica?
+    - come posso parlarti?
+    - cosa capisci?
+
+#main commands:
 - intent: ask_find_product
   examples: |
+    - aiutami a trovare un prodotto
+    - aiutami a cercare un prodotto
     - trovami un prodotto
     - cercami un prodotto
+    - trovarmi un prodotto
+    - cercarmi un prodotto
     - cerca un prodotto nel magazzino
-    - fammi una ricerca
+    - fammi una ricerca prodotto
     - ricerca prodotto
 
+- intent: ask_find_supplier
+  examples: |
+    - aiutami a trovare un fornitore
+    - aiutami a cercare un produttore
+    - aiutami a trovare un'azienda
+    - trovami un fornitore
+    - cercami un produttore
+    - cerca un'azienda
+    - trova un'azienda
+    - trovarmi un produttore
+    - cercarmi un fornitore
+    - cerca un produttore nel magazzino
+    - trova un'azienda nel magazzino
+    - ricerca produttore
+    - ricerca fornitore
+    - ricerca azienda
+
+- intent: ask_wh_update
+  examples: |
+    - aggiorniamo le giacenze
+    - aiutami ad aggiornare le giacenze
+    - aggiorniamo le giacenze dei prodotti
+    - aggiorniamo i pezzi venduti
+    - aggiorniamo i pezzi entrati
+    - devo aggiornare i dati al magazzino
+    - aggiorna magazzino
+    - aggiorna giacenze
+    - puoi aggiornarmi i dati al magazzino?
+    - mi aggiorneresti i dati al magazzino?
+    - mi aggiorneresti le giacenze prodotti?
+
+#product info:
 - intent: inform_text
   examples: |
     - nome
@@ -138,13 +184,6 @@ nlu:
     - segnalo per il prossimo ordine
 
 #warehouse:
-- intent: ask_wh_update
-  examples: |
-    - devo aggiornare i dati al magazzino
-    - aggiorna magazzino
-    - puoi aggiornarmi i dati al magazzino?
-    - mi aggiorneresti i dati al magazzino?
-
 - intent: inform_pieces
   examples: |
     - [6](pieces) pezzi
@@ -185,6 +224,8 @@ nlu:
     - prepara una lista ordine
     - mi aiuti a fare un ordine?
     - facciamo un ordine
+    - prepariamo un ordine
+    - scriviamo un ordine
 
 - intent: ask_new_list
   examples: |

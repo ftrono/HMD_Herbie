@@ -8,21 +8,25 @@ session_config:
 #USER INTENTS:
 intents:
   - greet
-  - stop
+  - completed
   - thanks
   - affirm
   - deny
+  #user guidance:
   - bot_challenge
   - ask_capabilities
-  #product info:
+  - ask_guidance
+  #main commands:
   - ask_find_product
+  - ask_find_supplier
+  - ask_wh_update
+  #product info:
   - inform_text
   - inform_ordinal
   #inventory & orders:
   - ask_stock_info
   - ask_add_to_order
   #warehouse:
-  - ask_wh_update
   - inform_pieces
   - inform_decr_pieces
   #orders:
@@ -51,7 +55,7 @@ slots:
     influence_conversation: True
     mappings:
     - type: from_text
-      not_intent: stop
+      not_intent: completed
       conditions:
       - active_loop: find_prod_form
         requested_slot: p_code
@@ -65,7 +69,7 @@ slots:
     influence_conversation: True
     mappings:
     - type: from_text
-      not_intent: stop
+      not_intent: completed
       conditions:
       - active_loop: find_supplier_form
         requested_slot: supplier
@@ -106,7 +110,7 @@ slots:
       not_intent:
         - inform_pieces
         - inform_decr_pieces
-        - stop
+        - completed
       conditions:
         - active_loop: wh_update_form
           requested_slot: variation
@@ -119,7 +123,7 @@ slots:
     mappings:
     - type: from_entity
       entity: pieces
-      not_intent: stop
+      not_intent: completed
 
   #2) stock:
   need_order:
@@ -146,7 +150,7 @@ slots:
         - affirm
         - inform_pieces
         - deny
-        - stop
+        - completed
 
   #3) orders:
   new_list:
@@ -202,7 +206,7 @@ slots:
         - affirm
         - inform_pieces
         - deny
-        - stop
+        - completed
       conditions:
         - active_loop: read_order_form
           requested_slot: keep
@@ -241,7 +245,7 @@ slots:
       not_intent:
         - inform_pieces
         - deny
-        - stop
+        - completed
       conditions:
         - active_loop: suggest_order_form
           requested_slot: add_sugg
@@ -260,7 +264,7 @@ responses:
   - text: "Ma figurati!"
 
   utter_available:
-  - text: "Se ti serve altro mi trovi qui quando vuoi!"
+  - text: "Sai dove trovarmi!"
   - text: "Se ti serve altro mi trovi qui."
   - text: "Resto a disposizione!"
   - text: "Chiamami pure quando vuoi!"
@@ -284,7 +288,10 @@ responses:
   - text: "Mi chiamo Herbie! Sono il tuo shop manager digitale. La mia missione è di aiutarti a gestire il negozio!"
 
   utter_mycapabilities:
-  - text: "Posso aiutarti a creare un inventario dei tuoi prodotti! Ti guiderò a catalogarli e potrai chiedermi informazioni su quantitativi, giacenze e caratteristiche. Posso anche aiutarti a compilare una lista ordini, suggerirti prodotti in esaurimento e offrirti viste del magazzino!"
+  - text: "Puoi chiedermi di cercarti un prodotto nel tuo magazzino: ti darò informazioni sulle giacenze disponibili, i prezzi ed eventuali allergeni. Puoi chiedermi di cercarti un fornitore: posso aiutarti a compilare una lista ordini, suggerirti prodotti in esaurimento e offrirti viste del magazzino! Oppure puoi chiedermi di aggiornare le giacenze per più prodotti!"
+
+  utter_guidance:
+  - text: "Memorizza questi 3 comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'aggiorniamo le giacenze'. Ti guiderò io in tutto!"
 
   utter_done:
   - text: "Fatto!"
@@ -357,7 +364,7 @@ responses:
   - text: "Quale produttore?"
   
   utter_ready_to_order:
-  - text: "Sono pronto a preparare l'ordine per {supplier}!"
+  - text: "Sono pronta a preparare l'ordine per {supplier}!"
   - text: "Prepariamo l'ordine per {supplier}!"
 
   utter_ask_read:
@@ -384,8 +391,8 @@ responses:
   - text: "Certo! Dimmi, uno alla volta, per quali prodotti vuoi aggiornare le giacenze. Iniziamo con il primo."
 
   utter_guidance_read:
-  - text: "Ok! Ti leggo i prodotti che abbiamo segnato: dimmi se tenerli o rimuoverli e quanti pezzi vuoi ordinare! Inizio col primo."
-  - text: "Ok! Ti leggo la lista: per ogni prodotto, dimmi se tenerlo o rimuoverlo e quanti pezzi vuoi ordinare! Iniziamo con il primo."
+  - text: "Ok! Ti leggo i prodotti che abbiamo segnato: dimmi se tenerli o rimuoverli e quanti pezzi vuoi ordinare! Inizio."
+  - text: "Ok! Ti leggo la lista: per ogni prodotto, dimmi se tenerlo o rimuoverlo e quanti pezzi vuoi ordinare! Iniziamo."
 
   utter_guidance_write:
   - text: "Dettami tu, uno alla volta, il nome dei prodotti di {supplier} da ordinare. Iniziamo col primo!"
@@ -458,4 +465,3 @@ forms:
   suggest_order_form:
     required_slots:
     - add_sugg
-
