@@ -21,6 +21,7 @@ intents:
   - ask_find_supplier
   - ask_wh_update
   #product info:
+  - ask_price
   - inform_text
   - inform_ordinal
   #inventory & orders:
@@ -249,6 +250,73 @@ slots:
       conditions:
         - active_loop: suggest_order_form
           requested_slot: add_sugg
+  
+  #product info:
+  category:
+    type: text
+    influence_conversation: False
+    mappings:
+    - type: custom
+  
+  price:
+    type: float
+    influence_conversation: False
+    mappings:
+    - type: custom
+  
+  discount:
+    type: float
+    influence_conversation: False
+    mappings:
+    - type: custom
+  
+  vat:
+    type: float
+    influence_conversation: False
+    mappings:
+    - type: custom
+
+  cost:
+    type: float
+    influence_conversation: False
+    mappings:
+    - type: custom
+  
+  tot_cost:
+    type: float
+    influence_conversation: False
+    mappings:
+    - type: custom
+
+  tot_value:
+    type: float
+    influence_conversation: False
+    mappings:
+    - type: custom
+  
+  vegan:
+    type: text
+    influence_conversation: False
+    mappings:
+    - type: custom
+
+  no_lactose:
+    type: text
+    influence_conversation: False
+    mappings:
+    - type: custom
+
+  no_gluten:
+    type: text
+    influence_conversation: False
+    mappings:
+    - type: custom
+
+  no_sugar:
+    type: text
+    influence_conversation: False
+    mappings:
+    - type: custom
 
 
 #AGENT'S RESPONSES:
@@ -364,8 +432,8 @@ responses:
   - text: "Quale produttore?"
   
   utter_ready_to_order:
-  - text: "Sono pronta a preparare l'ordine per {supplier}!"
-  - text: "Prepariamo l'ordine per {supplier}!"
+  - text: "Sono pronta a preparare l'ordine!"
+  - text: "Prepariamo l'ordine!"
 
   utter_ask_read:
   - text: "Vuoi che te la rilegga prima di andare avanti?"
@@ -412,9 +480,13 @@ actions:
   #global slots validation:
   #- action_validate_slot_mappings
   #custom actions:
+  #gen:
   - action_reset_all_slots
   - action_reset_ord_slots
   - action_utter_greet
+  #prod info:
+  - action_utter_price
+  #orders:
   - action_check_wh
   - action_add_to_list
   - action_get_ordlist

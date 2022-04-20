@@ -1,0 +1,101 @@
+version: "3.0"
+stories:
+
+#FIND A PRODUCT:
+# - product info
+# - others & alternate
+
+#MAIN ENTRY POINT:
+- story: ask find a product
+  steps:
+  - intent: ask_find_product
+  - action: action_reset_all_slots
+  - action: utter_ok
+  - action: find_prod_form #find prod
+  - active_loop: find_prod_form
+  - slot_was_set:
+    - requested_slot: null
+  - active_loop: null
+  - action: utter_ask_what
+  - checkpoint: product_found
+
+#SUBTASK 1) ask stock info:
+#entry point - from main:
+- story: ask stock info - 0.a) from find_product
+  steps:
+  - checkpoint: product_found
+  - intent: ask_stock_info
+  - checkpoint: stock_info
+
+#entry point - alternate:
+- story: ask stock info - 0.b) direct ask
+  steps:
+  - intent: ask_stock_info
+  - action: action_reset_all_slots
+  - action: utter_ok
+  - action: find_prod_form #find prod
+  - active_loop: find_prod_form
+  - slot_was_set:
+    - requested_slot: null
+  - active_loop: null
+  - checkpoint: stock_info
+
+#storylines:
+- story: ask stock info - 1.a) sufficient stock
+  steps:
+  - checkpoint: stock_info
+  - action: action_check_wh
+  - slot_was_set:
+    - need_order: False
+  - action: utter_ask_more
+  - checkpoint: product_found
+
+- story: ask stock info - 1.b) need to order
+  steps:
+  - checkpoint: stock_info
+  - action: action_check_wh
+  - slot_was_set:
+    - need_order: True
+  - checkpoint: need_to_order
+
+- story: ask stock info - 1.b.a) need to order -> don't order
+  steps:
+  - checkpoint: need_to_order
+  - action: utter_ask_add_to_order
+  - or:
+    - intent: affirm
+    - intent: inform_pieces
+  - slot_was_set:
+    - add_to_order: True
+  - action: action_add_to_list
+  - action: utter_ask_more
+  - checkpoint: product_found
+
+- story: ask stock info - 1.b.b) need to order -> don't order
+  steps:
+  - checkpoint: need_to_order
+  - action: utter_ask_add_to_order
+  - intent: deny
+  - slot_was_set:
+    - add_to_order: False
+  - action: utter_ok
+  - action: utter_ask_more
+  - checkpoint: product_found
+
+#SUBTASK 2) ask price:
+- story: ask stock info - 0.a) from find_product
+  steps:
+  - checkpoint: product_found
+  - intent: ask_price
+  - action: action_utter_price
+  - action: utter_ask_more
+  - checkpoint: product_found
+
+#END:
+- story: product -> done enough
+  steps:
+  - checkpoint: product_found
+  - intent: deny
+  - action: utter_ok
+  - action: utter_available
+  - action: action_reset_all_slots

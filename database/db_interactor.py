@@ -18,12 +18,12 @@ from database.db_tools import db_connect, db_disconnect
 def match_product(p_text, supplier=None):
     Prodotti = pd.DataFrame()
     #extract data from DB:
-    suppl = ""
+    suppstr = ""
     if supplier:
-        suppl = f" WHERE produttore = '{supplier}'"
+        suppstr = f"WHERE prodotti.produttore = '{supplier}'"
     try:
         conn, cursor = db_connect()
-        query = f"SELECT * FROM {SCHEMA}.prodotti{suppl}"
+        query = f"SELECT prodotti.*, produttori.scontomedio, categorie.aliquota FROM {SCHEMA}.prodotti INNER JOIN {SCHEMA}.produttori ON prodotti.produttore = produttori.produttore INNER JOIN {SCHEMA}.categorie ON prodotti.categoria = categorie.categoria {suppstr}"
         Prodotti = pd.read_sql(query, conn)
         db_disconnect(conn, cursor)
     except Exception as e:
@@ -45,10 +45,15 @@ def match_product(p_text, supplier=None):
     #fiter the dict keeping only the 3 items with the highest similarity:
     matches = dict(sorted(matches.items(), key=lambda item: item[1], reverse=True)[:3])
     inds = list(matches.keys())
-    if len(inds) < 2:
+    #if 0 good matches (less 20% confidence) -> return empty dataframe:
+    if matches[inds[0]] <= 20:
+        Matches = pd.DataFrame()
+        return Matches
+    #elif 1 good match -> return it:
+    elif len(inds) < 2:
         Matches = Prodotti.iloc[inds]
         return Matches
-    #apply similarity threshold (delta > 10%):
+    #else: apply similarity threshold (delta > 10%):
     elif matches[inds[0]] > matches[inds[1]]+10:
         inds = [inds[0]]
     Matches = Prodotti.iloc[inds]

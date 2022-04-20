@@ -1,0 +1,64 @@
+version: "3.0"
+stories:
+
+#BASICS:
+# - chatbot info
+# - update inventory
+
+#basics -> chatbot info:
+- story: basics
+  steps:
+  - intent: greet
+  - action: action_utter_greet
+  - intent: bot_challenge
+  - action: utter_iamabot
+  - intent: ask_capabilities
+  - action: utter_mycapabilities
+  - intent: ask_guidance
+  - action: utter_guidance
+  - intent: thanks
+  - action: utter_welcome
+  - action: action_reset_all_slots
+
+#after a task:
+- story: clarify what else to do
+  steps:
+  - action: utter_ask_more
+  - intent: affirm #need to reset?
+  - action: utter_ask_what
+
+- story: done enough
+  steps:
+  - action: utter_ask_more
+  - intent: deny
+  - action: utter_ok
+  - action: utter_available
+  - action: action_reset_all_slots
+
+#UPDATE WAREHOUSE:
+#MAIN ENTRY POINT:
+- story: ask warehouse update - full
+  steps:
+  - intent: ask_wh_update
+  - action: utter_guidance_wo #wh_upd form
+  - action: wh_update_form
+  - active_loop: wh_update_form
+  - slot_was_set:
+    - requested_slot: null
+  - active_loop: null
+  - action: action_reset_all_slots
+
+#deviations:
+- story: ask warehouse update - completed
+  steps:
+  - intent: ask_wh_update
+  - action: utter_guidance_wo #wh_upd form
+  - action: wh_update_form
+  - active_loop: wh_update_form
+  - intent: completed
+  - action: action_deactivate_loop
+  - active_loop: null
+  - action: utter_order_ready
+  - action: utter_available
+
+

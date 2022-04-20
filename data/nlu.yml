@@ -134,7 +134,7 @@ nlu:
     - mi aggiorneresti i dati al magazzino?
     - mi aggiorneresti le giacenze prodotti?
 
-#product info:
+#1) PRODUCT:
 - intent: inform_text
   examples: |
     - nome
@@ -160,8 +160,7 @@ nlu:
     - il terzo della lista
     - l'ultimo di questi
 
-
-#inventory & orders:
+#stock_info:
 - intent: ask_stock_info
   examples: |
     - quanti pezzi abbiamo?
@@ -182,6 +181,18 @@ nlu:
     - ti ricordi di metterlo in lista?
     - mettimelo in lista ordini
     - segnalo per il prossimo ordine
+
+#price:
+- intent: ask_price
+  examples: |
+    - quanto costa?
+    - qual è il prezzo?
+    - qual è il prezzo al pubblico?
+    - prezzo
+    - mi dici il prezzo?
+    - dimmi il prezzo
+    - prezzo di listino
+    - qual è il prezzo di listino?
 
 #warehouse:
 - intent: inform_pieces

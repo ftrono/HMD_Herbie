@@ -1,24 +1,20 @@
 version: "3.0"
-
 rules:
-#GENERAL:
-- rule: introduce myself
-  steps:
-  - intent: bot_challenge
-  - action: utter_iamabot
 
+#fallback:
+- rule: low confidence
+  steps:
+  - intent: nlu_fallback
+  - action: utter_please_rephrase
+
+#"thanks" -> reset all:
 - rule: you're welcome
   steps:
   - intent: thanks
   - action: utter_welcome
   - action: action_reset_all_slots
 
-- rule: low confidence
-  steps:
-  - intent: nlu_fallback
-  - action: utter_please_rephrase
-
-#DB FAIL:
+#DB fail -> reset all:
 - rule: DB fail
   condition:
   - slot_was_set:
@@ -26,7 +22,7 @@ rules:
   steps:
   - action: action_reset_all_slots
 
-#FORCED MAPPINGS:
+#forced intent mappings:
 - rule: inform prod
   steps:
   - action: utter_ask_p_code
@@ -37,8 +33,7 @@ rules:
   - action: utter_ask_supplier
   - intent: inform_text
 
-#STOP RULES:
-#during forms:
+#stop -> early interrupt main search forms:
 - rule: completed - find_prod_form
   condition:
   - active_loop: find_prod_form
@@ -53,17 +48,6 @@ rules:
 - rule: completed - find_supplier_form
   condition:
   - active_loop: find_supplier_form
-  steps:
-  - intent: completed
-  - action: action_deactivate_loop
-  - active_loop: null
-  - action: utter_ok
-  - action: utter_available
-  - action: action_reset_all_slots
-
-- rule: completed - wh_update_form
-  condition:
-  - active_loop: wh_update_form
   steps:
   - intent: completed
   - action: action_deactivate_loop

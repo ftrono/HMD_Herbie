@@ -7,6 +7,7 @@ from globals import *
 from database.db_tools import db_connect, db_disconnect
 import database.db_interactor as db_interactor
 import actions.commons as commons
+import actions.orders as orders
 import utils
 
 
@@ -23,7 +24,8 @@ class ActionResetAllSlots(Action):
         domain: Dict[Text, Any]
         ) -> List[Dict[Text, Any]]:
 
-        return [AllSlotsReset()]
+        slots_set = commons.reset_all(tracker)
+        return slots_set
 
 
 #Create Order -> reset recurrent slots for order preparation:
@@ -54,6 +56,24 @@ class ActionUtterGreet(Action):
         ) -> List[Dict[Text, Any]]:
 
         message = utils.adapt_greeting()
+        dispatcher.utter_message(text=message)
+        return []
+
+
+#PRODUCTS:
+#Product Info:
+#1) price:
+class ActionUtterPrice(Action):
+    def name(self) -> Text:
+            return "action_utter_price"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        price = float(tracker.get_slot("price"))
+        message = f"Il prezzo di listino è {utils.readable_price(price)}."
         dispatcher.utter_message(text=message)
         return []
 
@@ -137,9 +157,13 @@ class ActionAddToList(Action):
                 dispatcher.utter_message(text=message)
         else:
             dispatcher.utter_message(response="utter_ok")
-        return [AllSlotsReset(), SlotSet('ord_code', None)]
+        
+        #reset all:
+        slots_set = commons.reset_all(tracker)
+        return slots_set
 
 
+#ORDERS:
 #Create Order -> get latest order list from DB:
 class ActionGetOrdList(Action):
     def name(self) -> Text:
@@ -180,7 +204,7 @@ class ActionGetOrdList(Action):
                 num_str = f"{num_prods} prodotti"
                 if num_prods == 1:
                     num_str = "un prodotto"
-                read_date = commons.readable_date(slots['ord_date'])
+                read_date = utils.readable_date(slots['ord_date'])
                 message = f"Abbiamo una lista aperta, modificata per ultimo {read_date}, con {num_str}."
                 dispatcher.utter_message(text=message)
                 slots['new_list'] = False
@@ -284,7 +308,7 @@ class ActionAskKeep(Action):
         #get JSON list to read:
         ord_list = tracker.get_slot('ord_list')
         #extract p_code and read message:
-        slots = commons.read_ord_list(dispatcher, ord_list)
+        slots = orders.read_ord_list(dispatcher, ord_list)
         if slots['p_code'] != None:
             dispatcher.utter_message(response='utter_ask_keep_piece')
         
@@ -306,7 +330,7 @@ class ActionAskAddSugg(Action):
         slots = tracker.current_slot_values()
         
         #2) read next prod in JSON list: extract p_code and read message:
-        slots = commons.read_ord_list(dispatcher, slots['ord_list'], suggest_mode=True)
+        slots = orders.read_ord_list(dispatcher, slots['ord_list'], suggest_mode=True)
         if slots['p_code'] != None:
             dispatcher.utter_message(response='utter_ask_sugg_pieces')
         
@@ -430,7 +454,7 @@ class ValidateReadOrderForm(FormValidationAction):
         
         #update warehouse and reset form:
         elog.info(f"Ok, {slots['keep']}, {slots['pieces']}")
-        slots = commons.update_ord_list(dispatcher, slots)
+        slots = orders.update_ord_list(dispatcher, slots)
         return slots
 
 
@@ -464,7 +488,7 @@ class ValidateWriteOrderForm(FormValidationAction):
         if slots['pieces'] != None:
             #update warehouse and reset form:
             elog.info(f"Ok, {slots['p_code']}, {slots['pieces']}")
-            slots = commons.write_ord_list(dispatcher, slots, next_slot='p_code')
+            slots = orders.write_ord_list(dispatcher, slots, next_slot='p_code')
         else:
             message = f"Mmm, non ho capito bene."
             dispatcher.utter_message(text=message)
@@ -495,7 +519,7 @@ class ValidateSuggestOrderForm(FormValidationAction):
             if slots['add_sugg'] == False:
                 dispatcher.utter_message(response='utter_skip')
                 #update JSON reading list only (no DB):
-                slots['ord_list'] = commons.update_reading_list(slots['ord_list'])
+                slots['ord_list'] = orders.update_reading_list(slots['ord_list'])
                 #if empty list:
                 if slots['ord_list'] == None:
                     message = f"Non ho trovato altri prodotti di {slots['supplier']} con meno di {THRESHOLD_TO_ORD} pezzi!"
@@ -518,5 +542,5 @@ class ValidateSuggestOrderForm(FormValidationAction):
         #b) update order list in DB, JSON reading list and reset form:
         else:
             elog.info(f"Ok, {slots['add_sugg']}, {slots['pieces']}")
-            slots = commons.write_ord_list(dispatcher, slots, next_slot='add_sugg', update_json=True)
+            slots = orders.write_ord_list(dispatcher, slots, next_slot='add_sugg', update_json=True)
         return slots

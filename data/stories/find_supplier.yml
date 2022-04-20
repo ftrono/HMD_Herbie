@@ -1,107 +1,15 @@
 version: "3.0"
-
 stories:
 
-#basics:
-- story: basics
-  steps:
-  - intent: greet
-  - action: action_utter_greet
-  - intent: bot_challenge
-  - action: utter_iamabot
-  - intent: ask_capabilities
-  - action: utter_mycapabilities
-  - intent: ask_guidance
-  - action: utter_guidance
-  - intent: thanks
-  - action: utter_welcome
-  - action: action_reset_all_slots
+#FIND A SUPPLIER:
+# - order lists
+# - others & alternate
 
-- story: clarify what else to do
-  steps:
-  - action: utter_ask_more
-  - intent: affirm #need to reset?
-  - action: utter_ask_what
-
-- story: done enough
-  steps:
-  - action: utter_ask_more
-  - intent: deny
-  - action: utter_ok
-  - action: utter_available
-  - action: action_reset_all_slots
-
-#MAIN: update warehouse:
-- story: ask warehouse update - full
-  steps:
-  - intent: ask_wh_update
-  - action: utter_guidance_wo #wh_upd form
-  - action: wh_update_form
-  - active_loop: wh_update_form
-  - slot_was_set:
-    - requested_slot: null
-  - active_loop: null
-  #reset and last sentences handled by custom action
-
-#MAIN: find a product
-- story: ask find a product
-  steps:
-  - intent: ask_find_product
-  - action: utter_ok
-  - action: find_prod_form #find prod
-  - active_loop: find_prod_form
-  - slot_was_set:
-    - requested_slot: null
-  - active_loop: null
-  - action: utter_ask_what
-  - checkpoint: product_found
-
-#ask stock info:
-- story: ask stock info - a) need to order -> add to order
-  steps:
-  - checkpoint: product_found
-  - intent: ask_stock_info
-  - action: action_check_wh
-  - slot_was_set:
-    - need_order: True
-  - action: utter_ask_add_to_order
-  - or:
-    - intent: affirm
-    - intent: inform_pieces
-  - slot_was_set:
-    - add_to_order: True
-  - action: action_add_to_list
-  #reset and last sentences handled by custom action
-
-- story: ask stock info - b) need to order -> don't order
-  steps:
-  - checkpoint: product_found
-  - intent: ask_stock_info
-  - action: action_check_wh
-  - slot_was_set:
-    - need_order: True
-  - action: utter_ask_add_to_order
-  - intent: deny
-  - slot_was_set:
-    - add_to_order: False
-  - action: utter_ok
-  - action: utter_available
-  - action: action_reset_all_slots
-
-- story: ask stock info - c) sufficient stock
-  steps:
-  - checkpoint: product_found
-  - intent: ask_stock_info
-  - action: action_check_wh
-  - slot_was_set:
-    - need_order: False
-  - action: action_reset_all_slots
-
-
-#MAIN: find a supplier
+#MAIN ENTRY POINT:
 - story: ask find a supplier
   steps:
   - intent: ask_find_supplier
+  - action: action_reset_all_slots
   - action: utter_ok
   - action: find_supplier_form #find supplier
   - active_loop: find_supplier_form
@@ -111,7 +19,8 @@ stories:
   - action: utter_ask_what
   - checkpoint: supplier_found
 
-#main entry point - create order list:
+#SUBTASK 1) create order list:
+#entry point - from main:
 - story: create order - 0.a) from find_supplier
   steps:
   - checkpoint: supplier_found
@@ -119,16 +28,18 @@ stories:
   - action: utter_ok
   - checkpoint: create_order
 
-#alternative: create order list:
+#entry point - alternate:
 - story: create order - 0.b) direct ask
   steps:
   - intent: inform_need_order
+  - action: action_reset_all_slots
   - action: utter_ok
   - action: find_supplier_form #find supplier
   - active_loop: find_supplier_form
   - active_loop: null
   - checkpoint: create_order
 
+#storylines:
 - story: create order - 1.a) new list -> write
   steps:
   - checkpoint: create_order
