@@ -19,6 +19,11 @@ nlu:
     - è tutto
     - detto tutto
     - fatto
+    - no basta così
+    - no basta
+    - basta così
+    - a posto così
+    - no a posto
 
 - intent: thanks
   examples: |
@@ -97,8 +102,6 @@ nlu:
     - aiutami a cercare un prodotto
     - trovami un prodotto
     - cercami un prodotto
-    - trovarmi un prodotto
-    - cercarmi un prodotto
     - cerca un prodotto nel magazzino
     - fammi una ricerca prodotto
     - ricerca prodotto
@@ -112,8 +115,6 @@ nlu:
     - cercami un produttore
     - cerca un'azienda
     - trova un'azienda
-    - trovarmi un produttore
-    - cercarmi un fornitore
     - cerca un produttore nel magazzino
     - trova un'azienda nel magazzino
     - ricerca produttore
@@ -182,7 +183,18 @@ nlu:
     - mettimelo in lista ordini
     - segnalo per il prossimo ordine
 
-#price:
+#prod info:
+- intent: ask_prodinfo
+  examples: |
+    - leggimi le info del prodotto
+    - leggimi le informazioni del prodotto
+    - dammi le informazioni del prodotto
+    - dimmi i dettagli del prodotto
+    - elencami i dettagli prodotto
+    - parlami del prodotto
+    - che prodotto è?
+    - cos'ha il prodotto?
+
 - intent: ask_price
   examples: |
     - quanto costa?
@@ -193,6 +205,63 @@ nlu:
     - dimmi il prezzo
     - prezzo di listino
     - qual è il prezzo di listino?
+
+- intent: ask_cat_vat
+  examples: |
+    - a quale categoria appartiene il prodotto?
+    - che categoria è?
+    - che categoria ha il prodotto?
+    - quale aliquota?
+    - quale aliquota si applica?
+    - il prodotto quale aliquota IVA vuole?
+    - mi dici l'aliquota IVA?
+
+- intent: ask_allergens
+  examples: |
+    - il prodotto ha allergeni?
+    - che allergeni ci sono?
+    - quali allergeni contiene?
+    - mi elenchi gli allergeni?
+    - controlla gli allergeni
+    - dimmi se contiene allergeni
+    - leggimi gli allergeni
+    - verifica allergie
+    - controlla gli ingredienti
+    - può causare intolleranze?
+
+- intent: ask_vegan
+  examples: |
+    - il prodotto è vegano?
+    - mi dici se è vegano?
+    - controlla se è vegano
+    - è vegano?
+    - è adatto ai vegani?
+
+- intent: ask_nolactose
+  examples: |
+    - il prodotto contiene lattosio?
+    - il prodotto è senza lattosio?
+    - c'è lattosio?
+    - contiene lattosio?
+    - è senza lattosio?
+    - contiene tracce di lattosio?
+
+- intent: ask_nogluten
+  examples: |
+    - il prodotto contiene glutine?
+    - il prodotto è senza glutine?
+    - c'è glutine?
+    - contiene glutine?
+    - è senza glutine?
+    - contiene tracce di glutine?
+
+- intent: ask_nosugar
+  examples: |
+    - il prodotto contiene zucchero?
+    - il prodotto è senza zucchero?
+    - c'è zucchero?
+    - contiene zucchero?
+    - è senza zucchero?
 
 #warehouse:
 - intent: inform_pieces

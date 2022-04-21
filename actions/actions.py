@@ -7,8 +7,8 @@ from globals import *
 from database.db_tools import db_connect, db_disconnect
 import database.db_interactor as db_interactor
 import actions.commons as commons
+import actions.products as products
 import actions.orders as orders
-import utils
 
 
 #CUSTOM ACTIONS & FORMS VALIDATION
@@ -55,14 +55,30 @@ class ActionUtterGreet(Action):
         domain: Dict[Text, Any]
         ) -> List[Dict[Text, Any]]:
 
-        message = utils.adapt_greeting()
+        message = commons.adapt_greeting()
         dispatcher.utter_message(text=message)
         return []
 
 
 #PRODUCTS:
 #Product Info:
-#1) price:
+class ActionUtterProdInfo(Action):
+    def name(self) -> Text:
+            return "action_utter_prodinfo"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        slots = tracker.current_slot_values()
+        if slots['p_code'] == None:
+            message = f"Chiedimi di trovare un prodotto, potrò risponderti subito dopo."
+        else:
+            message = products.read_prodinfo(slots)
+        dispatcher.utter_message(text=message)
+        return []
+
 class ActionUtterPrice(Action):
     def name(self) -> Text:
             return "action_utter_price"
@@ -72,8 +88,118 @@ class ActionUtterPrice(Action):
         domain: Dict[Text, Any]
         ) -> List[Dict[Text, Any]]:
 
-        price = float(tracker.get_slot("price"))
-        message = f"Il prezzo di listino è {utils.readable_price(price)}."
+        price = tracker.get_slot("price")
+        if price == None:
+            message = f"Chiedimi di trovare un prodotto, potrò risponderti subito dopo."
+        else:
+            message = f"Il prezzo di listino è {products.readable_price(price)}."
+        dispatcher.utter_message(text=message)
+        return []
+
+class ActionUtterCatVat(Action):
+    def name(self) -> Text:
+            return "action_utter_cat_vat"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        category = tracker.get_slot("category")
+        vat = tracker.get_slot("vat")
+        if category == None or vat == None:
+            message = f"Chiedimi di trovare un prodotto, potrò risponderti subito dopo."
+        else:
+            message = products.read_cat_vat(category, vat)
+        dispatcher.utter_message(text=message)
+        return []
+
+class ActionUtterAllergens(Action):
+    def name(self) -> Text:
+            return "action_utter_allergens"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        vegan = tracker.get_slot("vegan")
+        nolactose = tracker.get_slot("no_lactose")
+        nogluten = tracker.get_slot("no_gluten")
+        nosugar = tracker.get_slot("no_sugar")
+        if vegan == None or nolactose == None or nogluten == None or nosugar == None:
+            message = f"Chiedimi di trovare un prodotto, potrò risponderti subito dopo."
+        else:
+            message = products.read_allergens(vegan, nolactose, nogluten, nosugar)
+        dispatcher.utter_message(text=message)
+        return []
+
+class ActionUtterVegan(Action):
+    def name(self) -> Text:
+            return "action_utter_vegan"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        vegan = tracker.get_slot("vegan")
+        if vegan == None:
+            message = f"Chiedimi di trovare un prodotto, potrò risponderti subito dopo."
+        else:
+            message = products.read_vegan(vegan)
+        dispatcher.utter_message(text=message)
+        return []
+
+class ActionUtterNoLactose(Action):
+    def name(self) -> Text:
+            return "action_utter_nolactose"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        vegan = tracker.get_slot("vegan")
+        nolactose = tracker.get_slot("no_lactose")
+        if vegan == None or nolactose == None:
+            message = f"Chiedimi di trovare un prodotto, potrò risponderti subito dopo."
+        else:
+            message = products.read_nolactose(vegan, nolactose)
+        dispatcher.utter_message(text=message)
+        return []
+
+class ActionUtterNoGluten(Action):
+    def name(self) -> Text:
+            return "action_utter_nogluten"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        nogluten = tracker.get_slot("no_gluten")
+        if nogluten == None:
+            message = f"Chiedimi di trovare un prodotto, potrò risponderti subito dopo."
+        else:
+            message = products.read_nogluten(nogluten)
+        dispatcher.utter_message(text=message)
+        return []
+
+class ActionUtterNoSugar(Action):
+    def name(self) -> Text:
+            return "action_utter_nosugar"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        nosugar = tracker.get_slot("no_sugar")
+        if nosugar == None:
+            message = f"Chiedimi di trovare un prodotto, potrò risponderti subito dopo."
+        else:
+            message = products.read_nosugar(nosugar)
         dispatcher.utter_message(text=message)
         return []
 
@@ -126,8 +252,8 @@ class ActionAddToList(Action):
         err = False
         slots = tracker.current_slot_values()
         if slots['add_to_order'] == True:
-            #store number of pieces to add, if said:
-            if slots['pieces'] == None:
+            #store number of pieces to add, if said, and prepare message for later:
+            if slots['pieces'] == None or slots['pieces'] == str(1):
                 slots['pieces'] = 1
                 message = "Segnato nella prossima lista ordini!"
             else:
@@ -204,7 +330,7 @@ class ActionGetOrdList(Action):
                 num_str = f"{num_prods} prodotti"
                 if num_prods == 1:
                     num_str = "un prodotto"
-                read_date = utils.readable_date(slots['ord_date'])
+                read_date = commons.readable_date(slots['ord_date'])
                 message = f"Abbiamo una lista aperta, modificata per ultimo {read_date}, con {num_str}."
                 dispatcher.utter_message(text=message)
                 slots['new_list'] = False

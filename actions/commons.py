@@ -1,12 +1,16 @@
 from rasa_sdk.events import SlotSet
+import random
 from globals import *
-from database.db_tools import db_connect, db_disconnect
 import database.db_interactor as db_interactor
 
 #COMMONS:
 #Python functions that are used across multiple custom actions / forms:
 # - convert_to_slotset()
 # - reset_and_goto()
+# - reset_all()
+# - adapt_greeting()
+# - readable_date()
+# - check_intent()
 # - disambiguate_prod()
 # - disambiguate_supplier()
 # - update_warehouse()
@@ -43,6 +47,55 @@ def reset_all(tracker):
     for sname in slots.keys():
         slots_set.append(SlotSet(sname, None))
     return slots_set
+
+
+#answer "ciao" or adapted greet depending on random prob:
+def adapt_greeting():
+    pick = random.randint(0, 10)
+    if pick <= 5:
+        #simple greet:
+        message = "Ciao!"
+    else:
+        #get current time of the day:
+        now = datetime.now(pytz.timezone('Europe/Rome'))
+        hour = int(now.hour)
+        #adapt greet:
+        if hour < 13:
+            message = f"Buongiorno!"
+        elif hour >= 13 and hour < 18:
+            message = "Buon pomeriggio!"
+        else:
+            message = "Buonasera!"
+    return message
+
+
+#convert date to readable:
+def readable_date(datestr):
+    #orig date (format: '%Y-%m-%d'):
+    comps = datestr.split('-')
+    date_orig = date(int(comps[0]), int(comps[1]), int(comps[2]))
+    mon = MONTHS[int(comps[1])-1]
+    read_date = f"{int(comps[2])} {mon} {comps[0]}"
+
+    #today:
+    td = datetime.now(pytz.timezone('Europe/Rome'))
+    td = td.strftime('%Y-%m-%d')
+    comps_td = td.split('-')
+    date_today = date(int(comps_td[0]), int(comps_td[1]), int(comps_td[2]))
+
+    #datedif (in number of days):
+    datedif = (date_today-date_orig).days
+
+    #message:
+    if datedif == 0:
+        read_str = f"oggi"
+    elif datedif == 1:
+        read_str = f"ieri"
+    elif datedif > 1 and datedif <= 15:
+        read_str = f"{datedif} giorni fa, in data {read_date}"
+    else:
+        read_str = f"in data {read_date}"
+    return read_str
 
 
 #check if user is referring to a previous match or has changed his mind:
@@ -146,7 +199,7 @@ def disambiguate_prod(tracker, dispatcher, supplier=None, pieces=None):
         "category": Matches['categoria'].iloc[0], 
         "price": str(Matches['prezzo'].iloc[0]), 
         "discount": str(Matches['scontomedio'].iloc[0]), 
-        "vat": str(Matches['aliquota'].iloc[0]), 
+        "vat": str(int(Matches['aliquota'].iloc[0])), 
         "cost": str(cost),
         "tot_cost": str(tot_cost), 
         "tot_value": str(Matches['valoretotale'].iloc[0]), 
@@ -222,17 +275,17 @@ def update_warehouse(dispatcher, slots):
     var = "un pezzo" if int(slots['pieces']) == 1 else f"{slots['pieces']} pezzi"
 
     if ret == 0 and slots['variation'] == 'add':
-        message = f"Ti ho aggiunto {var} a {slots['p_name']} di {slots['supplier']}."
+        message = f"Ti ho aggiunto {var}!"
         dispatcher.utter_message(text=message)
         dispatcher.utter_message(response='utter_ask_next')
 
     elif ret == 0 and slots['variation'] == 'decrease':
-        message = f"Ti ho rimosso {var} a {slots['p_name']} di {slots['supplier']}."
+        message = f"Ti ho rimosso {var}!"
         dispatcher.utter_message(text=message)
         dispatcher.utter_message(response='utter_ask_next')
 
     else:
-        message = "C'è stato un problema con il mio database, ti chiedo scusa. Riprova al prossimo turno!"
+        message = "C'è stato un problema con il mio database, ti chiedo scusa. Riprova!"
         dispatcher.utter_message(text=message)
     #empty slots and restart form:
     ret_slots = reset_and_goto(slots, del_slots=['p_code', 'p_name', 'supplier', 'cur_quantity', 'variation'], req_slot='p_code')

@@ -20,13 +20,20 @@ intents:
   - ask_find_product
   - ask_find_supplier
   - ask_wh_update
-  #product info:
-  - ask_price
-  - inform_text
-  - inform_ordinal
   #inventory & orders:
   - ask_stock_info
   - ask_add_to_order
+  #product info:
+  - inform_text
+  - inform_ordinal
+  - ask_prodinfo
+  - ask_price
+  - ask_cat_vat
+  - ask_allergens
+  - ask_vegan
+  - ask_nolactose
+  - ask_nogluten
+  - ask_nosugar
   #warehouse:
   - inform_pieces
   - inform_decr_pieces
@@ -331,15 +338,8 @@ responses:
   - text: "Ma di nulla!"
   - text: "Ma figurati!"
 
-  utter_available:
-  - text: "Sai dove trovarmi!"
-  - text: "Se ti serve altro mi trovi qui."
-  - text: "Resto a disposizione!"
-  - text: "Chiamami pure quando vuoi!"
-  - text: "Alla prossima!"
-
   utter_ready:
-  - text: "Sono pronto!"
+  - text: "Sono pronta!"
   - text: "Certo!"
   - text: "Subito!"
   - text: "Certamente!"
@@ -386,13 +386,34 @@ responses:
   - text: "Ok, ignoro!"
   - text: "Ok, salto!"
 
-#product info:
+  utter_ask_more:
+  - text: "Può servirti altro?"
+  - text: "Ti può servire altro?"
+  - text: "Posso fare qualcos'altro?"
+  - text: "Cos'altro posso fare?"
+  - text: "Hai altre domande?"
+
+  utter_ask_what:
+  - text: "Cosa vuoi che faccia?"
+  - text: "Cosa ti serve?"
+  - text: "Cosa ti può servire?"
+  - text: "Dimmi cosa posso fare!"
+  - text: "Vuoi chiedermi qualcosa?"
+
+  utter_available:
+  - text: "Sai dove trovarmi!"
+  - text: "Se ti serve altro mi trovi qui."
+  - text: "Resto a disposizione!"
+  - text: "Chiamami pure quando vuoi!"
+  - text: "Alla prossima!"
+
+  #product info:
   utter_ask_p_code:
   - text: "Dimmi il prodotto!"
   - text: "Dimmi pure il prodotto!"
   - text: "Vai col prodotto!"
 
-#warehouse:
+  #warehouse:
   utter_ask_variation:
   - text: "Mi dici la variazione dei pezzi?"
   - text: "Variazione?"
@@ -408,23 +429,12 @@ responses:
   - text: "Continuiamo."
   - text: "Successivo."
 
-  utter_ask_more:
-  - text: "Può servirti altro?"
-  - text: "Posso fare qualcos'altro per te?"
-  - text: "Cos'altro posso fare?"
-
-  utter_ask_what:
-  - text: "Cosa vuoi che faccia?"
-  - text: "Cosa ti serve?"
-  - text: "Cosa ti può servire?"
-  - text: "Dimmi cosa posso fare!"
-
   utter_ask_add_to_order:
   - text: "Vuoi che te lo segni come da ordinare?"
   - text: "Lo includo nel prossimo ordine?"
   - text: "Te lo metto in lista per il prossimo ordine?"
 
-#orders:
+  #orders:
   utter_ask_supplier:
   - text: "Mi diresti il nome del produttore?"
   - text: "Qual è il produttore?"
@@ -485,7 +495,14 @@ actions:
   - action_reset_ord_slots
   - action_utter_greet
   #prod info:
+  - action_utter_prodinfo
   - action_utter_price
+  - action_utter_cat_vat
+  - action_utter_allergens
+  - action_utter_vegan
+  - action_utter_nolactose
+  - action_utter_nogluten
+  - action_utter_nosugar
   #orders:
   - action_check_wh
   - action_add_to_list

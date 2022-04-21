@@ -5,13 +5,13 @@ stories:
 # - product info
 # - others & alternate
 
-#MAIN ENTRY POINT:
+#ENTRY POINT:
 - story: ask find a product
   steps:
   - intent: ask_find_product
   - action: action_reset_all_slots
   - action: utter_ok
-  - action: find_prod_form #find prod
+  - action: find_prod_form
   - active_loop: find_prod_form
   - slot_was_set:
     - requested_slot: null
@@ -20,30 +20,10 @@ stories:
   - checkpoint: product_found
 
 #SUBTASK 1) ask stock info:
-#entry point - from main:
-- story: ask stock info - 0.a) from find_product
+- story: ask stock info - 1.a) sufficient stock
   steps:
   - checkpoint: product_found
   - intent: ask_stock_info
-  - checkpoint: stock_info
-
-#entry point - alternate:
-- story: ask stock info - 0.b) direct ask
-  steps:
-  - intent: ask_stock_info
-  - action: action_reset_all_slots
-  - action: utter_ok
-  - action: find_prod_form #find prod
-  - active_loop: find_prod_form
-  - slot_was_set:
-    - requested_slot: null
-  - active_loop: null
-  - checkpoint: stock_info
-
-#storylines:
-- story: ask stock info - 1.a) sufficient stock
-  steps:
-  - checkpoint: stock_info
   - action: action_check_wh
   - slot_was_set:
     - need_order: False
@@ -52,7 +32,8 @@ stories:
 
 - story: ask stock info - 1.b) need to order
   steps:
-  - checkpoint: stock_info
+  - checkpoint: product_found
+  - intent: ask_stock_info
   - action: action_check_wh
   - slot_was_set:
     - need_order: True
@@ -82,20 +63,48 @@ stories:
   - action: utter_ask_more
   - checkpoint: product_found
 
-#SUBTASK 2) ask price:
-- story: ask stock info - 0.a) from find_product
+#SUBTASKS 2) ask product info:
+- story: ask prodinfo
   steps:
   - checkpoint: product_found
+  - intent: ask_prodinfo
+  - action: action_utter_prodinfo
+  - action: utter_ask_more
   - intent: ask_price
   - action: action_utter_price
   - action: utter_ask_more
-  - checkpoint: product_found
+  - intent: ask_cat_vat
+  - action: action_utter_cat_vat
+  - action: utter_ask_more
+  - intent: ask_allergens
+  - action: action_utter_allergens
+  - action: utter_ask_more
+  - intent: ask_vegan
+  - action: action_utter_vegan
+  - action: utter_ask_more
+  - intent: ask_nolactose
+  - action: action_utter_nolactose
+  - action: utter_ask_more
+  - intent: ask_nogluten
+  - action: action_utter_nogluten
+  - action: utter_ask_more
+  - intent: ask_nosugar
+  - action: action_utter_nosugar
+  - action: utter_ask_more
+  - or:
+    - intent: deny
+    - intent: completed
+  - action: utter_ok
+  - action: utter_available
+  - action: action_reset_all_slots
 
 #END:
 - story: product -> done enough
   steps:
   - checkpoint: product_found
-  - intent: deny
+  - or:
+    - intent: deny
+    - intent: completed
   - action: utter_ok
   - action: utter_available
   - action: action_reset_all_slots
