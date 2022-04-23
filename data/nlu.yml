@@ -80,10 +80,14 @@ nlu:
 - intent: bot_challenge
   examples: |
     - chi sei?
+    - chi 6?
     - come ti chiami?
     - qual è il tuo nome?
     - sei un bot?
+    - 6 un bot?
     - sei 1 bot?
+    - 6 1 bot?
+    - 61 bot?
     - con chi parlo?
 
 - intent: ask_capabilities
@@ -92,7 +96,9 @@ nlu:
     - quali sono le tue abilità?
     - quali sono le tue capacità?
     - cosa sei capace di fare?
+    - cosa 6 capace di fare?
     - cosa sei in grado di fare?
+    - cosa 6 in grado di fare?
     - cosa puoi fare?
 
 - intent: ask_guidance
@@ -187,8 +193,11 @@ nlu:
     - il terzo
     - l'ultimo
     - uno
+    - 1
     - due
+    - 2
     - tre
+    - 3
     - il primo di questi
     - il secondo della lista
     - il terzo della lista
@@ -361,6 +370,7 @@ nlu:
     - no facciamone una da capo
     - facciamone una nuova
     - facciamone una da zero
+    - facciamone una da 0
 
 #ord cost:
 - intent: ask_tot_ordcost

@@ -125,13 +125,13 @@ def check_intent(tracker, dispatcher, p_text):
         for tok in toks:
             if len(tok) > 1:
                 tok = tok[:-1]
-                if tok == 'prim' or tok == 'un':
+                if tok == 'prim' or tok == 'un' or str(tok) == '1':
                     pos = 1
                     break
-                elif tok == 'second' or tok == 'du':
+                elif tok == 'second' or tok == 'du' or str(tok) == '2':
                     pos = 2
                     break
-                elif tok == 'terz' or tok == 'tr':
+                elif tok == 'terz' or tok == 'tr' or str(tok) == '3':
                     pos = 3
                     break
                 elif tok == 'ultim':
