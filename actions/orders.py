@@ -79,7 +79,7 @@ def update_ord_list(dispatcher, slots):
                 ret = db_interactor.edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], slots['pieces'])
             else:
                 #no change to DB:
-                message = f"Mantengo il prodotto!"
+                message = f"Tenuto!"
         else:
             if slots['pieces'] == 1:
                 message = f"Ti ho segnato un pezzo."

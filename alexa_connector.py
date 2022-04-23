@@ -3,7 +3,7 @@ import json
 from sanic import Blueprint, response
 from sanic.request import Request
 from typing import Text, Optional, List, Dict, Any
-
+from globals import *
 from rasa.core.channels.channel import UserMessage, OutputChannel
 from rasa.core.channels.channel import InputChannel
 from rasa.core.channels.channel import CollectingOutputChannel
@@ -62,6 +62,7 @@ class AlexaConnector(InputChannel):
                     # get the user-provided text from
                     # the slot named "text"
                     text = payload["request"].get("intent", {}).get("slots",{}).get("text",{}).get("value","")
+                    elog.info(f"{text}")
 
                     # initialize output channel
                     out = CollectingOutputChannel()
@@ -71,7 +72,7 @@ class AlexaConnector(InputChannel):
                     await on_new_message(UserMessage(text, out,sender_id=sender_id))
                     # extract the text from Rasa's response
                     responses = [m["text"] for m in out.messages]
-                    if len(responses) >0:
+                    if len(responses) > 0:
                         message = " ".join(responses)
                     else:
                         message = "Non ho capito! Potresti ripetere?"

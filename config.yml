@@ -6,16 +6,12 @@ recipe: default.v1
 # https://rasa.com/docs/rasa/nlu/components/
 language: it
 
+# See https://rasa.com/docs/rasa/tuning-your-model for more information.
 pipeline:
-# # No configuration for the NLU pipeline was provided. The following default pipeline was used to train your model.
-# # If you'd like to customize it, uncomment and adjust the pipeline.
-# # See https://rasa.com/docs/rasa/tuning-your-model for more information.
-    #language model to load:
+  #language model to load:
   - name: SpacyNLP
     model: "it_core_news_sm"
-  #- name: SpacyTokenizer
   - name: WhitespaceTokenizer
-  #- name: SpacyFeaturizer
   - name: RegexFeaturizer
   - name: LexicalSyntacticFeaturizer
   - name: CountVectorsFeaturizer
@@ -27,22 +23,15 @@ pipeline:
     entity_recognition: True
     epochs: 100
     constrain_similarities: True
-  # - name: RegexEntityExtractor
-  #   use_lookup_tables: True
   - name: EntitySynonymMapper
   - name: ResponseSelector
     epochs: 100
     constrain_similarities: True
   - name: FallbackClassifier
-    threshold: 0.5
-    ambiguity_threshold: 0.3
+    threshold: 0.3
 
-# Configuration for Rasa Core.
-# https://rasa.com/docs/rasa/core/policies/
+# Configuration for Rasa Core - https://rasa.com/docs/rasa/core/policies/
 policies:
-# # No configuration for policies was provided. The following default policies were used to train your model.
-# # If you'd like to customize them, uncomment and adjust the policies.
-# # See https://rasa.com/docs/rasa/policies for more information.
   - name: MemoizationPolicy
   - name: RulePolicy
   - name: TEDPolicy

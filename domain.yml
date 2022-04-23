@@ -132,6 +132,11 @@ slots:
     mappings:
     - type: from_entity
       entity: pieces
+      intent: inform_pieces
+      not_intent: completed
+    - type: from_entity
+      entity: pieces
+      intent: inform_decr_pieces
       not_intent: completed
 
   #2) stock:
@@ -337,7 +342,7 @@ responses:
   - text: "Nulla!"
   - text: "Figurati!"
   - text: "Ma di nulla!"
-  - text: "Ma figurati!"
+  - text: "Ma figùrati!"
 
   utter_ready:
   - text: "Sono pronta!"

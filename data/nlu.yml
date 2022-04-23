@@ -46,10 +46,17 @@ nlu:
     - giusto
     - magari
     - magari grazie
+    - confermo
+    - sì confermo
+    - lo voglio
     - sì aggiungilo
     - si tienilo
     - sì lo voglio
     - sì questo sì
+    - leggi la lista
+    - leggi i prodotti
+    - rileggi
+    - leggi
 
 - intent: deny
   examples: |
@@ -66,6 +73,9 @@ nlu:
     - no ignora
     - no questo ignoralo
     - no salta
+    - non leggere
+    - no non leggere
+    - no vai avanti
 
 - intent: bot_challenge
   examples: |
@@ -73,6 +83,7 @@ nlu:
     - come ti chiami?
     - qual è il tuo nome?
     - sei un bot?
+    - sei 1 bot?
     - con chi parlo?
 
 - intent: ask_capabilities
@@ -98,25 +109,50 @@ nlu:
 #main commands:
 - intent: ask_find_product
   examples: |
-    - aiutami a trovare un prodotto
-    - aiutami a cercare un prodotto
-    - trovami un prodotto
+    - cerca un prodotto
+    - cerca 1 prodotto
     - cercami un prodotto
+    - cercami 1 prodotto
+    - trova un prodotto
+    - trova 1 prodotto
+    - trovami un prodotto
+    - trovami 1 prodotto
+    - aiutami a trovare un prodotto
+    - aiutami a trovare 1 prodotto
+    - aiutami a cercare un prodotto
+    - aiutami a cercare 1 prodotto
     - cerca un prodotto nel magazzino
+    - cerca 1 prodotto nel magazzino
     - fammi una ricerca prodotto
     - ricerca prodotto
 
 - intent: ask_find_supplier
   examples: |
-    - aiutami a trovare un fornitore
-    - aiutami a cercare un produttore
-    - aiutami a trovare un'azienda
-    - trovami un fornitore
+    - trova un produttore
+    - trova 1 produttore
+    - cerca un produttore
+    - cerca 1 produttore
+    - trova un fornitore
+    - trova 1 fornitore
+    - cerca un fornitore
+    - cerca 1 fornitore
     - cercami un produttore
+    - cercami 1 produttore
+    - cercami un fornitore
+    - trovami un produttore
+    - trovami 1 produttore
+    - trovami un fornitore
+    - trovami 1 fornitore
+    - aiutami a trovare un fornitore
+    - aiutami a trovare 1 fornitore
+    - aiutami a cercare un produttore
+    - aiutami a cercare 1 produttore
+    - aiutami a trovare un'azienda
+    - aiutami a trovare 1 azienda
     - cerca un'azienda
+    - cerca 1 azienda
     - trova un'azienda
-    - cerca un produttore nel magazzino
-    - trova un'azienda nel magazzino
+    - trova 1 azienda
     - ricerca produttore
     - ricerca fornitore
     - ricerca azienda
@@ -141,11 +177,8 @@ nlu:
     - nome
     - nome fiale
     - nome bustine
-    - prodotto nome compresse
+    - nome compresse
     - nome altro buste blister
-    - aboca
-    - esi
-    - bio2
 
 - intent: inform_ordinal
   examples: |
@@ -303,14 +336,21 @@ nlu:
 - intent: inform_need_order
   examples: |
     - ho bisogno di fare un ordine
+    - ho bisogno di fare 1 ordine
     - compiliamo una lista ordini
     - devo fare un ordine
+    - devo fare 1 ordine
     - dobbiamo preparare un ordine
+    - dobbiamo preparare 1 ordine
     - prepara una lista ordine
     - mi aiuti a fare un ordine?
+    - mi aiuti a fare 1 ordine?
     - facciamo un ordine
+    - facciamo 1 ordine
     - prepariamo un ordine
+    - prepariamo 1 ordine
     - scriviamo un ordine
+    - scriviamo 1 ordine
 
 - intent: ask_new_list
   examples: |
