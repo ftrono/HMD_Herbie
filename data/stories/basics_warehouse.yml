@@ -24,7 +24,7 @@ stories:
 - story: clarify what else to do
   steps:
   - action: utter_ask_more
-  - intent: affirm #need to reset?
+  - intent: affirm
   - action: utter_ask_what
 
 - story: done enough

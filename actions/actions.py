@@ -92,7 +92,7 @@ class ActionUtterPrice(Action):
         if price == None:
             message = f"Chiedimi di trovare un prodotto, potrò risponderti subito dopo."
         else:
-            message = f"Il prezzo di listino è {products.readable_price(price)}."
+            message = f"Il prezzo di listino è {commons.readable_price(price)}."
         dispatcher.utter_message(text=message)
         return []
 
@@ -114,9 +114,9 @@ class ActionUtterCatVat(Action):
         dispatcher.utter_message(text=message)
         return []
 
-class ActionUtterAllergens(Action):
+class ActionUtterCompatibility(Action):
     def name(self) -> Text:
-            return "action_utter_allergens"
+            return "action_utter_compatibility"
 
     def run(self, dispatcher: CollectingDispatcher,
         tracker: Tracker,
@@ -130,7 +130,7 @@ class ActionUtterAllergens(Action):
         if vegan == None or nolactose == None or nogluten == None or nosugar == None:
             message = f"Chiedimi di trovare un prodotto, potrò risponderti subito dopo."
         else:
-            message = products.read_allergens(vegan, nolactose, nogluten, nosugar)
+            message = products.read_compatibility(vegan, nolactose, nogluten, nosugar)
         dispatcher.utter_message(text=message)
         return []
 
@@ -464,6 +464,26 @@ class ActionAskAddSugg(Action):
         return slots_set
 
 
+#Create Order -> Get total cost of an order:
+class ActionUtterTotOrderCost(Action):
+    def name(self) -> Text:
+            return "action_utter_tot_ordcost"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        codiceord = tracker.get_slot("ord_code")
+        if codiceord == None:
+            message = f"Chiedimi di trovare una lista ordini, potrò risponderti subito dopo."
+        else:
+            tot_cost = orders.tot_ord_cost(codiceord)
+            message = f"Il costo totale stimato per l'ordine è {commons.readable_price(tot_cost)}."
+        dispatcher.utter_message(text=message)
+        return []
+
+
 #FORMS VALIDATION:
 #Finders -> find a product in DB:
 class ValidateFindProdForm(FormValidationAction):
@@ -598,7 +618,7 @@ class ValidateWriteOrderForm(FormValidationAction):
         ) -> Dict[Text, Any]:
 
         supplier = tracker.get_slot("supplier")
-        slots = commons.disambiguate_prod(tracker, dispatcher, supplier=supplier)
+        slots = commons.disambiguate_prod(tracker, dispatcher, supplier=supplier, pieces=True)
         return slots
 
     def validate_pieces(

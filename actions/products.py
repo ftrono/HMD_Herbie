@@ -1,9 +1,8 @@
-import math
 from globals import *
+import actions.commons as commons
 
 #PRODUCTS:
-# - readable_price()
-# - read_allergens()
+# - read_compatibility()
 # - read_prodinfo()
 # - read_cat_vat()
 # - read_vegan()
@@ -11,21 +10,9 @@ from globals import *
 # - read_nogluten()
 # - read_nosugar()
 
-#readable price:
-def readable_price(price):
-    price = float(price)
-    #modf -> returns a tuple with (decimal part, integer part):
-    parts = math.modf(price)
-    #integer part:
-    pricestr = f"{int(parts[1])} Euro"
-    #decimal part:
-    decs = int(parts[0]*100)
-    if decs != 0:
-        pricestr = f"{pricestr} e {decs}"
-    return pricestr
 
 #joint: product info:
-def read_allergens(vegan, nolactose, nogluten, nosugar):
+def read_compatibility(vegan, nolactose, nogluten, nosugar):
     message = "Il prodotto"
     if vegan == 'true':
         message = f"{message} è vegano, dunque è senza lattosio;"
@@ -46,7 +33,7 @@ def read_allergens(vegan, nolactose, nogluten, nosugar):
     return message
 
 def read_prodinfo(slots):
-    message = f"{slots['p_name']} è un prodotto di {slots['supplier']}, categoria {slots['category']}. Il prezzo di listino è {readable_price(slots['price'])} e include l'IVA al {slots['vat']}%. {read_allergens(slots['vegan'], slots['no_lactose'], slots['no_gluten'], slots['no_sugar'])}"
+    message = f"{slots['p_name']} è un prodotto di {slots['supplier']}, categoria {slots['category']}. Il prezzo di listino è {commons.readable_price(slots['price'])} e include l'IVA al {slots['vat']}%. {read_compatibility(slots['vegan'], slots['no_lactose'], slots['no_gluten'], slots['no_sugar'])}"
     return message
 
 

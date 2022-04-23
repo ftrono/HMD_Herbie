@@ -138,7 +138,8 @@ stories:
   - active_loop: suggest_order_form
   - active_loop: null
   - action: utter_order_ready
-  - action: utter_available
+  - action: action_utter_tot_ordcost
+  - action: utter_ask_more
 
 - story: create order - 4.b) suggest_order - stopped
   steps:
@@ -155,7 +156,8 @@ stories:
   - action: action_deactivate_loop
   - active_loop: null
   - action: utter_order_ready
-  - action: utter_available
+  - action: action_utter_tot_ordcost
+  - action: utter_ask_more
 
 - story: create order - 4.c) suggest_order - not found
   steps:
@@ -166,7 +168,8 @@ stories:
   - slot_was_set:
     - found: False
   - action: utter_order_ready
-  - action: utter_available
+  - action: action_utter_tot_ordcost
+  - action: utter_ask_more
 
 - story: create order - 4.d) suggest_order - don't suggest
   steps:
@@ -174,4 +177,35 @@ stories:
   - action: utter_ask_suggest_ord
   - intent: deny
   - action: utter_order_ready
+  - action: action_utter_tot_ordcost
+  - action: utter_ask_more
+
+#after a task:
+- story: supplier - clarify what else to do
+  steps:
+  - action: utter_ask_more
+  - intent: affirm
+  - action: utter_ask_what
+
+#END:
+#main_entry_point:
+- story: supplier -> done enough
+  steps:
+  - checkpoint: supplier_found
+  - or:
+    - intent: deny
+    - intent: completed
+  - action: utter_ok
   - action: utter_available
+  - action: action_reset_all_slots
+
+#alternate:
+- story: supplier -> done enough
+  steps:
+  - checkpoint: create_order
+  - or:
+    - intent: deny
+    - intent: completed
+  - action: utter_ok
+  - action: utter_available
+  - action: action_reset_all_slots

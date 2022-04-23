@@ -76,8 +76,8 @@ stories:
   - intent: ask_cat_vat
   - action: action_utter_cat_vat
   - action: utter_ask_more
-  - intent: ask_allergens
-  - action: action_utter_allergens
+  - intent: ask_compatibility
+  - action: action_utter_compatibility
   - action: utter_ask_more
   - intent: ask_vegan
   - action: action_utter_vegan
@@ -97,6 +97,13 @@ stories:
   - action: utter_ok
   - action: utter_available
   - action: action_reset_all_slots
+
+#after a task:
+- story: product - clarify what else to do
+  steps:
+  - action: utter_ask_more
+  - intent: affirm
+  - action: utter_ask_what
 
 #END:
 - story: product -> done enough

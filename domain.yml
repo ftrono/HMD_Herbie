@@ -20,16 +20,15 @@ intents:
   - ask_find_product
   - ask_find_supplier
   - ask_wh_update
-  #inventory & orders:
+  #product:
   - ask_stock_info
   - ask_add_to_order
-  #product info:
   - inform_text
   - inform_ordinal
   - ask_prodinfo
   - ask_price
   - ask_cat_vat
-  - ask_allergens
+  - ask_compatibility
   - ask_vegan
   - ask_nolactose
   - ask_nogluten
@@ -37,9 +36,11 @@ intents:
   #warehouse:
   - inform_pieces
   - inform_decr_pieces
-  #orders:
+  #supplier:
   - inform_need_order
   - ask_new_list
+  - ask_tot_ordcost
+  - ask_wh_value
 
 
 #ENTITIES:
@@ -498,7 +499,7 @@ actions:
   - action_utter_prodinfo
   - action_utter_price
   - action_utter_cat_vat
-  - action_utter_allergens
+  - action_utter_compatibility
   - action_utter_vegan
   - action_utter_nolactose
   - action_utter_nogluten
@@ -511,6 +512,7 @@ actions:
   - action_get_suggestion_list
   - action_ask_keep
   - action_ask_add_sugg
+  - action_utter_tot_ordcost
   #forms validation:
   - validate_find_prod_form
   - validate_find_supplier_form

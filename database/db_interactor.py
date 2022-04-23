@@ -234,19 +234,3 @@ def get_suggestion_list(conn, supplier, ord_code):
         dlog.error(f"Unable to perform get_suggestion_list for supplier {supplier}. {e}")
         
     return full_list, num_prods
-
-
-#get list of products from DB:
-def get_view_prodotti(supplier=None):
-    suppstr = ""
-    FullList = pd.DataFrame()
-    try:
-        conn, cursor = db_connect()
-        if supplier:
-            suppstr = f" WHERE produttore = {supplier}"
-        query = f"SELECT * FROM {SCHEMA}.prodotti{suppstr}"
-        FullList = pd.read_sql(query, conn)
-        db_disconnect(conn, cursor)
-    except Exception as e:
-        dlog.error(f"Unable to perform get_suggestion_list for supplier {supplier}. {e}")
-    return FullList

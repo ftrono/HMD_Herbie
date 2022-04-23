@@ -1,5 +1,5 @@
 from rasa_sdk.events import SlotSet
-import random
+import math, random
 from globals import *
 import database.db_interactor as db_interactor
 
@@ -9,6 +9,7 @@ import database.db_interactor as db_interactor
 # - reset_and_goto()
 # - reset_all()
 # - adapt_greeting()
+# - readable_price()
 # - readable_date()
 # - check_intent()
 # - disambiguate_prod()
@@ -67,6 +68,20 @@ def adapt_greeting():
         else:
             message = "Buonasera!"
     return message
+
+
+#readable price:
+def readable_price(price):
+    price = float(price)
+    #modf -> returns a tuple with (decimal part, integer part):
+    parts = math.modf(price)
+    #integer part:
+    pricestr = f"{int(parts[1])} Euro"
+    #decimal part:
+    decs = int(parts[0]*100)
+    if decs != 0:
+        pricestr = f"{pricestr} e {decs}"
+    return pricestr
 
 
 #convert date to readable:

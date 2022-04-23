@@ -12,11 +12,11 @@ from globals import *
 
 #EXPORT:
 #view Prodotti:
-def create_view_prodotti(schema, filename, supplier=None):
+def create_view_prodotti(filename, supplier=None):
     headers = {'Codice': 'codiceprod', 'Produttore': 'produttore', 'Nome': 'nome', 'Categoria': 'categoria', 'Quantita': 'quantita', 'Prezzo Pubblico €': 'prezzo', 'Sconto Medio %': 'scontomedio', 'IVA %': 'aliquota', 'Costo Acquisto €': 'costoacquisto', 'Costo Giacenze €': 'costototale', 'Valore Giacenze €': 'valoretotale', 'Disp Medico': 'dispmedico', 'Eta Minima': 'etaminima', ' Bio ': 'bio', ' Vegano ': 'vegano', 'Senza Glutine': 'senzaglutine', 'Senza Lattosio': 'senzalattosio', 'Senza Zucchero': 'senzazucchero'}
     #export table to pdf:
     try:
-        Prodotti = db_export.get_view_prodotti(schema, supplier)
+        Prodotti = db_export.get_view_prodotti(SCHEMA, supplier)
         if Prodotti.empty == False:
             #1) format adjustments:
             Vista = pd.DataFrame(columns=headers.keys())
@@ -58,7 +58,7 @@ def create_view_prodotti(schema, filename, supplier=None):
             #2) export:
             #load Pandas Excel exporter:
             writer = pd.ExcelWriter(filename)
-            Vista.to_excel(writer, sheet_name=schema, index=False, na_rep='')
+            Vista.to_excel(writer, sheet_name=SCHEMA, index=False, na_rep='')
             workbook  = writer.book
             fmt_price = workbook.add_format({'num_format': '#,##0.00'})
             fmt_pct = workbook.add_format({'num_format': '0%'})
@@ -67,24 +67,24 @@ def create_view_prodotti(schema, filename, supplier=None):
                 column_width = max(Vista[column].astype(str).map(len).max(), len(column))
                 col_idx = Vista.columns.get_loc(column)
                 if column in ['Prezzo Pubblico €', 'Costo Acquisto €', 'Costo Giacenze €', 'Valore Giacenze €']:
-                    writer.sheets[schema].set_column(first_col=col_idx, last_col=col_idx, width=column_width, cell_format=fmt_price)
+                    writer.sheets[SCHEMA].set_column(first_col=col_idx, last_col=col_idx, width=column_width, cell_format=fmt_price)
                 elif column in ['Sconto Medio %', 'IVA %']:
-                    writer.sheets[schema].set_column(first_col=col_idx, last_col=col_idx, width=column_width, cell_format=fmt_pct)
+                    writer.sheets[SCHEMA].set_column(first_col=col_idx, last_col=col_idx, width=column_width, cell_format=fmt_pct)
                 else:
-                    writer.sheets[schema].set_column(first_col=col_idx, last_col=col_idx, width=column_width)
+                    writer.sheets[SCHEMA].set_column(first_col=col_idx, last_col=col_idx, width=column_width)
             writer.save()
         return 0
     except Exception:
-        tlog.exception(f"Export error for xslx Prodotti for schema {schema}. {Exception}")
+        elog.exception(f"Export error for xslx Prodotti for schema {SCHEMA}. {Exception}")
         return -1
 
 
 #view Recap by produttore & categoria:
-def create_view_recap(schema, filename):
+def create_view_recap(filename):
     headers = {'Produttore': 'produttore', 'Categoria': 'categoria', 'Sconto Medio %': 'scontomedio', 'IVA %': 'aliquota', 'Quantita': 'quantita', 'Costo Giacenze €': 'costototale', 'Valore Giacenze €': 'valoretotale'}
     #export table to pdf:
     try:
-        Recap = db_export.get_view_recap(schema)
+        Recap = db_export.get_view_recap()
         if Recap.empty == False:
             #1) format adjustments:
             Vista = pd.DataFrame(columns=headers.keys())
@@ -112,7 +112,7 @@ def create_view_recap(schema, filename):
             #2) export:
             #load Pandas Excel exporter:
             writer = pd.ExcelWriter(filename)
-            Vista.to_excel(writer, sheet_name=schema, index=False, na_rep='')
+            Vista.to_excel(writer, sheet_name=SCHEMA, index=False, na_rep='')
             workbook  = writer.book
             fmt_price = workbook.add_format({'num_format': '#,##0.00'})
             fmt_pct = workbook.add_format({'num_format': '0%'})
@@ -121,27 +121,27 @@ def create_view_recap(schema, filename):
                 column_width = max(Vista[column].astype(str).map(len).max(), len(column))
                 col_idx = Vista.columns.get_loc(column)
                 if column in ['Costo Giacenze €', 'Valore Giacenze €']:
-                    writer.sheets[schema].set_column(first_col=col_idx, last_col=col_idx, width=column_width, cell_format=fmt_price)
+                    writer.sheets[SCHEMA].set_column(first_col=col_idx, last_col=col_idx, width=column_width, cell_format=fmt_price)
                 elif column in ['Sconto Medio %', 'IVA %']:
-                    writer.sheets[schema].set_column(first_col=col_idx, last_col=col_idx, width=column_width, cell_format=fmt_pct)
+                    writer.sheets[SCHEMA].set_column(first_col=col_idx, last_col=col_idx, width=column_width, cell_format=fmt_pct)
                 else:
-                    writer.sheets[schema].set_column(first_col=col_idx, last_col=col_idx, width=column_width)
+                    writer.sheets[SCHEMA].set_column(first_col=col_idx, last_col=col_idx, width=column_width)
             writer.save()
         return 0
     except Exception:
-        tlog.exception(f"Export error for xslx Recap for schema {schema}. {Exception}")
+        elog.exception(f"Export error for xslx Recap for schema {SCHEMA}. {Exception}")
         return -1
 
 
 #view ListaOrdine by produttore or codiceord:
-def create_view_listaordine(schema, filename, supplier=None, codiceord=None):
+def create_view_listaordine(filename, supplier=None, codiceord=None):
     if not supplier and not codiceord:
-        tlog.error(f"create_view_listaordine() needs either a supplier or an order code.")
+        elog.error(f"create_view_listaordine() needs either a supplier or an order code.")
         return -1
     headers = {'Codice Prodotto': 'codiceprod', 'Produttore': 'produttore', 'Nome': 'nome', 'Categoria': 'categoria', 'Quantita Ordine': 'quantita', 'Prezzo Pubblico €': 'prezzo', 'Sconto Medio %': 'scontomedio', 'IVA %': 'aliquota', 'Costo Acquisto €': 'costoacquisto', 'Costo Totale €': 'costototale', 'Valore Totale €': 'valoretotale'}
     #export table to pdf:
     try:
-        ListaOrdine = db_export.get_view_listaordine(schema, supplier=supplier, codiceord=codiceord)
+        ListaOrdine = db_export.get_view_listaordine(supplier=supplier, codiceord=codiceord)
         if ListaOrdine.empty == False:
             #1) format adjustments:
             Vista = pd.DataFrame(columns=headers.keys())
@@ -188,7 +188,7 @@ def create_view_listaordine(schema, filename, supplier=None, codiceord=None):
             #2) export:
             #load Pandas Excel exporter:
             writer = pd.ExcelWriter(filename)
-            Vista.to_excel(writer, sheet_name=schema, index=False, na_rep='')
+            Vista.to_excel(writer, sheet_name=SCHEMA, index=False, na_rep='')
             workbook  = writer.book
             fmt_price = workbook.add_format({'num_format': '#,##0.00'})
             fmt_pct = workbook.add_format({'num_format': '0%'})
@@ -197,24 +197,24 @@ def create_view_listaordine(schema, filename, supplier=None, codiceord=None):
                 column_width = max(Vista[column].astype(str).map(len).max(), len(column))
                 col_idx = Vista.columns.get_loc(column)
                 if column in ['Prezzo Pubblico €', 'Costo Acquisto €', 'Costo Totale €', 'Valore Totale €']:
-                    writer.sheets[schema].set_column(first_col=col_idx, last_col=col_idx, width=column_width, cell_format=fmt_price)
+                    writer.sheets[SCHEMA].set_column(first_col=col_idx, last_col=col_idx, width=column_width, cell_format=fmt_price)
                 elif column in ['Sconto Medio %', 'IVA %']:
-                    writer.sheets[schema].set_column(first_col=col_idx, last_col=col_idx, width=column_width, cell_format=fmt_pct)
+                    writer.sheets[SCHEMA].set_column(first_col=col_idx, last_col=col_idx, width=column_width, cell_format=fmt_pct)
                 else:
-                    writer.sheets[schema].set_column(first_col=col_idx, last_col=col_idx, width=column_width)
+                    writer.sheets[SCHEMA].set_column(first_col=col_idx, last_col=col_idx, width=column_width)
             writer.save()
         return 0
     except Exception:
-        tlog.exception(f"Export error for xslx ListaOrdine {codiceord if codiceord else supplier} for schema {schema}. {Exception}")
+        elog.exception(f"Export error for xslx ListaOrdine {codiceord if codiceord else supplier} for schema {SCHEMA}. {Exception}")
         return -1
 
 
 #view StoricoOrdini:
-def create_view_storicoordini(schema, filename):
+def create_view_storicoordini(filename):
     headers = {'Codice Ordine': 'codiceord', 'Produttore': 'produttore', 'Riferimento': 'riferimento', 'Data Modifica': 'datamodifica', 'Data Inoltro': 'datainoltro', 'Data Ricezione': 'dataricezione'}
     #export table to pdf:
     try:
-        Storico = db_export.get_view_storicoordini(schema)
+        Storico = db_export.get_view_storicoordini()
         if Storico.empty == False:
             #1) format adjustments:
             Vista = pd.DataFrame(columns=headers.keys())
@@ -228,14 +228,14 @@ def create_view_storicoordini(schema, filename):
             #2) export:
             #load Pandas Excel exporter:
             writer = pd.ExcelWriter(filename)
-            Vista.to_excel(writer, sheet_name=schema, index=False, na_rep='')
+            Vista.to_excel(writer, sheet_name=SCHEMA, index=False, na_rep='')
             #auto-adjust columns' width:
             for column in Vista:
                 column_width = max(Vista[column].astype(str).map(len).max(), len(column))
                 col_idx = Vista.columns.get_loc(column)
-                writer.sheets[schema].set_column(first_col=col_idx, last_col=col_idx, width=column_width)
+                writer.sheets[SCHEMA].set_column(first_col=col_idx, last_col=col_idx, width=column_width)
             writer.save()
         return 0
     except Exception:
-        tlog.exception(f"Export error for xslx StoricoOrdini for schema {schema}. {Exception}")
+        elog.exception(f"Export error for xslx StoricoOrdini for schema {SCHEMA}. {Exception}")
         return -1

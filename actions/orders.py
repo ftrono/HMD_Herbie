@@ -1,6 +1,7 @@
 from globals import *
 from database.db_tools import db_connect, db_disconnect
 import database.db_interactor as db_interactor
+import database.db_export as db_export
 import actions.commons as commons
 
 #ORDERS:
@@ -8,6 +9,7 @@ import actions.commons as commons
 # - update_reading_list()
 # - update_ord_list()
 # - write_ord_list()
+# - tot_ord_cost()
 
 
 #READ order list:
@@ -158,3 +160,22 @@ def write_ord_list(dispatcher, slots, next_slot, update_json=False):
     #6) restart form, keeping stored only the slots to be used forward:
     slots = commons.reset_and_goto(slots, del_slots=['p_code', 'p_name', 'pieces', 'add_sugg'], req_slot=next_slot)
     return slots
+
+
+#get total cost of an order list:
+def tot_ord_cost(codiceord):
+    tot_cost = 0
+    OrdList = db_export.get_view_listaordine(codiceord=codiceord)
+    if OrdList.empty == False:
+        tot_costs = []
+        for ind in OrdList.index:
+            #unit costs:
+            discount = OrdList['prezzo'].iloc[ind] * (OrdList['scontomedio'].iloc[ind]/100)
+            cost = OrdList['prezzo'].iloc[ind] - discount
+            cost = cost + (cost * (OrdList['aliquota'].iloc[ind]/100))
+            #total cost:
+            totcost = cost * OrdList['quantita'].iloc[ind]
+            tot_costs.append(totcost)
+        tot_cost = sum(tot_costs)
+    return tot_cost
+

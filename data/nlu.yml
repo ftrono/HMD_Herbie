@@ -216,18 +216,21 @@ nlu:
     - il prodotto quale aliquota IVA vuole?
     - mi dici l'aliquota IVA?
 
-- intent: ask_allergens
+- intent: ask_compatibility
   examples: |
-    - il prodotto ha allergeni?
-    - che allergeni ci sono?
-    - quali allergeni contiene?
-    - mi elenchi gli allergeni?
-    - controlla gli allergeni
-    - dimmi se contiene allergeni
-    - leggimi gli allergeni
-    - verifica allergie
+    - il prodotto contiene glutine, zucchero o lattosio?
+    - il prodotto contiene allergeni?
+    - controlla se contiene glutine, lattosio
+    - dimmi se contiene lattosio, zucchero
+    - mi dici se contiene glutine o lattosio?
+    - leggimi se ci sono zucchero, glutine, lattosio
+    - verifica se contiene glutine, lattosio
     - controlla gli ingredienti
+    - controlla gli allergeni
     - può causare intolleranze?
+    - mi interessa sapere se ha glutine, zucchero, lattosio
+    - contiene glutine o lattosio
+    - contiene lattosio o glutine
 
 - intent: ask_vegan
   examples: |
@@ -263,7 +266,8 @@ nlu:
     - contiene zucchero?
     - è senza zucchero?
 
-#warehouse:
+
+#2) WAREHOUSE:
 - intent: inform_pieces
   examples: |
     - [6](pieces) pezzi
@@ -294,6 +298,7 @@ nlu:
     - toglimi [2](pieces) pezzi
     - leva [3](pieces) pezzi
 
+#3) SUPPLIER:
 #orders_list:
 - intent: inform_need_order
   examples: |
@@ -316,3 +321,24 @@ nlu:
     - no facciamone una da capo
     - facciamone una nuova
     - facciamone una da zero
+
+#ord cost:
+- intent: ask_tot_ordcost
+  examples: |
+    - quanto costa l'ordine?
+    - a quanto ammonta l'ordine?
+    - a quanto stiamo?
+    - quanto vale l'ordine?
+    - costo totale dell'ordine?
+
+#inventory value:
+- intent: ask_wh_value
+  examples: |
+    - quanto valgono le giacenze?
+    - qual è il valore delle giacenze?
+    - a quanto ammontano le giacenze?
+    - valore delle giacenze?
+    - valore del magazzino?
+    - mi dici il valore del magazzino?
+    - mi dici il valore delle giacenze di questo prodotto?
+    - mi dici il valore delle giacenze di questo fornitore?
