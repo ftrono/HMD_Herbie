@@ -9,6 +9,7 @@ import database.db_interactor as db_interactor
 import actions.commons as commons
 import actions.products as products
 import actions.orders as orders
+import actions.views as views
 
 
 #CUSTOM ACTIONS & FORMS VALIDATION
@@ -480,6 +481,25 @@ class ActionUtterTotOrderCost(Action):
         else:
             tot_cost = orders.tot_ord_cost(codiceord)
             message = f"Il costo totale stimato per l'ordine è {commons.readable_price(tot_cost)}."
+        dispatcher.utter_message(text=message)
+        return []
+
+
+#Views -> Send view via tBot:
+class ActionSendView(Action):
+    def name(self) -> Text:
+            return "action_send_view"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        codiceord = tracker.get_slot("ord_code")
+        if codiceord == None:
+            message = f"Chiedimi di trovare una lista ordini, potrò risponderti subito dopo."
+        else:
+            message = views.get_vista(caller='lista_ordine', filter=codiceord)
         dispatcher.utter_message(text=message)
         return []
 

@@ -41,6 +41,7 @@ intents:
   - ask_new_list
   - ask_tot_ordcost
   - ask_wh_value
+  - ask_get_view
 
 
 #ENTITIES:
@@ -518,6 +519,7 @@ actions:
   - action_ask_keep
   - action_ask_add_sugg
   - action_utter_tot_ordcost
+  - action_send_view
   #forms validation:
   - validate_find_prod_form
   - validate_find_supplier_form

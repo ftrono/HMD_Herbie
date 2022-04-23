@@ -1,6 +1,7 @@
 import os, psycopg2, logging, configparser, time, json, pytz
 from datetime import datetime, date
 import pandas as pd
+import telegram
 
 #GLOBAL IMPORTS, PARAMETERS & INSTANTIATIONS:
 
@@ -9,12 +10,18 @@ THRESHOLD_TO_ORD = 5
 MONTHS = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
 
 #Config:
+#DB:
 config = configparser.ConfigParser()
-print(os.getcwd())
 config.read(os.getcwd()+"/database/db_credentials.ini")
-t_conf = config['DB']
-DATABASE_URL = t_conf.get('database_url')
-SCHEMA = t_conf.get('schema')
+d_conf = config['DB']
+DATABASE_URL = d_conf.get('database_url')
+SCHEMA = d_conf.get('schema')
+
+#t-Bot (for sending messages):
+config.read(os.getcwd()+"/t_credentials.ini")
+t_conf = config['TELEGRAM']
+TOKEN = t_conf.get('token')
+TBOT = telegram.Bot(token=TOKEN)
 
 #LOGS:
 #db log:

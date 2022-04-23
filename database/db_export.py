@@ -2,6 +2,20 @@ from globals import *
 from database.db_tools import db_connect, db_disconnect
 
 
+#get chat IDs to send the views to:
+def get_chat_IDs():
+    ids = []
+    try:
+        conn, cursor = db_connect()
+        query = f"SELECT DISTINCT chatid FROM utenti WHERE nomeschema = '{SCHEMA}'"
+        FullList = pd.read_sql(query, conn)
+        ids = FullList['chatid'].tolist()
+        db_disconnect(conn, cursor)
+    except psycopg2.Error as e:
+        dlog.error(f"Unable to extract chatID list for schema: {SCHEMA}. {e}")
+    return ids
+
+
 #get Products view from DB:
 def get_view_prodotti(supplier=None):
     suppstr = ""

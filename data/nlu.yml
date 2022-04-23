@@ -382,3 +382,15 @@ nlu:
     - mi dici il valore del magazzino?
     - mi dici il valore delle giacenze di questo prodotto?
     - mi dici il valore delle giacenze di questo fornitore?
+
+#ask send DB view:
+- intent: ask_get_view
+  examples: |
+    - mi invieresti la vista?
+    - mi invieresti la lista?
+    - mi invii la lista via Telegram?
+    - puoi inviarmi la vista via Telegram bot?
+    - inviami la vista su Telegram
+    - mandami la lista da stampare
+    - mandami il pdf
+    - inviami il file Excel

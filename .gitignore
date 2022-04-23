@@ -4,3 +4,4 @@ __pycache__
 logs/*
 models/*
 database/db_credentials.ini
+t_credentials.ini

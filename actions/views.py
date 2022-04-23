@@ -2,7 +2,7 @@ import database.db_interactor as db_interactor
 import database.db_export as db_export
 from globals import *
 
-#TBOT_EXPORTERS:
+#TBOT_VIEWS:
 #common functions with Telegram bot:
 # - create_view_prodotti()
 # - create_view_recap()
@@ -239,3 +239,49 @@ def create_view_storicoordini(filename):
     except Exception:
         elog.exception(f"Export error for xslx StoricoOrdini for schema {SCHEMA}. {Exception}")
         return -1
+
+
+#extract view and send it via tBot:
+def get_vista(caller, filter):
+    #get vista:
+    filter = filter if filter != 'all' else None
+    filterstr = f"_{filter}" if filter else ""
+    filename = f'./actions/data_cache/{SCHEMA}.{caller}{filterstr}.xlsx'
+    #forker:
+    if caller == 'prodotti':
+        ret = create_view_prodotti(filename, filter)
+    elif caller == 'recap':
+        ret = create_view_recap(filename)
+    elif caller == 'storico_ordini':
+        ret = create_view_storicoordini(filename)
+    elif caller == 'lista_ordine':
+        try:
+            ordcode = int(filter)
+            supplier = None
+            print(ordcode)
+        except:
+            ordcode = None
+            supplier = filter
+        ret = create_view_listaordine(filename, codiceord=ordcode)
+    else:
+        #no caller
+        message = f"Non ho capito bene."
+        return message
+    if ret == 0:
+        #3) send file to user:
+        try:
+            xlsx = open(filename, 'rb')
+            ids = db_export.get_chat_IDs()
+            for chat_id in ids:
+                TBOT.sendDocument(chat_id, xlsx)
+            os.remove(filename)
+            message = f"Ti ho inviato la vista su Telegram, pronta per la stampa. Dai un'occhiata!"
+            return message
+        except:
+            message = f"Non ho trovato dati."
+            return message
+    else:
+        message = f"Non ho trovato viste corrispondenti."
+        return message
+
+
