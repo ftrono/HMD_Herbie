@@ -123,20 +123,22 @@ def check_intent(tracker, dispatcher, p_text):
         toks = p_text.split()
         #check position:
         for tok in toks:
+            #if it's a word: cut word ending (to generalize):
             if len(tok) > 1:
                 tok = tok[:-1]
-                if tok == 'prim' or tok == 'un' or str(tok) == '1':
-                    pos = 1
-                    break
-                elif tok == 'second' or tok == 'du' or str(tok) == '2':
-                    pos = 2
-                    break
-                elif tok == 'terz' or tok == 'tr' or str(tok) == '3':
-                    pos = 3
-                    break
-                elif tok == 'ultim':
-                    pos = -1
-                    break
+            #classify:
+            if tok == 'prim' or tok == 'un' or str(tok) == '1':
+                pos = 1
+                break
+            elif tok == 'second' or tok == 'du' or str(tok) == '2':
+                pos = 2
+                break
+            elif tok == 'terz' or tok == 'tr' or str(tok) == '3':
+                pos = 3
+                break
+            elif tok == 'ultim':
+                pos = -1
+                break
     return pos
 
 
@@ -218,10 +220,11 @@ def disambiguate_prod(tracker, dispatcher, supplier=None, pieces=None):
         "cost": str(cost),
         "tot_cost": str(tot_cost), 
         "tot_value": str(Matches['valoretotale'].iloc[0]), 
+        "dispmedico": 'true' if Matches['dispmedico'].iloc[0] == True else 'false',
         "vegan": 'true' if Matches['vegano'].iloc[0] == True else 'false', 
-        "no_lactose": 'true' if Matches['senzalattosio'].iloc[0] else 'false', 
-        "no_gluten": 'true' if Matches['senzaglutine'].iloc[0] else 'false', 
-        "no_sugar": 'true' if Matches['senzazucchero'].iloc[0] else 'false'
+        "no_lactose": 'true' if Matches['senzalattosio'].iloc[0] == True else 'false', 
+        "no_gluten": 'true' if Matches['senzaglutine'].iloc[0] == True else 'false', 
+        "no_sugar": 'true' if Matches['senzazucchero'].iloc[0] == True else 'false'
         }
     
     #utter message:

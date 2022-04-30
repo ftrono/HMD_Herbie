@@ -115,6 +115,23 @@ class ActionUtterCatVat(Action):
         dispatcher.utter_message(text=message)
         return []
 
+class ActionUtterDispMedico(Action):
+    def name(self) -> Text:
+            return "action_utter_dispmedico"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        dispmedico = tracker.get_slot("dispmedico")
+        if dispmedico == None:
+            message = f"Chiedimi di trovare un prodotto, potrò risponderti subito dopo."
+        else:
+            message = products.read_dispmedico(dispmedico)
+        dispatcher.utter_message(text=message)
+        return []
+
 class ActionUtterCompatibility(Action):
     def name(self) -> Text:
             return "action_utter_compatibility"

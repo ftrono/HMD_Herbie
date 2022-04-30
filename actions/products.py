@@ -33,13 +33,24 @@ def read_compatibility(vegan, nolactose, nogluten, nosugar):
     return message
 
 def read_prodinfo(slots):
-    message = f"{slots['p_name']} è un prodotto di {slots['supplier']}, categoria {slots['category']}. Il prezzo di listino è {commons.readable_price(slots['price'])} e include l'IVA al {slots['vat']}%. {read_compatibility(slots['vegan'], slots['no_lactose'], slots['no_gluten'], slots['no_sugar'])}"
+    if slots['dispmedico'] == 'true':
+        read_disp = "E' un dispositivo medico."
+    else:
+        read_disp = "Non è un dispositivo medico."
+    message = f"{slots['p_name']} è un prodotto di {slots['supplier']}, categoria {slots['category']}. {read_disp} Il prezzo di listino è {commons.readable_price(slots['price'])} e include l'IVA al {slots['vat']}%. {read_compatibility(slots['vegan'], slots['no_lactose'], slots['no_gluten'], slots['no_sugar'])}"
     return message
 
 
 #separate: product info:
 def read_cat_vat(category, vat):
     message = f"Il prodotto appartiene alla categoria {category}, con IVA al {vat}%."
+    return message
+
+def read_dispmedico(dispmedico):
+    if dispmedico == 'true':
+        message = "Il prodotto è un dispositivo medico."
+    else:
+        message = "Il prodotto non è un dispositivo medico."
     return message
 
 def read_vegan(vegan):

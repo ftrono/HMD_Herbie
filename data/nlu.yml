@@ -258,6 +258,14 @@ nlu:
     - il prodotto quale aliquota IVA vuole?
     - mi dici l'aliquota IVA?
 
+- intent: ask_dispmedico
+  examples: |
+    - il prodotto è un dispositivo medico?
+    - mi dici se è un dispositivo medico?
+    - controlla se è un dispositivo medico
+    - verifica se è un dispositivo medico
+    - è un dispositivo medico?
+
 - intent: ask_compatibility
   examples: |
     - il prodotto contiene glutine, zucchero o lattosio?
@@ -279,6 +287,7 @@ nlu:
     - il prodotto è vegano?
     - mi dici se è vegano?
     - controlla se è vegano
+    - verifica se è vegano
     - è vegano?
     - è adatto ai vegani?
 
@@ -290,6 +299,8 @@ nlu:
     - contiene lattosio?
     - è senza lattosio?
     - contiene tracce di lattosio?
+    - controlla se ha lattosio
+    - verifica se contiene lattosio
 
 - intent: ask_nogluten
   examples: |
@@ -299,6 +310,8 @@ nlu:
     - contiene glutine?
     - è senza glutine?
     - contiene tracce di glutine?
+    - controlla se ha glutine
+    - verifica se contiene glutine
 
 - intent: ask_nosugar
   examples: |
@@ -307,6 +320,8 @@ nlu:
     - c'è zucchero?
     - contiene zucchero?
     - è senza zucchero?
+    - controlla se ha zucchero
+    - verifica se contiene zucchero
 
 
 #2) WAREHOUSE:

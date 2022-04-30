@@ -28,6 +28,7 @@ intents:
   - ask_prodinfo
   - ask_price
   - ask_cat_vat
+  - ask_dispmedico
   - ask_compatibility
   - ask_vegan
   - ask_nolactose
@@ -308,6 +309,12 @@ slots:
     mappings:
     - type: custom
   
+  dispmedico:
+    type: text
+    influence_conversation: False
+    mappings:
+    - type: custom
+
   vegan:
     type: text
     influence_conversation: False
@@ -505,6 +512,7 @@ actions:
   - action_utter_prodinfo
   - action_utter_price
   - action_utter_cat_vat
+  - action_utter_dispmedico
   - action_utter_compatibility
   - action_utter_vegan
   - action_utter_nolactose

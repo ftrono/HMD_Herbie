@@ -76,6 +76,9 @@ stories:
   - intent: ask_cat_vat
   - action: action_utter_cat_vat
   - action: utter_ask_more
+  - intent: ask_dispmedico
+  - action: action_utter_dispmedico
+  - action: utter_ask_more
   - intent: ask_compatibility
   - action: action_utter_compatibility
   - action: utter_ask_more
