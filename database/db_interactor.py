@@ -140,7 +140,7 @@ def get_existing_ordlist(conn, supplier):
     full_list = None
     num_prods = 0
     try:
-        query = f"SELECT codiceord, datamodifica FROM {SCHEMA}.storicoordini WHERE produttore = '{supplier}' AND datainoltro IS NULL ORDER BY datamodifica DESC LIMIT 1"
+        query = f"SELECT codiceord, datamodifica FROM {SCHEMA}.storicoordini WHERE produttore = '{supplier}' AND definitiva = FALSE ORDER BY datamodifica DESC LIMIT 1"
         Latest = pd.read_sql(query, conn)
         if Latest.empty == False:
             #extract references:

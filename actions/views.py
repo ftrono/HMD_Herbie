@@ -133,15 +133,12 @@ def create_view_recap(filename):
         return -1
 
 
-#view ListaOrdine by produttore or codiceord:
-def create_view_listaordine(filename, supplier=None, codiceord=None):
-    if not supplier and not codiceord:
-        elog.error(f"create_view_listaordine() needs either a supplier or an order code.")
-        return -1
+#view ListaOrdine by codiceord:
+def create_view_listaordine(filename, codiceord):
     headers = {'Codice Prodotto': 'codiceprod', 'Produttore': 'produttore', 'Nome': 'nome', 'Categoria': 'categoria', 'Quantita Ordine': 'quantita', 'Prezzo Pubblico €': 'prezzo', 'Sconto Medio %': 'scontomedio', 'IVA %': 'aliquota', 'Costo Acquisto €': 'costoacquisto', 'Costo Totale €': 'costototale', 'Valore Totale €': 'valoretotale'}
     #export table to pdf:
     try:
-        ListaOrdine = db_export.get_view_listaordine(supplier=supplier, codiceord=codiceord)
+        ListaOrdine = db_export.get_view_listaordine(codiceord)
         if ListaOrdine.empty == False:
             #1) format adjustments:
             Vista = pd.DataFrame(columns=headers.keys())
@@ -205,39 +202,7 @@ def create_view_listaordine(filename, supplier=None, codiceord=None):
             writer.save()
         return 0
     except Exception:
-        elog.exception(f"Export error for xslx ListaOrdine {codiceord if codiceord else supplier} for schema {SCHEMA}. {Exception}")
-        return -1
-
-
-#view StoricoOrdini:
-def create_view_storicoordini(filename):
-    headers = {'Codice Ordine': 'codiceord', 'Produttore': 'produttore', 'Riferimento': 'riferimento', 'Data Modifica': 'datamodifica', 'Data Inoltro': 'datainoltro', 'Data Ricezione': 'dataricezione'}
-    #export table to pdf:
-    try:
-        Storico = db_export.get_view_storicoordini()
-        if Storico.empty == False:
-            #1) format adjustments:
-            Vista = pd.DataFrame(columns=headers.keys())
-            for col in Vista.columns:
-                if col == 'Codice Ordine':
-                    Vista[col] = [str(p_code) for p_code in Storico[headers[col]]]
-                else:
-                    Vista[col] = Storico[headers[col]]
-            Vista.reset_index(drop=True, inplace=True)
-
-            #2) export:
-            #load Pandas Excel exporter:
-            writer = pd.ExcelWriter(filename)
-            Vista.to_excel(writer, sheet_name=SCHEMA, index=False, na_rep='')
-            #auto-adjust columns' width:
-            for column in Vista:
-                column_width = max(Vista[column].astype(str).map(len).max(), len(column))
-                col_idx = Vista.columns.get_loc(column)
-                writer.sheets[SCHEMA].set_column(first_col=col_idx, last_col=col_idx, width=column_width)
-            writer.save()
-        return 0
-    except Exception:
-        elog.exception(f"Export error for xslx StoricoOrdini for schema {SCHEMA}. {Exception}")
+        elog.exception(f"Export error for xslx ListaOrdine {codiceord} for schema {SCHEMA}. {Exception}")
         return -1
 
 
@@ -252,21 +217,17 @@ def get_vista(caller, filter):
         ret = create_view_prodotti(filename, filter)
     elif caller == 'recap':
         ret = create_view_recap(filename)
-    elif caller == 'storico_ordini':
-        ret = create_view_storicoordini(filename)
-    elif caller == 'lista_ordine':
+    elif caller == 'lista':
         try:
             ordcode = int(filter)
-            supplier = None
-            elog.info(f"{ordcode}")
         except:
-            ordcode = None
-            supplier = filter
-        ret = create_view_listaordine(filename, codiceord=ordcode)
+            message = f"C'è stato un problema, ti chiedo scusa!"
+            return -1, message
+        ret = create_view_listaordine(filename, ordcode)
     else:
         #no caller
         message = f"Non ho capito bene."
-        return message
+        return -1, message
     if ret == 0:
         #3) send file to user:
         try:
@@ -276,12 +237,12 @@ def get_vista(caller, filter):
                 TBOT.sendDocument(chat_id, xlsx)
             os.remove(filename)
             message = f"Ti ho inviato la vista su Telegram, pronta per la stampa. Dai un'occhiata!"
-            return message
+            return 0, message
         except:
             message = f"Non ho trovato dati."
-            return message
+            return -1, message
     else:
         message = f"Non ho trovato viste corrispondenti."
-        return message
+        return -1, message
 
 

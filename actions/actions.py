@@ -516,7 +516,7 @@ class ActionSendView(Action):
         if codiceord == None:
             message = f"Chiedimi di trovare una lista ordini, potrò risponderti subito dopo."
         else:
-            message = views.get_vista(caller='lista_ordine', filter=codiceord)
+            _, message = views.get_vista(caller='lista', filter=codiceord)
         dispatcher.utter_message(text=message)
         return []
 

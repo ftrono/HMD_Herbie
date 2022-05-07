@@ -14,7 +14,6 @@ intents:
   - deny
   #user guidance:
   - bot_challenge
-  - ask_capabilities
   - ask_guidance
   #main commands:
   - ask_find_product
@@ -369,11 +368,9 @@ responses:
   - text: "Sono Herbie, il tuo shop manager digitale. Sono qui per aiutarti a gestire il negozio!"
   - text: "Mi chiamo Herbie! Sono il tuo shop manager digitale. La mia missione è di aiutarti a gestire il negozio!"
 
-  utter_mycapabilities:
-  - text: "Puoi chiedermi di cercarti un prodotto nel tuo magazzino: ti darò informazioni sulle giacenze disponibili, i prezzi ed eventuali allergeni. Puoi chiedermi di cercarti un fornitore: posso aiutarti a compilare una lista ordini, suggerirti prodotti in esaurimento e offrirti viste del magazzino! Oppure puoi chiedermi di aggiornare le giacenze per più prodotti!"
-
   utter_guidance:
   - text: "Memorizza questi 3 comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'aggiorniamo le giacenze'. Ti guiderò io in tutto!"
+  - text: "Usa questi 3 comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'aggiorniamo le giacenze'. Ti guiderò io!"
 
   utter_done:
   - text: "Fatto!"

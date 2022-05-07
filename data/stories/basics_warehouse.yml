@@ -12,8 +12,6 @@ stories:
   - action: action_utter_greet
   - intent: bot_challenge
   - action: utter_iamabot
-  - intent: ask_capabilities
-  - action: utter_mycapabilities
   - intent: ask_guidance
   - action: utter_guidance
   - intent: thanks
@@ -58,7 +56,7 @@ stories:
   - intent: completed
   - action: action_deactivate_loop
   - active_loop: null
-  - action: utter_order_ready
+  - action: utter_ok
   - action: utter_available
 
 

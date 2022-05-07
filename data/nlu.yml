@@ -16,14 +16,15 @@ nlu:
     - finito
     - ho finito
     - completato
+    - ho completato
     - è tutto
     - detto tutto
     - fatto
-    - no basta così
-    - no basta
-    - basta così
+    - ho fatto
+    - abbiamo fatto
     - a posto così
     - no a posto
+
 
 - intent: thanks
   examples: |
@@ -53,10 +54,6 @@ nlu:
     - si tienilo
     - sì lo voglio
     - sì questo sì
-    - leggi la lista
-    - leggi i prodotti
-    - rileggi
-    - leggi
 
 - intent: deny
   examples: |
@@ -90,19 +87,14 @@ nlu:
     - 61 bot?
     - con chi parlo?
 
-- intent: ask_capabilities
+- intent: ask_guidance
   examples: |
     - cosa sai fare?
-    - quali sono le tue abilità?
-    - quali sono le tue capacità?
     - cosa sei capace di fare?
     - cosa 6 capace di fare?
     - cosa sei in grado di fare?
     - cosa 6 in grado di fare?
     - cosa puoi fare?
-
-- intent: ask_guidance
-  examples: |
     - come funzioni?
     - cosa devo dire?
     - cosa posso chiederti?
@@ -111,6 +103,7 @@ nlu:
     - cosa vuoi che ti dica?
     - come posso parlarti?
     - cosa capisci?
+
 
 #main commands:
 - intent: ask_find_product
