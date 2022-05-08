@@ -207,42 +207,36 @@ def create_view_listaordine(filename, codiceord):
 
 
 #extract view and send it via tBot:
-def get_vista(caller, filter):
-    #get vista:
-    filter = filter if filter != 'all' else None
-    filterstr = f"_{filter}" if filter else ""
-    filename = f'./actions/data_cache/{SCHEMA}.{caller}{filterstr}.xlsx'
-    #forker:
-    if caller == 'prodotti':
-        ret = create_view_prodotti(filename, filter)
-    elif caller == 'recap':
-        ret = create_view_recap(filename)
-    elif caller == 'lista':
-        try:
+def get_vista(caller, filter=None):
+    try:
+        #get vista:
+        filterstr = f"_{filter}" if filter else ""
+        filename = f'./actions/data_cache/{SCHEMA}.{caller}{filterstr}.xlsx'
+        #forker:
+        if caller == 'lista':
             ordcode = int(filter)
-        except:
-            message = f"C'è stato un problema, ti chiedo scusa!"
-            return -1, message
-        ret = create_view_listaordine(filename, ordcode)
-    else:
-        #no caller
-        message = f"Non ho capito bene."
-        return -1, message
-    if ret == 0:
-        #3) send file to user:
-        try:
-            xlsx = open(filename, 'rb')
-            ids = db_export.get_chat_IDs()
-            for chat_id in ids:
-                TBOT.sendDocument(chat_id, xlsx)
-            os.remove(filename)
-            message = f"Ti ho inviato la vista su Telegram, pronta per la stampa. Dai un'occhiata!"
-            return 0, message
-        except:
-            message = f"Non ho trovato dati."
-            return -1, message
-    else:
-        message = f"Non ho trovato viste corrispondenti."
-        return -1, message
-
-
+            ret = create_view_listaordine(filename, ordcode)
+        elif caller == 'recap':
+            ret = create_view_recap(filename)
+        else:
+            ret = create_view_prodotti(filename, filter)
+        #result:
+        if ret == 0:
+            #send file to user:
+            try:
+                xlsx = open(filename, 'rb')
+                ids = db_export.get_chat_IDs()
+                for chat_id in ids:
+                    TBOT.sendDocument(chat_id, xlsx)
+                os.remove(filename)
+                message = f"Ti ho inviato la vista su Telegram, pronta per la stampa. Dai un'occhiata!"
+                ret = 0
+            except:
+                message = f"Non ho trovato dati."
+                ret = -1
+        else:
+            message = f"Non ho trovato viste corrispondenti."
+            ret = -1
+    except:
+        message = f"C'è stato un problema, ti chiedo scusa!"
+    return -1, message

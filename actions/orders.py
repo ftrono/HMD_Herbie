@@ -5,11 +5,28 @@ import database.db_export as db_export
 import actions.commons as commons
 
 #ORDERS:
+# - get_open_order()
 # - read_ord_list()
 # - update_reading_list()
 # - update_ord_list()
 # - write_ord_list()
 # - tot_ord_cost()
+
+#get an open order (either existing or new):
+def get_open_order(conn, cursor, supplier):
+    ord_code = None
+    err = False
+    new_list = False
+    #check if an open list exists:
+    try:
+        ord_code, _, _, _ = db_interactor.get_open_ordlist(conn, supplier)
+    except:
+        err = True
+    #if no open lists -> create new list:
+    if ord_code == None or err == True:
+        ord_code = db_interactor.get_new_ordlist(conn, cursor, supplier)
+        new_list = True
+    return ord_code, new_list
 
 
 #READ order list:

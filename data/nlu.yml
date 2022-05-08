@@ -368,17 +368,23 @@ nlu:
     - prepariamo 1 ordine
     - scriviamo un ordine
     - scriviamo 1 ordine
+    - continuiamo l'ordine
+    - continuiamo l'ultimo ordine
+    - continuiamo a preparare l'ordine
+    - riprendiamo l'ordine
+    - riprendiamo a scrivere l'ordine
 
-- intent: ask_new_list
+- intent: ask_latest_list
   examples: |
-    - fanne una nuova
-    - no ripartiamo
-    - no resetta
-    - no azzera
-    - no facciamone una da capo
-    - facciamone una nuova
-    - facciamone una da zero
-    - facciamone una da 0
+    - trovami l'ultima lista ordini
+    - cerca l'ultima lista ordini
+    - cerca una lista ordini
+    - trova una lista ordini
+    - cercami l'ultima lista
+    - trovami la lista più recente
+    - apri la lista ordini che stavamo preparando
+    - riapri la lista ordini
+    - ritrova la lista ordini
 
 #ord cost:
 - intent: ask_tot_ordcost
@@ -388,6 +394,15 @@ nlu:
     - a quanto stiamo?
     - quanto vale l'ordine?
     - costo totale dell'ordine?
+
+- intent: ask_make_definitive
+  examples: |
+    - rendi l'ordine definitivo
+    - conferma l'ordine
+    - puoi confermare l'ordine
+    - confermiamo l'ordine
+    - è definitivo
+
 
 #inventory value:
 - intent: ask_wh_value
@@ -404,11 +419,19 @@ nlu:
 #ask send DB view:
 - intent: ask_get_view
   examples: |
-    - mi invieresti la vista?
-    - mi invieresti la lista?
+    - mi invieresti la lista ordini?
     - mi invii la lista via Telegram?
-    - puoi inviarmi la vista via Telegram bot?
-    - inviami la vista su Telegram
+    - puoi inviarmi la lista via Telegram bot?
+    - inviami la lista su Telegram
     - mandami la lista da stampare
     - mandami il pdf
     - inviami il file Excel
+    - inviami le giacenze
+    - inviami la vista del magazzino
+    - inviami la vista dei prodotti via Telegram
+    - mandami la vista da stampare
+    - inviami l'Excel dei prodotto
+    - inviami il pdf dei prodotti
+    - mandami la vista del magazzino
+    - mandami le giacenze del produttore
+    - inviami la lista dei prodotti

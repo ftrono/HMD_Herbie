@@ -1,30 +1,15 @@
 version: "3.0"
 stories:
 
-#FIND A SUPPLIER:
+#FIND A SUPPLIER - 2) ORDERS:
 # - order lists
-# - others & alternate
 
-#ENTRY POINT:
-- story: ask find a supplier
-  steps:
-  - intent: ask_find_supplier
-  - action: action_reset_all_slots
-  - action: utter_ok
-  - action: find_supplier_form #find supplier
-  - active_loop: find_supplier_form
-  - slot_was_set:
-    - requested_slot: null
-  - active_loop: null
-  - action: utter_ask_what
-  - checkpoint: supplier_found
-
-#SUBTASK 1) create order list:
+#SUBTASKS) create order list:
 - story: create order - 1.a) new list -> write
   steps:
   - checkpoint: supplier_found
   - intent: inform_need_order
-  - action: utter_ok
+  - action: utter_ready_to_order
   - action: action_get_ordlist
   - slot_was_set:
     - new_list: True
@@ -34,7 +19,7 @@ stories:
   steps:
   - checkpoint: supplier_found
   - intent: inform_need_order
-  - action: utter_ok
+  - action: utter_ready_to_order
   - action: action_get_ordlist
   - slot_was_set:
     - new_list: False
@@ -46,25 +31,12 @@ stories:
   steps:
   - checkpoint: supplier_found
   - intent: inform_need_order
-  - action: utter_ok
+  - action: utter_ready_to_order
   - action: action_get_ordlist
   - slot_was_set:
     - new_list: False
   - action: utter_ask_read
   - intent: deny
-  - checkpoint: start_write_order
-
-- story: create order - 1.d) existing list -> ask_new -> write
-  steps:
-  - checkpoint: supplier_found
-  - intent: inform_need_order
-  - action: utter_ok
-  - action: action_get_ordlist
-  - slot_was_set:
-    - new_list: False
-  - action: utter_ask_read
-  - intent: ask_new_list
-  - action: action_get_newlist
   - checkpoint: start_write_order
 
 - story: create order - 2.a) read - full
@@ -90,17 +62,7 @@ stories:
   - action: utter_ok
   - checkpoint: start_write_order
 
-- story: create order - 3.a) write - full
-  steps:
-  - checkpoint: start_write_order
-  - action: action_reset_ord_slots
-  - action: utter_guidance_write #write form
-  - action: write_order_form
-  - active_loop: write_order_form
-  - active_loop: null
-  - checkpoint: start_suggest_order
-
-- story: create order - 3.b) write - stopped
+- story: create order - 3) write - stopped (must be stopped by default)
   steps:
   - checkpoint: start_write_order
   - action: action_reset_ord_slots
@@ -126,8 +88,6 @@ stories:
   - active_loop: suggest_order_form
   - active_loop: null
   - action: utter_order_ready
-  - action: action_utter_tot_ordcost
-  - action: utter_ask_more
   - checkpoint: order_ready
 
 - story: create order - 4.b) suggest_order - stopped
@@ -145,8 +105,6 @@ stories:
   - action: action_deactivate_loop
   - active_loop: null
   - action: utter_order_ready
-  - action: action_utter_tot_ordcost
-  - action: utter_ask_more
   - checkpoint: order_ready
 
 - story: create order - 4.c) suggest_order - not found
@@ -158,8 +116,6 @@ stories:
   - slot_was_set:
     - found: False
   - action: utter_order_ready
-  - action: action_utter_tot_ordcost
-  - action: utter_ask_more
   - checkpoint: order_ready
 
 - story: create order - 4.d) suggest_order - don't suggest
@@ -168,15 +124,21 @@ stories:
   - action: utter_ask_suggest_ord
   - intent: deny
   - action: utter_order_ready
-  - action: action_utter_tot_ordcost
-  - action: utter_ask_more
   - checkpoint: order_ready
 
-- story: create order - finals
+- story: create order - finals - no definitive
   steps:
   - checkpoint: order_ready
-  - intent: ask_get_view
+  - action: action_utter_tot_ordcost
+  - action: utter_ask_definitive #make definitive - deny
+  - intent: deny
+  - action: utter_ok
+  - action: utter_ask_more
+  - intent: ask_get_view #send ord list
   - action: action_send_view
+  - action: utter_ask_more
+  - intent: ask_tot_ordcost #ask total ord cost
+  - action: action_utter_tot_ordcost
   - action: utter_ask_more
   - or:
     - intent: deny
@@ -185,20 +147,12 @@ stories:
   - action: utter_available
   - action: action_reset_all_slots
 
-#after a task:
-- story: supplier - clarify what else to do
+- story: create order - finals - make definitive
   steps:
-  - action: utter_ask_more
+  - checkpoint: order_ready
+  - action: action_utter_tot_ordcost
+  - action: utter_ask_definitive #make definitive
   - intent: affirm
-  - action: utter_ask_what
-
-#END:
-- story: supplier -> done enough
-  steps:
-  - checkpoint: supplier_found
-  - or:
-    - intent: deny
-    - intent: completed
-  - action: utter_ok
+  - action: action_mark_definitive
   - action: utter_available
   - action: action_reset_all_slots

@@ -38,8 +38,9 @@ intents:
   - inform_decr_pieces
   #supplier:
   - inform_need_order
-  - ask_new_list
+  - ask_latest_list
   - ask_tot_ordcost
+  - ask_make_definitive
   - ask_wh_value
   - ask_get_view
 
@@ -56,6 +57,18 @@ slots:
   fail:
     type: bool
     influence_conversation: True
+    mappings:
+    - type: custom
+  
+  warehouse:
+    type: bool
+    influence_conversation: False ###
+    mappings:
+    - type: custom
+  
+  recap:
+    type: bool
+    influence_conversation: False ###
     mappings:
     - type: custom
 
@@ -369,8 +382,8 @@ responses:
   - text: "Mi chiamo Herbie! Sono il tuo shop manager digitale. La mia missione è di aiutarti a gestire il negozio!"
 
   utter_guidance:
-  - text: "Memorizza questi 3 comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'aggiorniamo le giacenze'. Ti guiderò io in tutto!"
-  - text: "Usa questi 3 comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'aggiorniamo le giacenze'. Ti guiderò io!"
+  - text: "Memorizza questi 3 comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'gestisci il magazzino'. Ti guiderò io in tutto!"
+  - text: "Usa questi 3 comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'gestisci il magazzino'. Ti guiderò io!"
 
   utter_done:
   - text: "Fatto!"
@@ -457,8 +470,9 @@ responses:
   - text: "Prepariamo l'ordine!"
 
   utter_ask_read:
-  - text: "Vuoi che te la rilegga prima di andare avanti?"
-  - text: "Vuoi che io te la legga prima di andare avanti?"
+  - text: "Vuoi che ti rileggo la lista?"
+  - text: "Vuoi che io ti legga la lista?"
+  - text: "Ti rileggo la lista?"
 
   utter_ask_keep_piece:
   - text: "Teniamo in lista?"
@@ -488,12 +502,17 @@ responses:
   - text: "Dettami tu, uno alla volta, i prodotti di {supplier} che vuoi ordinare. Iniziamo!"
 
   utter_ask_suggest_ord:
-  - text: "Posso cercarti altri prodotti di {supplier} in esaurimento nel tuo magazzino. Vuoi che te li suggerisca?"
-  - text: "Vuoi che ti suggerisca altri prodotti di {supplier} in esaurimento nel tuo magazzino?"
+  - text: "Posso cercarti i prodotti di {supplier} in esaurimento nel tuo magazzino. Vuoi che te li suggerisca?"
+  - text: "Vuoi che ti suggerisca i prodotti di {supplier} in esaurimento nel tuo magazzino?"
 
   utter_order_ready:
   - text: "Il tuo ordine per {supplier} è pronto!"
   - text: "Abbiamo completato la lista ordini per {supplier}!"
+
+  utter_ask_definitive:
+  - text: "Posso confermarti l'ordine come definitivo? Non potrai più modificarlo."
+  - text: "Possiamo confermare l'ordine come definitivo? Non potrai più modificarlo."
+
 
 
 #AGENT'S CUSTOM ACTIONS:
@@ -524,6 +543,7 @@ actions:
   - action_ask_keep
   - action_ask_add_sugg
   - action_utter_tot_ordcost
+  - action_mark_definitive
   - action_send_view
   #forms validation:
   - validate_find_prod_form

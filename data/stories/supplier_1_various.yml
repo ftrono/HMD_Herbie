@@ -1,0 +1,134 @@
+version: "3.0"
+stories:
+
+#FIND A SUPPLIER - 1) VARIOUS:
+# - various
+
+#ENTRY POINT:
+- story: ask find a supplier
+  steps:
+  - intent: ask_find_supplier
+  - action: action_reset_all_slots
+  - action: utter_ok
+  - action: find_supplier_form #find supplier
+  - active_loop: find_supplier_form
+  - slot_was_set:
+    - requested_slot: null
+  - active_loop: null
+  - action: utter_ask_what
+  - checkpoint: supplier_found
+
+#SUBTASKS) various:
+- story: supplier - a) various requests
+  steps:
+  - checkpoint: supplier_found
+  - intent: ask_get_view #send supplier view
+  - action: action_send_view
+  - action: utter_ask_more
+  - intent: ask_latest_list #find latest list
+  - action: action_get_ordlist
+  - action: utter_ask_what
+  - intent: ask_tot_ordcost #ask total ord cost
+  - action: action_utter_tot_ordcost
+  - action: utter_ask_more
+  - intent: ask_make_definitive #make definitive - deny
+  - action: utter_ask_definitive
+  - intent: deny
+  - action: utter_ok
+  - action: utter_ask_more
+  - intent: ask_get_view #send ord list
+  - action: action_send_view
+  - action: utter_ask_more
+  - or:
+    - intent: deny
+    - intent: completed
+  - action: utter_ok
+  - action: utter_available
+  - action: action_reset_all_slots
+
+- story: supplier - b) make definitive
+  steps:
+  - checkpoint: supplier_found
+  - intent: ask_get_view #send supplier view
+  - action: action_send_view
+  - action: utter_ask_more
+  - intent: ask_latest_list #find latest list
+  - action: action_get_ordlist
+  - action: utter_ask_what
+  - intent: ask_tot_ordcost #ask total ord cost
+  - action: action_utter_tot_ordcost
+  - action: utter_ask_more
+  - intent: ask_make_definitive #make definitive
+  - action: utter_ask_definitive
+  - intent: affirm
+  - action: action_mark_definitive
+  - action: utter_available
+  - action: action_reset_all_slots
+
+#alternative callers for "need_order" (redirect to stories block "supplier_2_orders"):
+- story: supplier - c.1) continue order - new ordlist -> write
+  steps:
+  - checkpoint: supplier_found
+  - intent: ask_get_view #send supplier view
+  - action: action_send_view
+  - action: utter_ask_more
+  - intent: ask_latest_list #find latest list
+  - action: action_get_ordlist
+  - action: utter_ask_what
+  - intent: inform_need_order
+  - action: utter_ready_to_order
+  - slot_was_set:
+    - new_list: True
+  - checkpoint: start_write_order
+
+- story: supplier - c.2) continue order - existing ordlist -> read
+  steps:
+  - checkpoint: supplier_found
+  - intent: ask_get_view #send supplier view
+  - action: action_send_view
+  - action: utter_ask_more
+  - intent: ask_latest_list #find latest list
+  - action: action_get_ordlist
+  - action: utter_ask_what
+  - intent: inform_need_order
+  - action: utter_ready_to_order
+  - slot_was_set:
+    - new_list: False
+  - action: utter_ask_read
+  - intent: affirm
+  - checkpoint: start_read_order
+
+- story: supplier - c.3) continue order - existing ordlist - don't read -> write
+  steps:
+  - checkpoint: supplier_found
+  - intent: ask_get_view #send supplier view
+  - action: action_send_view
+  - action: utter_ask_more
+  - intent: ask_latest_list #find latest list
+  - action: action_get_ordlist
+  - action: utter_ask_what
+  - intent: inform_need_order
+  - action: utter_ready_to_order
+  - slot_was_set:
+    - new_list: False
+  - action: utter_ask_read
+  - intent: deny
+  - checkpoint: start_write_order
+
+#after a task:
+- story: supplier - clarify what else to do
+  steps:
+  - action: utter_ask_more
+  - intent: affirm
+  - action: utter_ask_what
+
+#END:
+- story: supplier -> done enough
+  steps:
+  - checkpoint: supplier_found
+  - or:
+    - intent: deny
+    - intent: completed
+  - action: utter_ok
+  - action: utter_available
+  - action: action_reset_all_slots
