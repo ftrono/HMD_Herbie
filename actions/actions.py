@@ -604,7 +604,10 @@ class ValidateWhUpdateForm(FormValidationAction):
         ) -> Dict[Text, Any]:
 
         slots = tracker.current_slot_values()
-        slots['pieces'] = next(tracker.get_latest_entity_values("pieces"), None)
+        #custom pieces entity extractor:
+        text = tracker.latest_message.get("text")
+        slots['pieces'] = commons.extract_pieces(text)
+        print(slots['pieces'])
         if slots['pieces'] != None:
             #update warehouse and reset form:
             elog.info(f"Ok, {slots['variation']}, {slots['pieces']}")
@@ -630,7 +633,10 @@ class ValidateReadOrderForm(FormValidationAction):
         ) -> Dict[Text, Any]:
 
         slots = tracker.current_slot_values()
-        slots['pieces'] = next(tracker.get_latest_entity_values("pieces"), None)
+        #custom pieces entity extractor:
+        text = tracker.latest_message.get("text")
+        slots['pieces'] = commons.extract_pieces(text)
+        print(slots['pieces'])
 
         #cases:
         #a) not understood:
@@ -675,7 +681,10 @@ class ValidateWriteOrderForm(FormValidationAction):
         ) -> Dict[Text, Any]:
 
         slots = tracker.current_slot_values()
-        slots['pieces'] = next(tracker.get_latest_entity_values("pieces"), None)
+        #custom pieces entity extractor:
+        text = tracker.latest_message.get("text")
+        slots['pieces'] = commons.extract_pieces(text)
+        print(slots['pieces'])
         if slots['pieces'] != None:
             #update warehouse and reset form:
             elog.info(f"Ok, {slots['p_code']}, {slots['pieces']}")
@@ -701,7 +710,10 @@ class ValidateSuggestOrderForm(FormValidationAction):
         ) -> Dict[Text, Any]:
 
         slots = tracker.current_slot_values()
-        slots['pieces'] = next(tracker.get_latest_entity_values("pieces"), None)
+        #custom pieces entity extractor:
+        text = tracker.latest_message.get("text")
+        slots['pieces'] = commons.extract_pieces(text)
+        print(slots['pieces'])
 
         #cases:
         #a) if no pieces given by user:

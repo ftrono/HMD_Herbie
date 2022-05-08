@@ -320,33 +320,43 @@ nlu:
 #2) WAREHOUSE:
 - intent: inform_pieces
   examples: |
-    - [6](pieces) pezzi
-    - [26](pieces) pezzi
-    - [5](pieces)
-    - [16](pieces)
-    - metti [10](pieces) pezzi
-    - mettine [20](pieces)
-    - facciamo [3](pieces) pezzi
-    - fai [8](pieces)
-    - segna [15](pieces)
-    - ordina [3](pieces) pezzi
-    - ordiniamo [30](pieces) pezzi
-    - cambia, [2](pieces) pezzi
-    - aggiungi [10](pieces) pezzi
-    - inserisci [15](pieces) pezzi
-    - più [4](pieces) pezzi
+    - 5
+    - 16
+    - 1 pezzo
+    - un pezzo
+    - 6 pezzi
+    - 26 pezzi
+    - metti 10 pezzi
+    - mettine 20
+    - facciamo 3 pezzi
+    - fai 8
+    - segna 15
+    - ordina 3 pezzi
+    - ordiniamo 30 pezzi
+    - cambia, 2 pezzi
+    - aggiungi 10 pezzi
+    - inserisci 15 pezzi
+    - più 4 pezzi
 
 - intent: inform_decr_pieces
   examples: |
-    - meno [6](pieces) pezzi
-    - meno [5](pieces)
-    - [6](pieces) pezzi in meno
-    - [16](pieces) pezzi da togliere
-    - togli [10](pieces) pezzi
-    - rimuovi [10](pieces) pezzi
-    - sottrai [10](pieces) pezzi
-    - toglimi [2](pieces) pezzi
-    - leva [3](pieces) pezzi
+    - meno 1
+    - meno uno
+    - meno 1 pezzo
+    - meno un pezzo
+    - togli 1
+    - togli uno
+    - togli un pezzo
+    - togli 1 pezzo
+    - meno 6 pezzi
+    - meno 5
+    - 6 pezzi in meno
+    - 16 pezzi da togliere
+    - togli 10 pezzi
+    - rimuovi 10 pezzi
+    - sottrai 10 pezzi
+    - toglimi 2 pezzi
+    - leva 3 pezzi
 
 #3) SUPPLIER:
 #orders_list:
@@ -385,6 +395,17 @@ nlu:
     - apri la lista ordini che stavamo preparando
     - riapri la lista ordini
     - ritrova la lista ordini
+
+- intent: ask_running_outs
+  examples: |
+    - controllami i prodotti in esaurimento
+    - controlla quali prodotti si stanno esaurendo
+    - leggimi i prodotti con poche scorte
+    - leggimi i prodotti che si stanno finendo
+    - quali prodotti si stanno esaurendo
+    - quali sono i prodotti in esaurimento
+    - verifica i prodotti in esaurimento
+    - verifica le giacenze vuote
 
 #ord cost:
 - intent: ask_tot_ordcost

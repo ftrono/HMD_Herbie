@@ -5,7 +5,7 @@ stories:
 # - order lists
 
 #SUBTASKS) create order list:
-- story: create order - 1.a) new list -> write
+- story: create order - 1.a) new list -> suggest
   steps:
   - checkpoint: supplier_found
   - intent: inform_need_order
@@ -13,7 +13,7 @@ stories:
   - action: action_get_ordlist
   - slot_was_set:
     - new_list: True
-  - checkpoint: start_write_order
+  - checkpoint: start_suggest_order
 
 - story: create order - 1.b) existing list -> read
   steps:
@@ -27,7 +27,7 @@ stories:
   - intent: affirm
   - checkpoint: start_read_order
 
-- story: create order - 1.c) existing list -> don't read -> write
+- story: create order - 1.c) existing list -> don't read -> suggest
   steps:
   - checkpoint: supplier_found
   - intent: inform_need_order
@@ -37,7 +37,7 @@ stories:
     - new_list: False
   - action: utter_ask_read
   - intent: deny
-  - checkpoint: start_write_order
+  - checkpoint: start_suggest_order
 
 - story: create order - 2.a) read - full
   steps:
@@ -47,7 +47,7 @@ stories:
   - action: read_order_form
   - active_loop: read_order_form
   - active_loop: null
-  - checkpoint: start_write_order
+  - checkpoint: start_suggest_order
 
 - story: create order - 2.b) read - stopped
   steps:
@@ -60,22 +60,9 @@ stories:
   - action: action_deactivate_loop
   - active_loop: null
   - action: utter_ok
-  - checkpoint: start_write_order
-
-- story: create order - 3) write - stopped (must be stopped by default)
-  steps:
-  - checkpoint: start_write_order
-  - action: action_reset_ord_slots
-  - action: utter_guidance_write #write form
-  - action: write_order_form
-  - active_loop: write_order_form
-  - intent: completed
-  - action: action_deactivate_loop
-  - active_loop: null
-  - action: utter_ok
   - checkpoint: start_suggest_order
 
-- story: create order - 4.a) suggest_order - full
+- story: create order - 3.a) suggest_order - full
   steps:
   - checkpoint: start_suggest_order
   - action: utter_ask_suggest_ord
@@ -87,10 +74,9 @@ stories:
   - action: suggest_order_form
   - active_loop: suggest_order_form
   - active_loop: null
-  - action: utter_order_ready
-  - checkpoint: order_ready
+  - checkpoint: start_write_order
 
-- story: create order - 4.b) suggest_order - stopped
+- story: create order - 3.b) suggest_order - stopped
   steps:
   - checkpoint: start_suggest_order
   - action: utter_ask_suggest_ord
@@ -104,10 +90,9 @@ stories:
   - intent: completed
   - action: action_deactivate_loop
   - active_loop: null
-  - action: utter_order_ready
-  - checkpoint: order_ready
+  - checkpoint: start_write_order
 
-- story: create order - 4.c) suggest_order - not found
+- story: create order - 3.c) suggest_order - not found
   steps:
   - checkpoint: start_suggest_order
   - action: utter_ask_suggest_ord
@@ -115,20 +100,43 @@ stories:
   - action: action_get_suggestion_list
   - slot_was_set:
     - found: False
-  - action: utter_order_ready
-  - checkpoint: order_ready
+  - checkpoint: start_write_order
 
-- story: create order - 4.d) suggest_order - don't suggest
+- story: create order - 3.d) suggest_order - don't suggest
   steps:
   - checkpoint: start_suggest_order
   - action: utter_ask_suggest_ord
   - intent: deny
-  - action: utter_order_ready
+  - checkpoint: start_write_order
+
+- story: create order - 4.a) write - yes (must then be stopped by default)
+  steps:
+  - checkpoint: start_write_order
+  - action: action_reset_ord_slots
+  - action: utter_ask_write
+  - intent: affirm
+  - action: utter_guidance_write #write form
+  - action: write_order_form
+  - active_loop: write_order_form
+  - intent: completed
+  - action: action_deactivate_loop
+  - active_loop: null
+  - action: utter_ok
+  - checkpoint: order_ready
+
+- story: create order - 4.b) write - no
+  steps:
+  - checkpoint: start_write_order
+  - action: action_reset_ord_slots
+  - action: utter_ask_write
+  - intent: deny
+  - action: utter_ok
   - checkpoint: order_ready
 
 - story: create order - finals - no definitive
   steps:
   - checkpoint: order_ready
+  - action: utter_order_ready
   - action: action_utter_tot_ordcost
   - action: utter_ask_definitive #make definitive - deny
   - intent: deny
@@ -150,6 +158,7 @@ stories:
 - story: create order - finals - make definitive
   steps:
   - checkpoint: order_ready
+  - action: utter_order_ready
   - action: action_utter_tot_ordcost
   - action: utter_ask_definitive #make definitive
   - intent: affirm

@@ -70,6 +70,20 @@ def adapt_greeting():
     return message
 
 
+#pieces entity extractor:
+def extract_pieces(text):
+    pieces = 0
+    text = text.strip()
+    text = text.split()
+    for tok in text:
+        try:
+            pieces = int(tok)
+            break
+        except:
+            pass
+    return pieces
+
+
 #readable price:
 def readable_price(price):
     price = float(price)

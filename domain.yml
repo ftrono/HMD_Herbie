@@ -39,16 +39,11 @@ intents:
   #supplier:
   - inform_need_order
   - ask_latest_list
+  - ask_running_outs
   - ask_tot_ordcost
   - ask_make_definitive
   - ask_wh_value
   - ask_get_view
-
-
-#ENTITIES:
-#to be captured by NLU:
-entities:
-  - pieces
 
 
 #SLOTS:
@@ -144,14 +139,13 @@ slots:
     min_value: 0
     max_value: 100
     mappings:
-    - type: from_entity
-      entity: pieces
-      intent: inform_pieces
+    - type: from_text
       not_intent: completed
-    - type: from_entity
-      entity: pieces
-      intent: inform_decr_pieces
-      not_intent: completed
+      conditions:
+      - active_loop: wh_update_form
+        requested_slot: pieces
+      - active_loop: write_order_form
+        requested_slot: pieces
 
   #2) stock:
   need_order:
@@ -496,6 +490,10 @@ responses:
   utter_guidance_read:
   - text: "Ok! Ti leggo i prodotti che abbiamo segnato: dimmi se tenerli o rimuoverli e quanti pezzi vuoi ordinare! Inizio."
   - text: "Ok! Ti leggo la lista: per ogni prodotto, dimmi se tenerlo o rimuoverlo e quanti pezzi vuoi ordinare! Iniziamo."
+
+  utter_ask_write:
+  - text: "Vuoi dettarmi tu altri prodotti da ordinare?"
+  - text: "Vuoi dettarmi tu dei prodotti da aggiungere alla lista?"
 
   utter_guidance_write:
   - text: "Dettami tu, uno alla volta, il nome dei prodotti di {supplier} da ordinare. Iniziamo col primo!"

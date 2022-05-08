@@ -65,6 +65,30 @@ stories:
   - action: utter_available
   - action: action_reset_all_slots
 
+
+#ask for products running out of stock:
+- story: supplier - ask running outs - a) direct
+  steps:
+  - checkpoint: supplier_found
+  - intent: ask_get_view #send supplier view
+  - action: action_send_view
+  - action: utter_ask_more
+  - intent: ask_running_outs #find latest list
+  - checkpoint: start_suggest_order
+
+- story: supplier - ask running outs - b) after "get latest list"
+  steps:
+  - checkpoint: supplier_found
+  - intent: ask_get_view #send supplier view
+  - action: action_send_view
+  - action: utter_ask_more
+  - intent: ask_latest_list #find latest list
+  - action: action_get_ordlist
+  - action: utter_ask_what
+  - intent: ask_running_outs #find latest list
+  - checkpoint: start_suggest_order
+
+
 #alternative callers for "need_order" (redirect to stories block "supplier_2_orders"):
 - story: supplier - c.1) continue order - new ordlist -> write
   steps:
@@ -79,7 +103,7 @@ stories:
   - action: utter_ready_to_order
   - slot_was_set:
     - new_list: True
-  - checkpoint: start_write_order
+  - checkpoint: start_suggest_order
 
 - story: supplier - c.2) continue order - existing ordlist -> read
   steps:
@@ -113,7 +137,7 @@ stories:
     - new_list: False
   - action: utter_ask_read
   - intent: deny
-  - checkpoint: start_write_order
+  - checkpoint: start_suggest_order
 
 #after a task:
 - story: supplier - clarify what else to do
