@@ -496,8 +496,8 @@ responses:
   - text: "Vuoi dettarmi tu dei prodotti da aggiungere alla lista?"
 
   utter_guidance_write:
-  - text: "Dettami tu, uno alla volta, il nome dei prodotti di {supplier} da ordinare. Iniziamo col primo!"
-  - text: "Dettami tu, uno alla volta, i prodotti di {supplier} che vuoi ordinare. Iniziamo!"
+  - text: "Dimmi, uno alla volta, il nome dei prodotti di {supplier} da ordinare. Iniziamo col primo!"
+  - text: "Dimmi, uno alla volta, i prodotti di {supplier} che vuoi ordinare. Iniziamo!"
 
   utter_ask_suggest_ord:
   - text: "Posso cercarti i prodotti di {supplier} in esaurimento nel tuo magazzino. Vuoi che te li suggerisca?"
@@ -512,7 +512,6 @@ responses:
   - text: "Possiamo confermare l'ordine come definitivo? Non potrai più modificarlo."
 
 
-
 #AGENT'S CUSTOM ACTIONS:
 actions:
   #global slots validation:
@@ -522,6 +521,7 @@ actions:
   - action_reset_all_slots
   - action_reset_ord_slots
   - action_utter_greet
+  - action_guide_user
   #prod info:
   - action_utter_prodinfo
   - action_utter_price

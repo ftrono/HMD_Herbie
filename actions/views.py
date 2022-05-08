@@ -134,7 +134,7 @@ def create_view_recap(filename):
 
 
 #view ListaOrdine by codiceord:
-def create_view_listaordine(filename, codiceord):
+def create_view_listaordine(codiceord):
     headers = {'Codice Prodotto': 'codiceprod', 'Produttore': 'produttore', 'Nome': 'nome', 'Categoria': 'categoria', 'Quantita Ordine': 'quantita', 'Prezzo Pubblico €': 'prezzo', 'Sconto Medio %': 'scontomedio', 'IVA %': 'aliquota', 'Costo Acquisto €': 'costoacquisto', 'Costo Totale €': 'costototale', 'Valore Totale €': 'valoretotale'}
     #export table to pdf:
     try:
@@ -181,9 +181,11 @@ def create_view_listaordine(filename, codiceord):
             Vista['Costo Totale €'].iloc[-1] = sum(temp_totcost)
             Vista['Valore Totale €'].iloc[-1] = sum(temp_totprice)
             Vista.reset_index(drop=True, inplace=True)
+            supplier = Vista['Produttore'].iloc[0]
 
             #2) export:
             #load Pandas Excel exporter:
+            filename = f'./actions/data_cache/{SCHEMA}.lista_{supplier}_{codiceord}.xlsx'
             writer = pd.ExcelWriter(filename)
             Vista.to_excel(writer, sheet_name=SCHEMA, index=False, na_rep='')
             workbook  = writer.book
@@ -200,26 +202,28 @@ def create_view_listaordine(filename, codiceord):
                 else:
                     writer.sheets[SCHEMA].set_column(first_col=col_idx, last_col=col_idx, width=column_width)
             writer.save()
-        return 0
+        return 0, supplier, filename
     except Exception:
         elog.exception(f"Export error for xslx ListaOrdine {codiceord} for schema {SCHEMA}. {Exception}")
-        return -1
+        return -1, None, ""
 
 
 #extract view and send it via tBot:
 def get_vista(caller, filter=None):
     try:
-        #get vista:
-        filterstr = f"_{filter}" if filter else ""
-        filename = f'./actions/data_cache/{SCHEMA}.{caller}{filterstr}.xlsx'
         #forker:
         if caller == 'lista':
             ordcode = int(filter)
-            ret = create_view_listaordine(filename, ordcode)
+            ret, suppl, filename = create_view_listaordine(ordcode)
+            filetype = f"la lista ordine per {suppl}"
         elif caller == 'recap':
+            filename = f'./actions/data_cache/{SCHEMA}.{caller}.xlsx'
             ret = create_view_recap(filename)
+            filetype = f"la vista di recap"
         else:
+            filename = f'./actions/data_cache/{SCHEMA}.{caller}{f"_{filter}" if filter else ""}.xlsx'
             ret = create_view_prodotti(filename, filter)
+            filetype = f"la vista delle giacenze{f' di {filter}' if filter else ''}"
         #result:
         if ret == 0:
             #send file to user:
@@ -229,14 +233,16 @@ def get_vista(caller, filter=None):
                 for chat_id in ids:
                     TBOT.sendDocument(chat_id, xlsx)
                 os.remove(filename)
-                message = f"Ti ho inviato la vista su Telegram, pronta per la stampa. Dai un'occhiata!"
+                message = f"Ti ho inviato {filetype} su Telegram, pronta per la stampa. Dai un'occhiata!"
                 ret = 0
-            except:
+            except Exception as e:
                 message = f"Non ho trovato dati."
+                elog.error(f"get_vista() exception. {e}")
                 ret = -1
         else:
             message = f"Non ho trovato viste corrispondenti."
             ret = -1
-    except:
+    except Exception as e:
         message = f"C'è stato un problema, ti chiedo scusa!"
+        elog.error(f"get_vista() exception. {e}")
     return -1, message

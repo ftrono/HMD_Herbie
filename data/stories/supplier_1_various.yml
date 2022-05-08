@@ -22,6 +22,9 @@ stories:
 - story: supplier - a) various requests
   steps:
   - checkpoint: supplier_found
+  - intent: ask_guidance #ask guidance - supplier
+  - action: action_guide_user
+  - action: utter_ask_what
   - intent: ask_get_view #send supplier view
   - action: action_send_view
   - action: utter_ask_more

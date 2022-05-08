@@ -63,39 +63,42 @@ stories:
   - action: utter_ask_more
   - checkpoint: product_found
 
-#SUBTASKS 2) ask product info:
-- story: ask prodinfo
+#SUBTASKS 2) ask product info - various:
+- story: ask prodinfo - various
   steps:
   - checkpoint: product_found
-  - intent: ask_prodinfo
+  - intent: ask_guidance #ask guidance - product
+  - action: action_guide_user
+  - action: utter_ask_what
+  - intent: ask_prodinfo #ask prod info
   - action: action_utter_prodinfo
   - action: utter_ask_more
-  - intent: ask_price
+  - intent: ask_price #ask price
   - action: action_utter_price
   - action: utter_ask_more
-  - intent: ask_cat_vat
+  - intent: ask_cat_vat #ask category & vegan
   - action: action_utter_cat_vat
   - action: utter_ask_more
-  - intent: ask_dispmedico
+  - intent: ask_dispmedico #ask disp medico
   - action: action_utter_dispmedico
   - action: utter_ask_more
-  - intent: ask_compatibility
+  - intent: ask_compatibility #ask allergens, sugar, vegan
   - action: action_utter_compatibility
   - action: utter_ask_more
-  - intent: ask_vegan
+  - intent: ask_vegan #ask vegan
   - action: action_utter_vegan
   - action: utter_ask_more
-  - intent: ask_nolactose
+  - intent: ask_nolactose #ask no lactose
   - action: action_utter_nolactose
   - action: utter_ask_more
-  - intent: ask_nogluten
+  - intent: ask_nogluten #ask no gluten
   - action: action_utter_nogluten
   - action: utter_ask_more
-  - intent: ask_nosugar
+  - intent: ask_nosugar #ask no sugar
   - action: action_utter_nosugar
   - action: utter_ask_more
   - or:
-    - intent: deny
+    - intent: deny #end
     - intent: completed
   - action: utter_ok
   - action: utter_available

@@ -61,6 +61,38 @@ class ActionUtterGreet(Action):
         return []
 
 
+#Views -> Send view via tBot:
+class ActionGuideUser(Action):
+    def name(self) -> Text:
+            return "action_guide_user"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        #disambiguate current case based on the slots populated:
+        p_code = tracker.get_slot("p_code")
+        supplier = tracker.get_slot("supplier")
+        warehouse = tracker.get_slot("warehouse")
+        if p_code:
+            #utter guidance for conv "product":
+            message = "Puoi chiedermi le quantità disponibili in magazzino, oppure di darti informazioni sul prodotto, come prezzo di listino, categoria e aliquota IVA, se è un dispositivo medico, se contiene glutine, lattosio o zucchero, o se è vegano."
+            dispatcher.utter_message(text=message)
+        elif supplier:
+            #utter guidance for conv "supplier":
+            message = "Puoi chiedermi di cercarti i prodotti in esaurimento, o di inviarti la vista delle giacenze. Puoi anche chiedermi di preparare o di continuare un ordine, di trovarti o confermare l'ultima lista ordini e di inviartela via Bot."
+            dispatcher.utter_message(text=message)
+        elif warehouse:
+            #utter guidance for conv "warehouse":
+            message = "Puoi chiedermi di inviarti la vista delle giacenze via Bot, oppure di aggiornarti le giacenze dicendomi i prodotti entrati e usciti. Puoi anche dirmi se ti è stato consegnato un ordine che avevamo creato insieme."
+            dispatcher.utter_message(text=message)
+        else:
+            #utter general guidance on main commands:
+            dispatcher.utter_message(response='utter_guidance')
+        return []
+
+
 #PRODUCTS:
 #Product Info:
 class ActionUtterProdInfo(Action):
@@ -317,42 +349,47 @@ class ActionGetOrdList(Action):
 
         #get slots saved:
         supplier = tracker.get_slot("supplier")
-        slots = {}
-        try:
-            conn, cursor = db_connect()
-            #check if an open list exists:
-            slots['ord_code'], slots['ord_date'], slots['ord_list'], num_prods = db_interactor.get_open_ordlist(conn, supplier)
-
-            #if no open lists or empty open list -> create new list:
-            if num_prods == 0:
-                if slots['ord_code'] != None:
-                    db_interactor.delete_ordlist(conn, cursor, slots['ord_code'])
-                slots['ord_code'] = db_interactor.get_new_ordlist(conn, cursor, supplier)
-                message = f"Ti ho appena creato una nuova lista!"
-                dispatcher.utter_message(text=message)
-                slots['new_list'] = True
-
-            #load open list:
-            else:
-                #prepare strings for message:
-                num_str = f"{num_prods} prodotti"
-                if num_prods == 1:
-                    num_str = "un prodotto"
-                read_date = commons.readable_date(slots['ord_date'])
-                message = f"Ti ho trovato l'ultima lista aperta, modificata per ultimo {read_date}, con {num_str}."
-                dispatcher.utter_message(text=message)
-                slots['new_list'] = False
-
-            db_disconnect(conn, cursor)
-
-        except:
-            elog.info("DB connection error.")
-            message = "C'è stato un problema con il mio database, ti chiedo scusa."
+        if supplier == None:
+            message = "Chiedimi di trovare un produttore. Potrò risponderti subito dopo!"
             dispatcher.utter_message(text=message)
-            slots['fail'] = True
-        
-        slots_set = commons.convert_to_slotset(slots)
-        return slots_set
+            return []
+        else:
+            slots = {}
+            try:
+                conn, cursor = db_connect()
+                #check if an open list exists:
+                slots['ord_code'], slots['ord_date'], slots['ord_list'], num_prods = db_interactor.get_open_ordlist(conn, supplier)
+
+                #if no open lists or empty open list -> create new list:
+                if num_prods == 0:
+                    if slots['ord_code'] != None:
+                        db_interactor.delete_ordlist(conn, cursor, slots['ord_code'])
+                    slots['ord_code'] = db_interactor.get_new_ordlist(conn, cursor, supplier)
+                    message = f"Ti ho appena creato una nuova lista!"
+                    dispatcher.utter_message(text=message)
+                    slots['new_list'] = True
+
+                #load open list:
+                else:
+                    #prepare strings for message:
+                    num_str = f"{num_prods} prodotti"
+                    if num_prods == 1:
+                        num_str = "un prodotto"
+                    read_date = commons.readable_date(slots['ord_date'])
+                    message = f"Ti ho trovato l'ultima lista aperta, modificata per ultimo {read_date}, con {num_str}."
+                    dispatcher.utter_message(text=message)
+                    slots['new_list'] = False
+
+                db_disconnect(conn, cursor)
+
+            except:
+                elog.info("DB connection error.")
+                message = "C'è stato un problema con il mio database, ti chiedo scusa."
+                dispatcher.utter_message(text=message)
+                slots['fail'] = True
+            
+            slots_set = commons.convert_to_slotset(slots)
+            return slots_set
 
 
 #Create Order -> create suggestion list:

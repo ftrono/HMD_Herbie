@@ -13,10 +13,9 @@ stories:
   - intent: bot_challenge
   - action: utter_iamabot
   - intent: ask_guidance
-  - action: utter_guidance
+  - action: action_guide_user
   - intent: thanks
   - action: utter_welcome
-  - action: action_reset_all_slots
 
 #after a task:
 - story: clarify what else to do
@@ -28,7 +27,9 @@ stories:
 - story: done enough
   steps:
   - action: utter_ask_more
-  - intent: deny
+  - or:
+    - intent: deny
+    - intent: completed
   - action: utter_ok
   - action: utter_available
   - action: action_reset_all_slots

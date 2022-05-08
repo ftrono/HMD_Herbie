@@ -22,8 +22,6 @@ nlu:
     - fatto
     - ho fatto
     - abbiamo fatto
-    - a posto così
-    - no a posto
 
 
 - intent: thanks
