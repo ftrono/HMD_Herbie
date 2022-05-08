@@ -281,11 +281,8 @@ class ActionAddToList(Action):
             #add to order list in DB:
             try:
                 conn, cursor = db_connect()
-                #check if an open list exists:
-                ord_code, _, _, _ = db_interactor.get_existing_ordlist(conn, slots['supplier'])
-                #if no open lists -> create new list:
-                if ord_code == None:
-                    ord_code = db_interactor.get_new_ordlist(conn, cursor, slots['supplier'])
+                #get an open order list (existing or new):
+                ord_code, _ = orders.get_open_order(conn, cursor, slots['supplier'])
                 #add product to list:
                 ret = db_interactor.edit_ord_list(conn, cursor, ord_code, slots['p_code'], slots['pieces'], write_mode=True)
             except:
@@ -307,8 +304,8 @@ class ActionAddToList(Action):
         return slots_set
 
 
-#ORDERS:
-#Create Order -> get latest order list from DB:
+#SUPPLIER / ORDERS:
+#Create Order -> get latest order list from DB or create a new one:
 class ActionGetOrdList(Action):
     def name(self) -> Text:
             return "action_get_ordlist"
@@ -320,25 +317,18 @@ class ActionGetOrdList(Action):
 
         #get slots saved:
         supplier = tracker.get_slot("supplier")
-        dispatcher.utter_message(response="utter_ready_to_order")
         slots = {}
         try:
             conn, cursor = db_connect()
             #check if an open list exists:
-            slots['ord_code'], slots['ord_date'], slots['ord_list'], num_prods = db_interactor.get_existing_ordlist(conn, supplier)
+            slots['ord_code'], slots['ord_date'], slots['ord_list'], num_prods = db_interactor.get_open_ordlist(conn, supplier)
 
-            #if no open lists -> create new list:
-            if slots['ord_code'] == None:
+            #if no open lists or empty open list -> create new list:
+            if num_prods == 0:
+                if slots['ord_code'] != None:
+                    db_interactor.delete_ordlist(conn, cursor, slots['ord_code'])
                 slots['ord_code'] = db_interactor.get_new_ordlist(conn, cursor, supplier)
-                message = f"Ti ho creato una nuova lista!"
-                dispatcher.utter_message(text=message)
-                slots['new_list'] = True
-                
-            #if open list but empty -> discard and create new list:
-            elif num_prods == 0:
-                db_interactor.delete_ordlist(conn, cursor, slots['ord_code'])
-                slots['ord_code'] = db_interactor.get_new_ordlist(conn, cursor, supplier)
-                message = f"Ti ho creato una nuova lista!"
+                message = f"Ti ho appena creato una nuova lista!"
                 dispatcher.utter_message(text=message)
                 slots['new_list'] = True
 
@@ -349,7 +339,7 @@ class ActionGetOrdList(Action):
                 if num_prods == 1:
                     num_str = "un prodotto"
                 read_date = commons.readable_date(slots['ord_date'])
-                message = f"Abbiamo una lista aperta, modificata per ultimo {read_date}, con {num_str}."
+                message = f"Ti ho trovato l'ultima lista aperta, modificata per ultimo {read_date}, con {num_str}."
                 dispatcher.utter_message(text=message)
                 slots['new_list'] = False
 
@@ -364,37 +354,6 @@ class ActionGetOrdList(Action):
         slots_set = commons.convert_to_slotset(slots)
         return slots_set
 
-
-#Create Order -> create new order list into DB:
-class ActionGetNewList(Action):
-    def name(self) -> Text:
-            return "action_get_newlist"
-
-    def run(self, dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any]
-        ) -> List[Dict[Text, Any]]:
-
-        #get slots saved:
-        supplier = tracker.get_slot("supplier")
-        slots = {}
-        slots['ord_code'] = tracker.get_slot("ord_code")
-        try:
-            conn, cursor = db_connect()
-            if slots['ord_code'] != None:
-                db_interactor.delete_ordlist(conn, cursor, slots['ord_code'])
-            slots['ord_code'] = db_interactor.get_new_ordlist(conn, cursor, supplier)
-            message = f"Ti ho creato una nuova lista, useremo questa!"
-            dispatcher.utter_message(text=message)
-            db_disconnect(conn, cursor)
-        except:
-            elog.info("DB connection error.")
-            message = "C'è stato un problema con il mio database, ti chiedo scusa."
-            dispatcher.utter_message(text=message)
-            slots['fail'] = True
-        
-        slots_set = commons.convert_to_slotset(slots)
-        return slots_set
 
 #Create Order -> create suggestion list:
 class ActionGetSuggestionList(Action):
@@ -411,6 +370,8 @@ class ActionGetSuggestionList(Action):
         #extract JSON list:
         try:
             conn, cursor = db_connect()
+            if slots['ord_code'] == None:
+                slots['ord_code'], slots['new_list'] = orders.get_open_order(conn, cursor, slots['supplier'])
             slots['ord_list'], num_prods = db_interactor.get_suggestion_list(conn, slots['supplier'], slots['ord_code'])
             db_disconnect(conn, cursor)
             #if extracted suggestion list empty:
@@ -418,6 +379,9 @@ class ActionGetSuggestionList(Action):
                 slots['found'] = False
                 message = f"Non ho trovato altri prodotti di {slots['supplier']} con meno di {THRESHOLD_TO_ORD} pezzi!"
                 dispatcher.utter_message(text=message)
+                #end:
+                slots_set = commons.convert_to_slotset(slots)
+                return slots_set
             #else: trigger start read:
             else:
                 slots['found'] = True
@@ -426,7 +390,7 @@ class ActionGetSuggestionList(Action):
                     start_str = ""
                 else:
                     num_str = f"{num_prods} prodotti"
-                    start_str = " Inizio a leggere!"
+                    start_str = " Per ogni prodotto, dimmi quanti pezzi vuoi ordinare, oppure dimmi di ignorarlo!"
                 message = f"Ti ho trovato {num_str} di {slots['supplier']} con meno di {THRESHOLD_TO_ORD} pezzi.{start_str}"
                 dispatcher.utter_message(text=message)
         except:
@@ -497,9 +461,41 @@ class ActionUtterTotOrderCost(Action):
             message = f"Chiedimi di trovare una lista ordini, potrò risponderti subito dopo."
         else:
             tot_cost = orders.tot_ord_cost(codiceord)
-            message = f"Il costo totale stimato per l'ordine è {commons.readable_price(tot_cost)}."
+            if tot_cost == 0:
+                message = f"La lista è vuota al momento!"
+            else:
+                message = f"Il costo totale stimato per l'ordine è {commons.readable_price(tot_cost)}."
         dispatcher.utter_message(text=message)
         return []
+
+#Create Order -> Mark order as definitive:
+class ActionMarkDefinitive(Action):
+    def name(self) -> Text:
+            return "action_mark_definitive"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        slots = tracker.current_slot_values()
+        if slots['ord_code'] == None:
+            message = f"Chiedimi di trovare una lista ordini, potrò risponderti subito dopo."
+        else:
+            ret = db_interactor.mark_definitive(slots['ord_code'])
+            if ret == 0:
+                message = f"Ok, ti ho confermato l'ordine per {slots['supplier']} come definitivo. "
+                #also send final list via Telegram:
+                ret, _ = views.get_vista(caller='lista', filter=slots['ord_code'])
+                if ret == 0:
+                    message = f"{message}Ti ho inviato la lista pronta via Telegram! "
+                #final guidance:
+                message = f"{message}Quando l'ordine ti verrà consegnato, chiedimi di gestire il magazzino, ti inserirò i prodotti arrivati in automatico."
+            else:
+                message = f"C'è stato un problema col mio magazzino, ti chiedo scusa!"
+        dispatcher.utter_message(text=message)
+        slots_set = commons.convert_to_slotset(slots)
+        return slots_set
 
 
 #Views -> Send view via tBot:
@@ -512,11 +508,23 @@ class ActionSendView(Action):
         domain: Dict[Text, Any]
         ) -> List[Dict[Text, Any]]:
 
+        #disambiguate current case based on the slots populated:
         codiceord = tracker.get_slot("ord_code")
-        if codiceord == None:
-            message = f"Chiedimi di trovare una lista ordini, potrò risponderti subito dopo."
-        else:
+        supplier = tracker.get_slot("supplier")
+        recap = tracker.get_slot("recap")
+        warehouse = tracker.get_slot("warehouse")
+        #priority order:
+        if codiceord and supplier:
             _, message = views.get_vista(caller='lista', filter=codiceord)
+        elif supplier:
+            _, message = views.get_vista(caller='prodotti', filter=supplier)
+        elif recap:
+            _, message = views.get_vista(caller='recap')
+        elif warehouse:
+            _, message = views.get_vista(caller='prodotti')
+        else:
+            #cannot start:
+            message = f"Usa uno di questi comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'gestisci il magazzino'. Potrò risponderti subito dopo."
         dispatcher.utter_message(text=message)
         return []
 
