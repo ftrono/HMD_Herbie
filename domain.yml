@@ -237,6 +237,12 @@ slots:
       conditions:
         - active_loop: read_order_form
           requested_slot: keep
+    - type: from_intent
+      intent: inform_decr_pieces
+      value: False
+      conditions:
+        - active_loop: read_order_form
+          requested_slot: keep
     - type: from_text
       not_intent:
         - affirm

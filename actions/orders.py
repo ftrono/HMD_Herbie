@@ -1,3 +1,4 @@
+import random
 from globals import *
 from database.db_tools import db_connect, db_disconnect
 import database.db_interactor as db_interactor
@@ -42,15 +43,13 @@ def read_ord_list(dispatcher, ord_list, suggest_mode=False):
         slots['cur_quantity'] = int(OrdList['quantita'].iloc[0])
         #build string:
         if suggest_mode == True:
-            str_have = "hai "
+            str_q = f"hai un solo pezzo in magazzino." if slots['cur_quantity'] == 1 else f"hai {slots['cur_quantity']} pezzi in magazzino."
         else:
-            str_have = ""
-        if slots['cur_quantity'] == 1:
-            str_q = f"un pezzo."
-        else:
-            str_q = f"{slots['cur_quantity']} pezzi."
+            giacenza = int(OrdList['giacenza'].iloc[0])
+            str_q = f"in magazzino hai un solo pezzo," if giacenza == 1 else f"in magazzino hai {giacenza} pezzi,"
+            str_q = f"{str_q} abbiamo segnato un solo pezzo in lista." if slots['cur_quantity'] == 1 else f"{str_q} abbiamo segnato {slots['cur_quantity']} pezzi in lista."
         #utter:
-        message = f"{slots['p_name']}, {str_have}{str_q}"
+        message = f"{slots['p_name']}: {str_q}"
         dispatcher.utter_message(text=message)
     else:
         #empty_list:
@@ -96,7 +95,13 @@ def update_ord_list(dispatcher, slots):
                 ret = db_interactor.edit_ord_list(conn, cursor, slots['ord_code'], slots['p_code'], slots['pieces'])
             else:
                 #no change to DB:
-                message = f"Tenuto!"
+                kept = [
+                    "Tenuto!",
+                    "Tengo!",
+                    "Ok, mantengo!",
+                    "Ok, tengo così!"
+                ]
+                message = kept[random.randint(0, len(kept))]
         else:
             if slots['pieces'] == 1:
                 message = f"Ti ho segnato un pezzo."

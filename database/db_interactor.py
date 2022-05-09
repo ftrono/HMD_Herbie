@@ -157,7 +157,7 @@ def get_json_ordlist(conn, supplier, closed=False):
             latest_code = int(Latest['codiceord'].iloc[0])
             latest_date = str(Latest['datamodifica'].iloc[0])
             #get full order list (if any) - inner join with table prodotti:
-            query = f"SELECT listeordini.codiceprod, prodotti.nome, listeordini.quantita FROM {SCHEMA}.listeordini INNER JOIN {SCHEMA}.prodotti ON listeordini.codiceprod = prodotti.codiceprod WHERE listeordini.codiceord = {latest_code}"
+            query = f"SELECT listeordini.codiceprod, prodotti.nome, listeordini.quantita, prodotti.quantita AS giacenza FROM {SCHEMA}.listeordini INNER JOIN {SCHEMA}.prodotti ON listeordini.codiceprod = prodotti.codiceprod WHERE listeordini.codiceord = {latest_code}"
             FullList = pd.read_sql(query, conn)
             if FullList.empty == False:
                 num_prods = int(len(FullList.index))
