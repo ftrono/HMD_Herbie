@@ -432,6 +432,11 @@ nlu:
     - continuiamo a preparare l'ordine
     - riprendiamo l'ordine
     - riprendiamo a scrivere l'ordine
+    - crea una nuova lista
+    - crea una lista ordini
+    - leggi la lista ordini
+    - leggimi la lista
+    - leggi la lista
 
 - intent: ask_latest_list
   examples: |

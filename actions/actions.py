@@ -313,39 +313,33 @@ class ActionAddToList(Action):
 
         err = False
         slots = tracker.current_slot_values()
-        if slots['add_to_order'] == True:
-            #store number of pieces to add, if said, and prepare message for later:
-            if slots['pieces'] == None or slots['pieces'] == str(1):
-                slots['pieces'] = 1
-                message = "Segnato nella prossima lista ordini!"
-            else:
-                message = f"Segnàti {slots['pieces']} pezzi nella prossima lista ordini!"
-            elog.info(f"Pieces: {slots['pieces']}")
-
-            #add to order list in DB:
-            try:
-                conn, cursor = db_connect()
-                #get an open order list (existing or new):
-                ord_code, _ = orders.get_open_order(conn, cursor, slots['supplier'])
-                #add product to list:
-                ret = db_interactor.edit_ord_list(conn, cursor, ord_code, slots['p_code'], slots['pieces'], write_mode=True)
-            except:
-                err = True
-
-            if err == True or ret == -1:
-                elog.info("DB connection error.")
-                message = "C'è stato un problema con il mio database, ti chiedo scusa."
-                dispatcher.utter_message(text=message)
-                return [SlotSet('fail', True)]
-            else:
-                #product added:
-                dispatcher.utter_message(text=message)
+        #store number of pieces to add, if said, and prepare message for later:
+        if slots['pieces'] == None or slots['pieces'] == str(1):
+            slots['pieces'] = 1
+            message = "Segnato nella prossima lista ordini!"
         else:
-            dispatcher.utter_message(response="utter_ok")
-        
-        #reset all:
-        slots_set = commons.reset_all(tracker)
-        return slots_set
+            message = f"Segnàti {slots['pieces']} pezzi nella prossima lista ordini!"
+        elog.info(f"Pieces: {slots['pieces']}")
+
+        #add to order list in DB:
+        try:
+            conn, cursor = db_connect()
+            #get an open order list (existing or new):
+            ord_code, _ = orders.get_open_order(conn, cursor, slots['supplier'])
+            #add product to list:
+            ret = db_interactor.edit_ord_list(conn, cursor, ord_code, slots['p_code'], slots['pieces'], write_mode=True)
+        except:
+            err = True
+
+        if err == True or ret == -1:
+            elog.info("DB connection error.")
+            message = "C'è stato un problema con il mio database, ti chiedo scusa."
+            dispatcher.utter_message(text=message)
+            return [SlotSet('pieces', None), SlotSet('add_to_order', None), SlotSet('fail', True)]
+        else:
+            #product added:
+            dispatcher.utter_message(text=message)
+        return [SlotSet('pieces', None), SlotSet('add_to_order', None)]
 
 
 #SUPPLIER / ORDERS:
@@ -701,20 +695,27 @@ class ValidateVariationsForm(FormValidationAction):
         ) -> Dict[Text, Any]:
 
         slots = tracker.current_slot_values()
-        #custom pieces entity extractor:
-        text = tracker.latest_message.get("text")
-        slots['pieces'] = commons.extract_pieces(text)
-        elog.info(f"Extracted pieces: {slots['pieces']}")
-        #slots check:
-        if (slots['variation'] != 'add' and slots['variation'] != 'decrease') or (slots['pieces'] == None):
-            message = f"Mmm, non ho capito. Dimmi 'aggiungi' o 'togli' e il numero di pezzi."
-            dispatcher.utter_message(text=message)
-            slots['variation'] = None
-            slots['pieces'] = None
+        #check if skip:
+        intent = tracker.latest_message['intent'].get('name')
+        if intent == 'deny':
+            dispatcher.utter_message(response='utter_skip')
+            elog.info(f"Skip")
+            slots = commons.reset_and_goto(slots, del_slots=['p_code', 'p_name', 'supplier', 'cur_quantity', 'variation'], req_slot='p_code')
         else:
-            #update warehouse and reset form:
-            elog.info(f"Ok, {slots['variation']}, {slots['pieces']}")
-            slots = commons.update_warehouse(dispatcher, slots)
+            #custom pieces entity extractor:
+            text = tracker.latest_message.get("text")
+            slots['pieces'] = commons.extract_pieces(text)
+            elog.info(f"Extracted pieces: {slots['pieces']}")
+            #slots check:
+            if (slots['variation'] != 'add' and slots['variation'] != 'decrease') or (slots['pieces'] == None):
+                message = f"Mmm, non ho capito. Dimmi 'aggiungi' o 'togli' e il numero di pezzi."
+                dispatcher.utter_message(text=message)
+                slots['variation'] = None
+                slots['pieces'] = None
+            else:
+                #update warehouse and reset form:
+                elog.info(f"Ok, {slots['variation']}, {slots['pieces']}")
+                slots = commons.update_warehouse(dispatcher, slots)
         return slots
 
 
@@ -780,18 +781,25 @@ class ValidateWriteOrderForm(FormValidationAction):
         ) -> Dict[Text, Any]:
 
         slots = tracker.current_slot_values()
-        #custom pieces entity extractor:
-        text = tracker.latest_message.get("text")
-        slots['pieces'] = commons.extract_pieces(text)
-        elog.info(f"Extracted pieces: {slots['pieces']}")
-        if slots['pieces'] != None:
-            #update warehouse and reset form:
-            elog.info(f"Ok, {slots['p_code']}, {slots['pieces']}")
-            slots = orders.write_ord_list(dispatcher, slots, next_slot='p_code')
+        #check if skip:
+        intent = tracker.latest_message['intent'].get('name')
+        if intent == 'deny':
+            dispatcher.utter_message(response='utter_skip')
+            elog.info(f"Skip")
+            slots = commons.reset_and_goto(slots, del_slots=['p_code', 'p_name', 'pieces', 'add_sugg'], req_slot='p_code')
         else:
-            message = f"Mmm, non ho capito bene."
-            dispatcher.utter_message(text=message)
-            slots['pieces'] = None
+            #custom pieces entity extractor:
+            text = tracker.latest_message.get("text")
+            slots['pieces'] = commons.extract_pieces(text)
+            elog.info(f"Extracted pieces: {slots['pieces']}")
+            if slots['pieces'] != None:
+                #update warehouse and reset form:
+                elog.info(f"Ok, {slots['p_code']}, {slots['pieces']}")
+                slots = orders.write_ord_list(dispatcher, slots, next_slot='p_code')
+            else:
+                message = f"Mmm, non ho capito bene."
+                dispatcher.utter_message(text=message)
+                slots['pieces'] = None
         return slots
 
 

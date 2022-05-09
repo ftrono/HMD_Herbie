@@ -70,6 +70,9 @@ stories:
   - intent: ask_guidance #ask guidance - product
   - action: action_guide_user
   - action: utter_ask_what
+  - intent: ask_add_to_order
+  - action: action_add_to_list
+  - action: utter_ask_more
   - intent: ask_prodinfo #ask prod info
   - action: action_utter_prodinfo
   - action: utter_ask_more
