@@ -3,6 +3,5 @@ __pycache__
 */__pycache__
 logs/*
 models/*
-database/db_credentials.ini
-t_credentials.ini
+local_credentials.ini
 actions/data_cache

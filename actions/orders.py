@@ -19,7 +19,7 @@ def get_open_order(conn, cursor, supplier):
     new_list = False
     #check if an open list exists:
     try:
-        ord_code, _, _, _ = db_interactor.get_open_ordlist(conn, supplier)
+        ord_code, _, _, _ = db_interactor.get_json_ordlist(conn, supplier)
     except:
         err = True
     #if no open lists -> create new list:

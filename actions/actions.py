@@ -45,6 +45,18 @@ class ActionResetOrdSlots(Action):
             slots_set.append(SlotSet(sname, None))
         return slots_set
 
+#Create Order -> reset recurrent slots for order preparation:
+class ActionResetRecap(Action):
+    def name(self) -> Text:
+            return "action_reset_recap"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        return [SlotSet('recap', None)]
+
 
 #adapt greet depending on the time of the day:
 class ActionUtterGreet(Action):
@@ -358,12 +370,12 @@ class ActionGetOrdList(Action):
             try:
                 conn, cursor = db_connect()
                 #check if an open list exists:
-                slots['ord_code'], slots['ord_date'], slots['ord_list'], num_prods = db_interactor.get_open_ordlist(conn, supplier)
+                slots['ord_code'], slots['ord_date'], slots['ord_list'], num_prods = db_interactor.get_json_ordlist(conn, supplier)
 
                 #if no open lists or empty open list -> create new list:
                 if num_prods == 0:
                     if slots['ord_code'] != None:
-                        db_interactor.delete_ordlist(conn, cursor, slots['ord_code'])
+                        db_interactor.delete_ordlist(slots['ord_code'], conn, cursor)
                     slots['ord_code'] = db_interactor.get_new_ordlist(conn, cursor, supplier)
                     message = f"Ti ho appena creato una nuova lista!"
                     dispatcher.utter_message(text=message)
@@ -427,7 +439,7 @@ class ActionGetSuggestionList(Action):
                     start_str = ""
                 else:
                     num_str = f"{num_prods} prodotti"
-                    start_str = " Per ogni prodotto, dimmi quanti pezzi vuoi ordinare, oppure dimmi di ignorarlo!"
+                    start_str = " Per ogni prodotto, dimmi se ordinarlo o ignorarlo e, nel caso, quanti pezzi vuoi ordinare!"
                 message = f"Ti ho trovato {num_str} di {slots['supplier']} con meno di {THRESHOLD_TO_ORD} pezzi.{start_str}"
                 dispatcher.utter_message(text=message)
         except:
@@ -477,7 +489,7 @@ class ActionAskAddSugg(Action):
         #2) read next prod in JSON list: extract p_code and read message:
         slots = orders.read_ord_list(dispatcher, slots['ord_list'], suggest_mode=True)
         if slots['p_code'] != None:
-            dispatcher.utter_message(response='utter_ask_sugg_pieces')
+            dispatcher.utter_message(response='utter_ask_pieces')
         
         slots_set = commons.convert_to_slotset(slots)
         return slots_set
@@ -527,12 +539,74 @@ class ActionMarkDefinitive(Action):
                 if ret == 0:
                     message = f"{message}Ti ho inviato la lista pronta via Telegram! "
                 #final guidance:
-                message = f"{message}Quando l'ordine ti verrà consegnato, chiedimi di gestire il magazzino, ti inserirò i prodotti arrivati in automatico."
+                message = f"{message}Quando l'ordine ti verrà consegnato, chiedimi di aprire il magazzino, ti inserirò i prodotti arrivati in automatico."
             else:
                 message = f"C'è stato un problema col mio magazzino, ti chiedo scusa!"
         dispatcher.utter_message(text=message)
         slots_set = commons.convert_to_slotset(slots)
         return slots_set
+
+
+#Warehouse -> Check if there are closed orders. Else, utter default ask_what:
+class ActionProactiveCheck(Action):
+    def name(self) -> Text:
+            return "action_proactive_check"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        dispatcher.utter_message(response='utter_opened_warehouse')
+        num_closed = db_interactor.check_closed()
+        if num_closed > 0:
+            #proactive ask for open order:
+            message = f"Ti è stato consegnato un ordine?"
+            dispatcher.utter_message(text=message)
+            return [SlotSet('warehouse', True), SlotSet('pending_delivery', True)]
+        else:
+            #general ask_what:
+            dispatcher.utter_message(response='utter_ask_what')
+            return [SlotSet('warehouse', True), SlotSet('pending_delivery', False)]
+
+
+#Warehouse -> Register closed order as delivered and update warehouse:
+class ActionRegisterDelivered(Action):
+    def name(self) -> Text:
+            return "action_register_delivered"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        slots = tracker.current_slot_values()
+        if slots['warehouse'] == None or slots['supplier'] == None:
+            message = f"Chiedimi di aprire il magazzino, potrò risponderti subito dopo."
+            dispatcher.utter_message(text=message)
+            return []
+        else:
+            #1) update wh:
+            ord_code, tot_pieces = db_interactor.register_delivered(slots['supplier'])
+            if ord_code == -1:
+                message = f"Non ho trovato ordini chiusi per {slots['supplier']}."
+            else:
+                #2) send list via Bot and delete closed list from DB:
+                ret_send, _ = views.get_vista(caller='lista', filter=ord_code)
+                ret_del = db_interactor.delete_ordlist(ord_code)
+                #confirmation of View sent:
+                if ret_send == 0:
+                    sent_confirm = "Ti ho inviato la lista ordine completa via Telegram!"
+                else:
+                    sent_confirm = "Non sono riuscita a inviarti la lista ordine completa via Telegram."
+                #check success:
+                if ret_del == 0:
+                    message = f"Fatto, ti ho registrato l'ultimo ordine chiuso per {slots['supplier']} come consegnato! Ti ho aggiornato le giacenze di ogni prodotto in lista nel magazzino, hai {tot_pieces} nuovi pezzi in totale. {sent_confirm}"
+                else:
+                    elog.error(f"Order list {ord_code} stored to Prodotti table but not deleted from StoricoOrdini e ListeOrdini.")
+                    message = f"C'è stato un problema, ti chiedo scusa!"
+            dispatcher.utter_message(text=message)
+            return [SlotSet('supplier', None)]
 
 
 #Views -> Send view via tBot:
@@ -555,13 +629,13 @@ class ActionSendView(Action):
             _, message = views.get_vista(caller='lista', filter=codiceord)
         elif supplier:
             _, message = views.get_vista(caller='prodotti', filter=supplier)
-        elif recap:
+        elif recap == True:
             _, message = views.get_vista(caller='recap')
-        elif warehouse:
+        elif warehouse == True:
             _, message = views.get_vista(caller='prodotti')
         else:
             #cannot start:
-            message = f"Usa uno di questi comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'gestisci il magazzino'. Potrò risponderti subito dopo."
+            message = f"Usa uno di questi comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'apri il magazzino'. Potrò risponderti subito dopo."
         dispatcher.utter_message(text=message)
         return []
 
@@ -602,10 +676,10 @@ class ValidateFindSupplierForm(FormValidationAction):
         return slots
 
 
-#Loopers -> Warehouse update:
-class ValidateWhUpdateForm(FormValidationAction):
+#Loopers -> register quantities variations:
+class ValidateVariationsForm(FormValidationAction):
     def name(self) -> Text:
-        return "validate_wh_update_form"
+        return "validate_variations_form"
 
     def validate_p_code(
         self, 
@@ -626,33 +700,21 @@ class ValidateWhUpdateForm(FormValidationAction):
         domain: Dict[Text, Any],
         ) -> Dict[Text, Any]:
 
-        variation = tracker.get_slot("variation")
-        if variation != 'add' and variation != 'decrease':
-            dispatcher.utter_message(response='utter_please_rephrase')
-            variation = None
-        return {'variation': variation}
-
-    def validate_pieces(
-        self, 
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-        ) -> Dict[Text, Any]:
-
         slots = tracker.current_slot_values()
         #custom pieces entity extractor:
         text = tracker.latest_message.get("text")
         slots['pieces'] = commons.extract_pieces(text)
-        print(slots['pieces'])
-        if slots['pieces'] != None:
+        elog.info(f"Extracted pieces: {slots['pieces']}")
+        #slots check:
+        if (slots['variation'] != 'add' and slots['variation'] != 'decrease') or (slots['pieces'] == None):
+            message = f"Mmm, non ho capito. Dimmi 'aggiungi' o 'togli' e il numero di pezzi."
+            dispatcher.utter_message(text=message)
+            slots['variation'] = None
+            slots['pieces'] = None
+        else:
             #update warehouse and reset form:
             elog.info(f"Ok, {slots['variation']}, {slots['pieces']}")
             slots = commons.update_warehouse(dispatcher, slots)
-        else:
-            message = f"Mmm, non ho capito il numero di pezzi."
-            dispatcher.utter_message(text=message)
-            slots['pieces'] = None
         return slots
 
 
@@ -673,7 +735,7 @@ class ValidateReadOrderForm(FormValidationAction):
         #custom pieces entity extractor:
         text = tracker.latest_message.get("text")
         slots['pieces'] = commons.extract_pieces(text)
-        print(slots['pieces'])
+        elog.info(f"Extracted pieces: {slots['pieces']}")
 
         #cases:
         #a) not understood:
@@ -721,7 +783,7 @@ class ValidateWriteOrderForm(FormValidationAction):
         #custom pieces entity extractor:
         text = tracker.latest_message.get("text")
         slots['pieces'] = commons.extract_pieces(text)
-        print(slots['pieces'])
+        elog.info(f"Extracted pieces: {slots['pieces']}")
         if slots['pieces'] != None:
             #update warehouse and reset form:
             elog.info(f"Ok, {slots['p_code']}, {slots['pieces']}")
@@ -750,7 +812,7 @@ class ValidateSuggestOrderForm(FormValidationAction):
         #custom pieces entity extractor:
         text = tracker.latest_message.get("text")
         slots['pieces'] = commons.extract_pieces(text)
-        print(slots['pieces'])
+        elog.info(f"Extracted pieces: {slots['pieces']}")
 
         #cases:
         #a) if no pieces given by user:

@@ -72,15 +72,19 @@ def adapt_greeting():
 
 #pieces entity extractor:
 def extract_pieces(text):
-    pieces = 0
+    pieces = None
+    #parse user message text:
     text = text.strip()
     text = text.split()
+    #look for integer:
     for tok in text:
         try:
             pieces = int(tok)
             break
         except:
             pass
+    #zero not accepted:
+    pieces = None if pieces == 0 else pieces
     return pieces
 
 

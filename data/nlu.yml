@@ -23,7 +23,6 @@ nlu:
     - ho fatto
     - abbiamo fatto
 
-
 - intent: thanks
   examples: |
     - grazie
@@ -45,6 +44,9 @@ nlu:
     - giusto
     - magari
     - magari grazie
+    - vai
+    - vai così
+    - andiamo
     - confermo
     - sì confermo
     - lo voglio
@@ -154,21 +156,115 @@ nlu:
     - ricerca fornitore
     - ricerca azienda
 
-- intent: ask_wh_update
+- intent: ask_open_warehouse
+  examples: |
+    - apri il magazzino
+    - apriamo il magazzino
+    - gestisci il magazzino
+    - entra nel magazzino
+    - entriamo nel magazzino
+    - apri la parte magazzino
+    - aggiorna il magazzino
+    - aggiorniamo il magazzino
+    - devo aggiornare i dati al magazzino
+    - puoi aggiornarmi i dati al magazzino?
+    - mi aggiorneresti i dati al magazzino?
+    - mi aggiorneresti le giacenze prodotti?
+    - entra in gestione magazzino
+    - apri gestione magazzino
+
+#1) WAREHOUSE:
+- intent: ask_completa
+  examples: |
+    - completa
+    - la vista completa
+    - voglio la vista completa
+    - mandami la completa
+    - invia la vista completa
+
+- intent: ask_recap
+  examples: |
+    - recap
+    - il recap
+    - voglio il recap
+    - mandami il recap
+    - invia il recap
+
+- intent: ask_delivered
+  examples: |
+    - mi è stato consegnato un ordine
+    - mi è arrivato l'ordine
+    - ho ricevuto un ordine
+    - mi è stato consegnato un ordine
+    - ordine consegnato
+
+- intent: ask_variations
   examples: |
     - aggiorniamo le giacenze
+    - aggiorna le giacenze
     - aiutami ad aggiornare le giacenze
     - aggiorniamo le giacenze dei prodotti
     - aggiorniamo i pezzi venduti
     - aggiorniamo i pezzi entrati
-    - devo aggiornare i dati al magazzino
-    - aggiorna magazzino
-    - aggiorna giacenze
-    - puoi aggiornarmi i dati al magazzino?
-    - mi aggiorneresti i dati al magazzino?
-    - mi aggiorneresti le giacenze prodotti?
+    - aggiorna le quantità dei prodotti
+    - aggiorniamo le quantità
+    - segna entrate e uscite
+    - aggiorniamo le entrate e le uscite
+    - registriamo i movimenti
+    - registra i movimenti
+    - segna i movimenti dei prodotti
+    - registra movimentazioni
+    - segna le movimentazioni delle giacenze
 
-#1) PRODUCT:
+- intent: inform_pieces
+  examples: |
+    - 5
+    - 16
+    - 1 pezzo
+    - un pezzo
+    - 6 pezzi
+    - 26 pezzi
+    - metti 10 pezzi
+    - mettine 20
+    - facciamo 3 pezzi
+    - fai 8
+    - segna 15
+    - ordina 3 pezzi
+    - ordiniamo 30 pezzi
+    - cambia, 2 pezzi
+    - aggiungi 10 pezzi
+    - inserisci 15 pezzi
+    - più 4 pezzi
+    - entrati 10 pezzi
+    - 2 pezzi entrati
+    - entrati 5
+    - 12 entrati
+
+- intent: inform_decr_pieces
+  examples: |
+    - meno 1
+    - meno uno
+    - meno 1 pezzo
+    - meno un pezzo
+    - togli 1
+    - togli uno
+    - togli un pezzo
+    - togli 1 pezzo
+    - meno 6 pezzi
+    - meno 5
+    - 6 pezzi in meno
+    - 16 pezzi da togliere
+    - togli 10 pezzi
+    - rimuovi 10 pezzi
+    - sottrai 10 pezzi
+    - toglimi 2 pezzi
+    - leva 3 pezzi
+    - usciti 2 pezzi
+    - 10 pezzi usciti
+    - usciti 5
+    - 12 usciti
+
+#2) PRODUCT:
 - intent: inform_text
   examples: |
     - nome
@@ -194,7 +290,6 @@ nlu:
     - il terzo della lista
     - l'ultimo di questi
 
-#stock_info:
 - intent: ask_stock_info
   examples: |
     - quanti pezzi abbiamo?
@@ -216,7 +311,6 @@ nlu:
     - mettimelo in lista ordini
     - segnalo per il prossimo ordine
 
-#prod info:
 - intent: ask_prodinfo
   examples: |
     - leggimi le info del prodotto
@@ -314,50 +408,7 @@ nlu:
     - controlla se ha zucchero
     - verifica se contiene zucchero
 
-
-#2) WAREHOUSE:
-- intent: inform_pieces
-  examples: |
-    - 5
-    - 16
-    - 1 pezzo
-    - un pezzo
-    - 6 pezzi
-    - 26 pezzi
-    - metti 10 pezzi
-    - mettine 20
-    - facciamo 3 pezzi
-    - fai 8
-    - segna 15
-    - ordina 3 pezzi
-    - ordiniamo 30 pezzi
-    - cambia, 2 pezzi
-    - aggiungi 10 pezzi
-    - inserisci 15 pezzi
-    - più 4 pezzi
-
-- intent: inform_decr_pieces
-  examples: |
-    - meno 1
-    - meno uno
-    - meno 1 pezzo
-    - meno un pezzo
-    - togli 1
-    - togli uno
-    - togli un pezzo
-    - togli 1 pezzo
-    - meno 6 pezzi
-    - meno 5
-    - 6 pezzi in meno
-    - 16 pezzi da togliere
-    - togli 10 pezzi
-    - rimuovi 10 pezzi
-    - sottrai 10 pezzi
-    - toglimi 2 pezzi
-    - leva 3 pezzi
-
 #3) SUPPLIER:
-#orders_list:
 - intent: inform_need_order
   examples: |
     - ho bisogno di fare un ordine
@@ -405,7 +456,6 @@ nlu:
     - verifica i prodotti in esaurimento
     - verifica le giacenze vuote
 
-#ord cost:
 - intent: ask_tot_ordcost
   examples: |
     - quanto costa l'ordine?
@@ -422,19 +472,7 @@ nlu:
     - confermiamo l'ordine
     - è definitivo
 
-
-#inventory value:
-- intent: ask_wh_value
-  examples: |
-    - quanto valgono le giacenze?
-    - qual è il valore delle giacenze?
-    - a quanto ammontano le giacenze?
-    - valore delle giacenze?
-    - valore del magazzino?
-    - mi dici il valore del magazzino?
-    - mi dici il valore delle giacenze di questo prodotto?
-    - mi dici il valore delle giacenze di questo fornitore?
-
+#COMMON:
 #ask send DB view:
 - intent: ask_get_view
   examples: |
@@ -454,3 +492,11 @@ nlu:
     - mandami la vista del magazzino
     - mandami le giacenze del produttore
     - inviami la lista dei prodotti
+    - quanto valgono le giacenze?
+    - qual è il valore delle giacenze?
+    - a quanto ammontano le giacenze?
+    - valore delle giacenze?
+    - valore del magazzino?
+    - mi dici il valore del magazzino?
+    - mi dici il valore delle giacenze di questo prodotto?
+    - mi dici il valore delle giacenze di questo fornitore?

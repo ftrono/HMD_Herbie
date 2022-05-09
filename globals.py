@@ -10,16 +10,12 @@ THRESHOLD_TO_ORD = 5
 MONTHS = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
 
 #Config:
-#DB:
 config = configparser.ConfigParser()
-config.read(os.getcwd()+"/database/db_credentials.ini")
-d_conf = config['DB']
+config.read(os.getcwd()+"/local_credentials.ini")
+d_conf = config['DB'] #for DB
 DATABASE_URL = d_conf.get('database_url')
 SCHEMA = d_conf.get('schema')
-
-#t-Bot (for sending messages):
-config.read(os.getcwd()+"/t_credentials.ini")
-t_conf = config['TELEGRAM']
+t_conf = config['TELEGRAM'] #for t-Bot (for sending messages)
 TOKEN = t_conf.get('token')
 TBOT = telegram.Bot(token=TOKEN)
 

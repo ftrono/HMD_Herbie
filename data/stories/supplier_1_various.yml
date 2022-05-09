@@ -9,7 +9,7 @@ stories:
   steps:
   - intent: ask_find_supplier
   - action: action_reset_all_slots
-  - action: utter_ok
+  - action: utter_ready
   - action: find_supplier_form #find supplier
   - active_loop: find_supplier_form
   - slot_was_set:

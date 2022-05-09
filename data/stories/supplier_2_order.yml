@@ -121,7 +121,7 @@ stories:
   - intent: completed
   - action: action_deactivate_loop
   - active_loop: null
-  - action: utter_ok
+  - action: utter_done
   - checkpoint: order_ready
 
 - story: create order - 4.b) write - no
@@ -130,7 +130,7 @@ stories:
   - action: action_reset_ord_slots
   - action: utter_ask_write
   - intent: deny
-  - action: utter_ok
+  - action: utter_done
   - checkpoint: order_ready
 
 - story: create order - finals - no definitive

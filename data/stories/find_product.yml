@@ -10,7 +10,7 @@ stories:
   steps:
   - intent: ask_find_product
   - action: action_reset_all_slots
-  - action: utter_ok
+  - action: utter_ready
   - action: find_prod_form
   - active_loop: find_prod_form
   - slot_was_set:

@@ -1,0 +1,118 @@
+version: "3.0"
+stories:
+
+#WAREHOUSE:
+# - update inventory
+# - send views
+
+#ENTRY POINTS:
+- story: ask open warehouse - a) delivery received
+  steps:
+  - intent: ask_open_warehouse
+  - action: action_reset_all_slots
+  - action: action_proactive_check #first thing: check if delivery pending
+  - slot_was_set:
+    - pending_delivery: True
+  - intent: affirm
+  - action: utter_explain_delivered
+  - action: find_supplier_form #find supplier
+  - active_loop: find_supplier_form
+  - slot_was_set:
+    - requested_slot: null
+  - active_loop: null
+  - action: action_register_delivered
+  - action: action_reset_all_slots
+  - action: utter_available
+
+- story: ask open warehouse - b) no delivery received
+  steps:
+  - intent: ask_open_warehouse
+  - action: action_reset_all_slots
+  - action: action_proactive_check #first thing: check if delivery pending
+  - slot_was_set:
+    - pending_delivery: True
+  - intent: deny
+  - action: utter_ok
+  - action: utter_ask_what
+  - checkpoint: wh_opened
+
+- story: ask open warehouse - c) no pending deliveries
+  steps:
+  - intent: ask_open_warehouse
+  - action: action_reset_all_slots
+  - action: action_proactive_check #if pending_delvery == False, the action already utters 'ask_what'
+  - slot_was_set:
+    - pending_delivery: False
+  - checkpoint: wh_opened
+
+
+#SUBTASK 1) Various + Delivered:
+- story: wh opened - various -> user asks delivered
+  steps:
+  - checkpoint: wh_opened
+  - intent: ask_guidance #ask guidance - warehouse
+  - action: action_guide_user
+  - action: utter_ask_what
+  - intent: ask_get_view #send supplier view
+  - action: utter_ask_which_view #complete or recap (managed by custom action)
+  - or:
+    - intent: ask_recap
+    - intent: ask_completa
+  - action: action_send_view
+  - action: action_reset_recap
+  - action: utter_ask_more
+  - intent: ask_delivered
+  - action: utter_explain_delivered
+  - action: find_supplier_form #find supplier
+  - active_loop: find_supplier_form
+  - slot_was_set:
+    - requested_slot: null
+  - active_loop: null
+  - action: action_register_delivered
+  - action: action_reset_all_slots
+  - action: utter_available
+
+#SUBTASK 2) Various + variations:
+- story: wh opened - various -> user asks variations
+  steps:
+  - checkpoint: wh_opened
+  - intent: ask_guidance #ask guidance - warehouse
+  - action: action_guide_user
+  - action: utter_ask_what
+  - intent: ask_get_view #send supplier view
+  - action: utter_ask_which_view #complete or recap (managed by custom action)
+  - or:
+    - intent: ask_recap
+    - intent: ask_completa
+  - action: action_send_view
+  - action: action_reset_recap
+  - action: utter_ask_more
+  - intent: ask_variations
+  - action: utter_guidance_vars #variations form (must be interrupted by default)
+  - action: variations_form
+  - active_loop: variations_form
+  - intent: completed
+  - action: action_deactivate_loop
+  - active_loop: null
+  - action: action_reset_all_slots
+  - action: utter_done
+  - action: utter_available
+
+#after a task:
+- story: warehouse - clarify what else to do
+  steps:
+  - action: utter_ask_more
+  - intent: affirm
+  - action: utter_ask_what
+
+#END:
+- story: warehouse -> done enough
+  steps:
+  - checkpoint: wh_opened
+  - or:
+    - intent: deny
+    - intent: completed
+  - action: utter_ok
+  - action: utter_available
+  - action: action_reset_all_slots
+

@@ -7,23 +7,30 @@ session_config:
 
 #USER INTENTS:
 intents:
+  #general:
   - greet
   - completed
   - thanks
   - affirm
   - deny
-  #user guidance:
   - bot_challenge
   - ask_guidance
   #main commands:
   - ask_find_product
   - ask_find_supplier
-  - ask_wh_update
+  - ask_open_warehouse
+  #warehouse:
+  - ask_completa
+  - ask_recap
+  - ask_delivered
+  - ask_variations
+  - inform_pieces
+  - inform_decr_pieces
   #product:
-  - ask_stock_info
-  - ask_add_to_order
   - inform_text
   - inform_ordinal
+  - ask_stock_info
+  - ask_add_to_order
   - ask_prodinfo
   - ask_price
   - ask_cat_vat
@@ -33,16 +40,12 @@ intents:
   - ask_nolactose
   - ask_nogluten
   - ask_nosugar
-  #warehouse:
-  - inform_pieces
-  - inform_decr_pieces
   #supplier:
   - inform_need_order
   - ask_latest_list
   - ask_running_outs
   - ask_tot_ordcost
   - ask_make_definitive
-  - ask_wh_value
   - ask_get_view
 
 
@@ -61,11 +64,22 @@ slots:
     mappings:
     - type: custom
   
-  recap:
+  pending_delivery:
     type: bool
-    influence_conversation: False ###
+    influence_conversation: True
     mappings:
     - type: custom
+  
+  recap:
+    type: bool
+    influence_conversation: False
+    mappings:
+    - type: from_intent
+      intent: ask_recap
+      value: True
+    - type: from_intent
+      intent: ask_completa
+      value: False
 
   #0) data identification:
   p_code:
@@ -77,7 +91,7 @@ slots:
       conditions:
       - active_loop: find_prod_form
         requested_slot: p_code
-      - active_loop: wh_update_form
+      - active_loop: variations_form
         requested_slot: p_code
       - active_loop: write_order_form
         requested_slot: p_code
@@ -116,13 +130,13 @@ slots:
       intent: inform_pieces
       value: add
       conditions:
-        - active_loop: wh_update_form
+        - active_loop: variations_form
           requested_slot: variation
     - type: from_intent
       intent: inform_decr_pieces
       value: decrease
       conditions:
-        - active_loop: wh_update_form
+        - active_loop: variations_form
           requested_slot: variation
     - type: from_text
       not_intent:
@@ -130,7 +144,7 @@ slots:
         - inform_decr_pieces
         - completed
       conditions:
-        - active_loop: wh_update_form
+        - active_loop: variations_form
           requested_slot: variation
    
   pieces:
@@ -142,7 +156,7 @@ slots:
     - type: from_text
       not_intent: completed
       conditions:
-      - active_loop: wh_update_form
+      - active_loop: variations_form
         requested_slot: pieces
       - active_loop: write_order_form
         requested_slot: pieces
@@ -348,9 +362,6 @@ slots:
 
 #AGENT'S RESPONSES:
 responses:
-  utter_happy:
-  - text: "Ottimo! Buon lavoro."
-
   utter_welcome:
   - text: "Di nulla!"
   - text: "Nulla!"
@@ -375,10 +386,6 @@ responses:
   - text: "Sono Herbie, il tuo shop manager digitale. Sono qui per aiutarti a gestire il negozio!"
   - text: "Mi chiamo Herbie! Sono il tuo shop manager digitale. La mia missione è di aiutarti a gestire il negozio!"
 
-  utter_guidance:
-  - text: "Memorizza questi 3 comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'gestisci il magazzino'. Ti guiderò io in tutto!"
-  - text: "Usa questi 3 comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'gestisci il magazzino'. Ti guiderò io!"
-
   utter_done:
   - text: "Fatto!"
   - text: "Ho completato!"
@@ -387,22 +394,15 @@ responses:
 
   utter_please_rephrase:
   - text: "Mmm, non ho capito bene. Potresti ripetere?"
-
-  utter_repeat:
-  - text: "Potresti ripetere?"
-  - text: "Puoi riprovare?"
-  - text: "Prova a precisare!"
-  - text: "Riprova da capo!"
-  - text: "Riprova!"
-
-  utter_specify:
-  - text: "Prova a specificare meglio!"
-  - text: "A quale ti riferisci?"
-  - text: "A quale di questi ti riferisci?"
+  - text: "Scusami, non ho capito. Prova a ripetere!"
+  - text: "Non ho compreso... Riprova!"
+  - text: "Mi è sfuggito, scusami! Puoi riprovare?"
 
   utter_skip:
   - text: "Ok, ignoro!"
   - text: "Ok, salto!"
+  - text: "Ricevuto, questo no!"
+  - text: "Va bene, questo lo salto!"
 
   utter_ask_more:
   - text: "Può servirti altro?"
@@ -422,35 +422,48 @@ responses:
   - text: "Sai dove trovarmi!"
   - text: "Se ti serve altro mi trovi qui."
   - text: "Resto a disposizione!"
-  - text: "Chiamami pure quando vuoi!"
+  - text: "Chiamami quando hai bisogno!"
   - text: "Alla prossima!"
+  - text: "A presto!"
 
-  #product info:
+  #products:
   utter_ask_p_code:
   - text: "Dimmi il prodotto!"
   - text: "Dimmi pure il prodotto!"
   - text: "Vai col prodotto!"
 
-  #warehouse:
-  utter_ask_variation:
-  - text: "Mi dici la variazione dei pezzi?"
-  - text: "Variazione?"
+  utter_ask_add_to_order:
+  - text: "Vuoi che te lo segni come da ordinare?"
+  - text: "Lo includo nel prossimo ordine?"
+  - text: "Te lo metto in lista per il prossimo ordine?"
+  - text: "Lo mettiamo già in lista ordine?"
+  - text: "Lo aggiungiamo alla lista ordine?"
 
-  utter_ask_pieces:
-  - text: "Quanti pezzi?"
-  - text: "Mi dici il numero dei pezzi?"
-  - text: "Numero di pezzi?"
+  #warehouse:
+  utter_opened_warehouse:
+  - text: "Ok, ho aperto il mio magazzino."
+  - text: "Ok, sono nel magazzino."
+  - text: "Ok, sono pronta a gestire il magazzino."
+  - text: "Eccomi, sono dentro il magazzino!"
+  - text: "Bene, sono entrata nel magazzino."
+
+  utter_ask_which_view:
+  - text: "Vuoi la vista completa o il recap?"
+  - text: "Ti invio la vista completa del magazzino o il recap?"
+  - text: "Quale vista vuoi, quella completa o il recap?"
+
+  utter_ask_variation:
+  - text: "Quanti pezzi aggiungo o tolgo?"
+  - text: "Variazione dei pezzi?"
+  - text: "Dimmi la variazione!"
+  - text: "Quanti pezzi entrati o usciti?"
+  - text: "Variazione?"
 
   utter_ask_next:
   - text: "Andiamo avanti."
   - text: "Prossimo."
   - text: "Continuiamo."
   - text: "Successivo."
-
-  utter_ask_add_to_order:
-  - text: "Vuoi che te lo segni come da ordinare?"
-  - text: "Lo includo nel prossimo ordine?"
-  - text: "Te lo metto in lista per il prossimo ordine?"
 
   #orders:
   utter_ask_supplier:
@@ -462,6 +475,7 @@ responses:
   utter_ready_to_order:
   - text: "Sono pronta a preparare l'ordine!"
   - text: "Prepariamo l'ordine!"
+  - text: "Sono pronta ad aiutarti con l'ordine!"
 
   utter_ask_read:
   - text: "Vuoi che ti rileggo la lista?"
@@ -469,35 +483,43 @@ responses:
   - text: "Ti rileggo la lista?"
 
   utter_ask_keep_piece:
-  - text: "Teniamo in lista?"
-  - text: "Tengo?"
-  - text: "Confermi?"
+  - text: "Teniamo così?"
+  - text: "Tengo così?"
+  - text: "Va bene così?"
+  - text: "Ti va bene?"
 
   utter_ask_add_piece:
-  - text: "Aggiungo alla lista?"
+  - text: "Ordiniamo dei pezzi?"
   - text: "Aggiungo?"
+  - text: "Lo ordiniamo?"
+  - text: "Te lo ordino?"
+  - text: "Lo aggiungiamo?"
 
-  utter_ask_sugg_pieces:
+  utter_ask_pieces:
   - text: "Quanti pezzi ordino?"
   - text: "Quanti te ne ordino?"
   - text: "Quanti pezzi ordiniamo?"
 
   #guidance:
-  utter_guidance_wo:
-  - text: "Ok! Dimmi, uno alla volta, per quali prodotti vuoi aggiornare le giacenze. Inizia col primo."
-  - text: "Certo! Dimmi, uno alla volta, per quali prodotti vuoi aggiornare le giacenze. Iniziamo con il primo."
+  utter_guidance:
+  - text: "Memorizza questi 3 comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'apri il magazzino'. Ti guiderò io in tutto!"
+  - text: "Usa questi 3 comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'apri il magazzino'. Ti guiderò io!"
+
+  utter_guidance_vars:
+  - text: "Ok! Per ogni prodotto, dimmi prima il nome, poi ti chiederò la variazione dei pezzi: dovrai dirmi, ad esempio, 'aggiungi 5 pezzi' oppure 'rimuovi 5 pezzi'. Quando hai finito, dimmi 'ho completato'. Iniziamo!"
+  - text: "Certo! Per ogni prodotto, dimmi prima il nome, poi ti chiederò la variazione della quantità: dovrai dirmi, ad esempio, 'aggiungi 5 pezzi' oppure 'togli 5 pezzi'. Quando hai finito, dimmi 'ho completato'. Iniziamo!"
 
   utter_guidance_read:
-  - text: "Ok! Ti leggo i prodotti che abbiamo segnato: dimmi se tenerli o rimuoverli e quanti pezzi vuoi ordinare! Inizio."
-  - text: "Ok! Ti leggo la lista: per ogni prodotto, dimmi se tenerlo o rimuoverlo e quanti pezzi vuoi ordinare! Iniziamo."
+  - text: "Ok, ti leggo i miei appunti. Dimmi se tenere o togliere ogni prodotto. Se vuoi cambiare il numero di pezzi, dimmi direttamente il nuovo quantitativo da ordinare. Iniziamo!"
+  - text: "Ok! Ti leggo la lista: per ogni prodotto, dimmi se tenerlo o toglierlo. Se vuoi cambiare il numero di pezzi, dimmi direttamente il nuovo numero di pezzi da ordinare. Iniziamo!"
 
   utter_ask_write:
   - text: "Vuoi dettarmi tu altri prodotti da ordinare?"
   - text: "Vuoi dettarmi tu dei prodotti da aggiungere alla lista?"
 
   utter_guidance_write:
-  - text: "Dimmi, uno alla volta, il nome dei prodotti di {supplier} da ordinare. Iniziamo col primo!"
-  - text: "Dimmi, uno alla volta, i prodotti di {supplier} che vuoi ordinare. Iniziamo!"
+  - text: "Dimmi, uno alla volta, il nome dei prodotti di {supplier} da ordinare. Quando hai finito, dimmi 'ho completato'. Iniziamo!"
+  - text: "Dimmi, uno alla volta, i prodotti di {supplier} che vuoi ordinare. Quando hai finito, dimmi 'ho completato'. Iniziamo!"
 
   utter_ask_suggest_ord:
   - text: "Posso cercarti i prodotti di {supplier} in esaurimento nel tuo magazzino. Vuoi che te li suggerisca?"
@@ -505,11 +527,16 @@ responses:
 
   utter_order_ready:
   - text: "Il tuo ordine per {supplier} è pronto!"
-  - text: "Abbiamo completato la lista ordini per {supplier}!"
+  - text: "La lista ordini per {supplier} è pronta!"
 
   utter_ask_definitive:
-  - text: "Posso confermarti l'ordine come definitivo? Non potrai più modificarlo."
-  - text: "Possiamo confermare l'ordine come definitivo? Non potrai più modificarlo."
+  - text: "Posso confermarti l'ordine come definitivo? Non potrai più modificarlo, rimarrà in attesa della consegna."
+  - text: "Possiamo confermare l'ordine come definitivo? Non potrai più modificarlo, rimarrà solo in attesa della consegna."
+  - text: "Posso chiudere l'ordine in definitiva? Non potrai più modificarlo, resterà in attesa della consegna."
+
+  utter_explain_delivered:
+  - text: "Ok! Ti registro l'ultimo ordine che abbiamo chiuso come consegnato, aggiugerò i prodotti alle tue giacenze."
+  - text: "Ok! Sto per registrarti l'ultimo ordine che abbiamo chiuso come consegnato, ti aggiugerò i prodotti alle giacenze."
 
 
 #AGENT'S CUSTOM ACTIONS:
@@ -520,6 +547,7 @@ actions:
   #gen:
   - action_reset_all_slots
   - action_reset_ord_slots
+  - action_reset_recap
   - action_utter_greet
   - action_guide_user
   #prod info:
@@ -542,11 +570,13 @@ actions:
   - action_ask_add_sugg
   - action_utter_tot_ordcost
   - action_mark_definitive
+  - action_proactive_check
   - action_send_view
+  - action_register_delivered
   #forms validation:
   - validate_find_prod_form
   - validate_find_supplier_form
-  - validate_wh_update_form
+  - validate_variations_form
   - validate_read_order_form
   - validate_write_order_form
   - validate_suggest_order_form
@@ -564,11 +594,10 @@ forms:
     - supplier
 
   #loopers:
-  wh_update_form:
+  variations_form:
     required_slots:
     - p_code
     - variation
-    - pieces
 
   #make order:  
   #3.1.a. system-driven read:

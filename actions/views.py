@@ -245,4 +245,5 @@ def get_vista(caller, filter=None):
     except Exception as e:
         message = f"C'è stato un problema, ti chiedo scusa!"
         elog.error(f"get_vista() exception. {e}")
-    return -1, message
+        ret = -1
+    return ret, message

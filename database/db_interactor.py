@@ -8,10 +8,12 @@ from database.db_tools import db_connect, db_disconnect
 # - match_supplier()
 # - update_pieces()
 # - delete_ordlist()
-# - get_open_ordlist()
+# - get_json_ordlist()
 # - get_new_ordlist()
 # - get_suggestion_list()
 # - mark_definitive()
+# - check_closed()
+# - register_delivered()
 
 
 #find matching product and get info (ret -> DataFrame):
@@ -90,12 +92,13 @@ def match_supplier(s_text):
     return results
 
 
+#update quantities in DB:
 def update_pieces(utts):
     #compose query:
     if utts['variation'] == 'add':
-        str1 = "+ " + str(utts['pieces'])
+        str1 = f"+ {utts['pieces']}"
     elif utts['variation'] == 'decrease':
-        str1 = "- " + str(utts['pieces'])
+        str1 = f"- {utts['pieces']}"
     else:
         return -1
     query = f"UPDATE {SCHEMA}.prodotti SET quantita = quantita {str1} WHERE codiceprod = {utts['p_code']}"
@@ -120,46 +123,34 @@ def update_pieces(utts):
 
 
 #delete an existent ord_list:
-def delete_ordlist(conn, cursor, ord_code):
+def delete_ordlist(ord_code, conn=None, cursor=None):
+    reconnect = False if conn else True
     try:
+        if reconnect == True:
+            conn, cursor = db_connect()
         query = f"DELETE FROM {SCHEMA}.listeordini WHERE codiceord = {ord_code}"
         cursor.execute(query)
         query = f"DELETE FROM {SCHEMA}.storicoordini WHERE codiceord = {ord_code}"
         cursor.execute(query)
         conn.commit()
+        if reconnect == True:
+            db_disconnect(conn, cursor)
         dlog.info(f"Success: deleted ord_list code {ord_code} from both tables listeordini and storicoordini.")
         return 0
     except Exception as e:
         dlog.error(f"Unable to delete ord_list code {ord_code}. {e}")
         return -1
 
-#get latest ordlist reference for a supplier in the DB:
-def get_latest_ordlist(supplier):
-    Latest = pd.DataFrame
-    num_prods = 0
-    try:
-        conn, cursor = db_connect()
-        query = f"SELECT * FROM {SCHEMA}.storicoordini WHERE produttore = '{supplier}' AND definitiva = FALSE ORDER BY datamodifica DESC LIMIT 1"
-        Latest = pd.read_sql(query, conn)
-        if Latest.empty == False:
-            #get count of products in list:
-            query = f"SELECT codiceprod FROM {SCHEMA}.listeordini WHERE codiceord = {int(Latest['codiceord'].iloc[0])}"
-            FullList = pd.read_sql(query, conn)
-            if FullList.empty == False:
-                num_prods = int(len(FullList.index))
-        db_disconnect(conn, cursor)
-    except Exception as e:
-        dlog.error(f"Unable to perform get_latest_ordlist for supplier {supplier}. {e}")
-    return Latest, num_prods
 
-#a) extract from DB latest open order list in JSON for the current supplier (if any):
-def get_open_ordlist(conn, supplier):
+#extract from DB latest order list in JSON for the current supplier (if any):
+def get_json_ordlist(conn, supplier, closed=False):
     latest_code = None
     latest_date = None
     full_list = None
     num_prods = 0
     try:
-        query = f"SELECT codiceord, datamodifica FROM {SCHEMA}.storicoordini WHERE produttore = '{supplier}' AND definitiva = FALSE ORDER BY datamodifica DESC LIMIT 1"
+        openstr = "FALSE" if closed==False else "TRUE"
+        query = f"SELECT codiceord, datamodifica FROM {SCHEMA}.storicoordini WHERE produttore = '{supplier}' AND definitiva = {openstr} ORDER BY datamodifica DESC LIMIT 1"
         Latest = pd.read_sql(query, conn)
         if Latest.empty == False:
             #extract references:
@@ -174,11 +165,11 @@ def get_open_ordlist(conn, supplier):
                 full_list = FullList.to_dict()
                 full_list = json.dumps(full_list)
     except Exception as e:
-        dlog.error(f"Unable to perform get_open_ordlist for supplier {supplier}. {e}")
+        dlog.error(f"Unable to perform get_json_ordlist for supplier {supplier}. {e}")
     return latest_code, latest_date, full_list, num_prods
 
 
-#b) create new order list from scratch in both DB tables:
+#create new order list from scratch in both DB tables:
 def get_new_ordlist(conn, cursor, supplier):
     latest_code = None
     latest_date = None
@@ -191,14 +182,12 @@ def get_new_ordlist(conn, cursor, supplier):
         cursor.execute(query)
         conn.commit()
         dlog.info(f"Success: created list ord_code {latest_code} into table storicoordini.")
-
     except Exception as e:
         dlog.error(f"Unable to perform get_new_ordlist for supplier {supplier}. {e}")
-        
     return latest_code
 
 
-#c) edit order list:
+#edit order list:
 def edit_ord_list(conn, cursor, ord_code, p_code, pieces, write_mode=False):
     try:
         #a) write_mode ("insert into"):
@@ -227,13 +216,13 @@ def edit_ord_list(conn, cursor, ord_code, p_code, pieces, write_mode=False):
         cursor.execute(query)
         conn.commit()
         dlog.info(f"Success: updated list ord_code {ord_code} into table listeordini.")
+        return 0
     except Exception as e:
         dlog.error(f"Unable to edit ord_list {ord_code} for product {p_code}. {e}")
         return -1
-    return 0
 
 
-#d) get list of suggestions from DB:
+#get list of suggestions from DB:
 def get_suggestion_list(conn, supplier, ord_code):
     full_list = None
     num_prods = 0
@@ -246,14 +235,12 @@ def get_suggestion_list(conn, supplier, ord_code):
             #convert to string:
             full_list = FullList.to_dict()
             full_list = json.dumps(full_list)
-
     except Exception as e:
         dlog.error(f"Unable to perform get_suggestion_list for supplier {supplier}. {e}")
-        
     return full_list, num_prods
 
 
-#e) mark an order list as definitive:
+#mark an order list as definitive:
 def mark_definitive(ord_code):
     try:
         conn, cursor = db_connect()
@@ -266,3 +253,50 @@ def mark_definitive(ord_code):
     except Exception as e:
         dlog.error(f"Unable to mark ord_list code {ord_code} as definitive. {e}")
         return -1
+
+
+#check if present closed orders:
+def check_closed():
+    num_closed = 0
+    try:
+        conn, cursor = db_connect()
+        query = f"SELECT codiceord FROM {SCHEMA}.storicoordini WHERE definitiva = TRUE"
+        Orders = pd.read_sql(query, conn)
+        if Orders.empty == False:
+            num_closed = len(Orders.index)
+        db_disconnect(conn, cursor)
+    except Exception as e:
+        dlog.error(f"Unable to check for closed orders. {e}")
+    return num_closed
+
+
+#mark an order list as definitive:
+def register_delivered(supplier):
+    tot_pieces = 0
+    try:
+        #get latest closed ord_list for supplier:
+        conn, cursor = db_connect()
+        ord_code, _, ord_list, num_prods = get_json_ordlist(conn, supplier, closed=True)
+        if num_prods == 0:
+            #empty list
+            dlog.info(f"mark_delivered(): empty match.")
+            db_disconnect(conn, cursor)
+            return -1, 0
+        else:
+            #unpack JSON string to DataFrame:
+            OrdList = json.loads(ord_list)
+            OrdList = pd.DataFrame(OrdList)
+            OrdList.reset_index(drop=True, inplace=True)
+            for ind in OrdList.index:
+                #update prod quantity in warehouse (var = ordered pieces):
+                pieces = OrdList['quantita'].iloc[ind]
+                query = f"UPDATE {SCHEMA}.prodotti SET quantita = quantita + {pieces} WHERE codiceprod = {OrdList['codiceprod'].iloc[ind]}"
+                tot_pieces = tot_pieces + pieces
+                cursor.execute(query)
+        conn.commit()
+        db_disconnect(conn, cursor)
+        dlog.info(f"Success: registered delivery of ord_list code {ord_code}.")
+        return ord_code, tot_pieces
+    except Exception as e:
+        dlog.error(f"Unable to register delivery of ord_list code {supplier}. {e}")
+        return -1, 0
