@@ -1,11 +1,9 @@
-import database.db_interactor as db_interactor
 import database.db_export as db_export
 from globals import *
 
 #TBOT_VIEWS:
 #common functions with Telegram bot:
 # - create_view_prodotti()
-# - create_view_recap()
 # - create_view_listaordine()
 # - create_view_storicoordini()
 
@@ -76,60 +74,6 @@ def create_view_prodotti(filename, supplier=None):
         return 0
     except Exception:
         elog.exception(f"Export error for xslx Prodotti for schema {SCHEMA}. {Exception}")
-        return -1
-
-
-#view Recap by produttore & categoria:
-def create_view_recap(filename):
-    headers = {'Produttore': 'produttore', 'Categoria': 'categoria', 'Sconto Medio %': 'scontomedio', 'IVA %': 'aliquota', 'Quantita': 'quantita', 'Costo Giacenze €': 'costototale', 'Valore Giacenze €': 'valoretotale'}
-    #export table to pdf:
-    try:
-        Recap = db_export.get_view_recap()
-        if Recap.empty == False:
-            #1) format adjustments:
-            Vista = pd.DataFrame(columns=headers.keys())
-            for col in Vista.columns:
-                if col in ['Sconto Medio %', 'IVA %']:
-                    Vista[col] = Recap[headers[col]]/100
-                elif col == 'Costo Giacenze €':
-                    temp_inv = []
-                    for ind in Recap.index:
-                        discount = Recap['valoretotale'].iloc[ind] * (Recap['scontomedio'].iloc[ind]/100)
-                        cost = Recap['valoretotale'].iloc[ind] - discount
-                        cost = cost + (cost * (Recap['aliquota'].iloc[ind]/100))
-                        temp_inv.append(cost)
-                    Vista[col] = temp_inv
-                else:
-                    Vista[col] = Recap[headers[col]]
-            #add grand totals row:
-            Vista = Vista.append({col:'-' for col in Vista.columns}, ignore_index=True)
-            Vista['Produttore'].iloc[-1] = 'TOTALE'
-            Vista['Quantita'].iloc[-1] = Recap['quantita'].sum()
-            Vista['Costo Giacenze €'].iloc[-1] = sum(temp_inv)
-            Vista['Valore Giacenze €'].iloc[-1] = Recap['valoretotale'].sum()
-            Vista.reset_index(drop=True, inplace=True)
-
-            #2) export:
-            #load Pandas Excel exporter:
-            writer = pd.ExcelWriter(filename)
-            Vista.to_excel(writer, sheet_name=SCHEMA, index=False, na_rep='')
-            workbook  = writer.book
-            fmt_price = workbook.add_format({'num_format': '#,##0.00'})
-            fmt_pct = workbook.add_format({'num_format': '0%'})
-            #auto-adjust columns' width:
-            for column in Vista:
-                column_width = max(Vista[column].astype(str).map(len).max(), len(column))
-                col_idx = Vista.columns.get_loc(column)
-                if column in ['Costo Giacenze €', 'Valore Giacenze €']:
-                    writer.sheets[SCHEMA].set_column(first_col=col_idx, last_col=col_idx, width=column_width, cell_format=fmt_price)
-                elif column in ['Sconto Medio %', 'IVA %']:
-                    writer.sheets[SCHEMA].set_column(first_col=col_idx, last_col=col_idx, width=column_width, cell_format=fmt_pct)
-                else:
-                    writer.sheets[SCHEMA].set_column(first_col=col_idx, last_col=col_idx, width=column_width)
-            writer.save()
-        return 0
-    except Exception:
-        elog.exception(f"Export error for xslx Recap for schema {SCHEMA}. {Exception}")
         return -1
 
 
@@ -216,10 +160,6 @@ def get_vista(caller, filter=None):
             ordcode = int(filter)
             ret, suppl, filename = create_view_listaordine(ordcode)
             filetype = f"la lista ordine per {suppl}"
-        elif caller == 'recap':
-            filename = f'./actions/data_cache/{SCHEMA}.{caller}.xlsx'
-            ret = create_view_recap(filename)
-            filetype = f"la vista di recap"
         else:
             filename = f'./actions/data_cache/{SCHEMA}.{caller}{f"_{filter}" if filter else ""}.xlsx'
             ret = create_view_prodotti(filename, filter)

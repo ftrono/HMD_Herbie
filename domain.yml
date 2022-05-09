@@ -15,13 +15,12 @@ intents:
   - deny
   - bot_challenge
   - ask_guidance
+  - ask_reset
   #main commands:
   - ask_find_product
   - ask_find_supplier
   - ask_open_warehouse
   #warehouse:
-  - ask_completa
-  - ask_recap
   - ask_delivered
   - ask_variations
   - inform_pieces
@@ -29,8 +28,7 @@ intents:
   #product:
   - inform_text
   - inform_ordinal
-  - ask_stock_info
-  - ask_add_to_order
+  - ask_quantity
   - ask_prodinfo
   - ask_price
   - ask_cat_vat
@@ -47,6 +45,7 @@ intents:
   - ask_tot_ordcost
   - ask_make_definitive
   - ask_get_view
+  - ask_get_view_ord
 
 
 #SLOTS:
@@ -58,9 +57,10 @@ slots:
     mappings:
     - type: custom
   
+  #warehouse:
   warehouse:
     type: bool
-    influence_conversation: False ###
+    influence_conversation: False
     mappings:
     - type: custom
   
@@ -69,25 +69,16 @@ slots:
     influence_conversation: True
     mappings:
     - type: custom
-  
-  recap:
-    type: bool
-    influence_conversation: False
-    mappings:
-    - type: from_intent
-      intent: ask_recap
-      value: True
-    - type: from_intent
-      intent: ask_completa
-      value: False
 
-  #0) data identification:
+  #data identification:
   p_code:
     type: text
-    influence_conversation: True
+    influence_conversation: False
     mappings:
     - type: from_text
-      not_intent: completed
+      not_intent:
+        - completed
+        - ask_reset
       conditions:
       - active_loop: find_prod_form
         requested_slot: p_code
@@ -98,10 +89,12 @@ slots:
 
   supplier:
     type: text
-    influence_conversation: True
+    influence_conversation: False
     mappings:
     - type: from_text
-      not_intent: completed
+      not_intent:
+        - completed
+        - ask_reset
       conditions:
       - active_loop: find_supplier_form
         requested_slot: supplier
@@ -118,7 +111,7 @@ slots:
     mappings:
     - type: custom
 
-  #1) warehouse:
+  #warehouse:
   variation:
     type: categorical
     influence_conversation: False
@@ -143,6 +136,7 @@ slots:
         - inform_pieces
         - inform_decr_pieces
         - completed
+        - ask_reset
       conditions:
         - active_loop: variations_form
           requested_slot: variation
@@ -154,21 +148,17 @@ slots:
     max_value: 100
     mappings:
     - type: from_text
-      not_intent: completed
+      not_intent:
+        - completed
+        - ask_reset
       conditions:
       - active_loop: variations_form
         requested_slot: pieces
       - active_loop: write_order_form
         requested_slot: pieces
 
-  #2) stock:
-  need_order:
-    type: bool
-    influence_conversation: True
-    mappings:
-    - type: custom
-
-  add_to_order:
+  #stock:
+  affirmed:
     type: bool
     influence_conversation: True
     mappings:
@@ -176,19 +166,10 @@ slots:
       intent: affirm
       value: True
     - type: from_intent
-      intent: inform_pieces
-      value: True
-    - type: from_intent
       intent: deny
       value: False
-    - type: from_text
-      not_intent:
-        - affirm
-        - inform_pieces
-        - deny
-        - completed
 
-  #3) orders:
+  #orders:
   new_list:
     type: bool
     influence_conversation: True
@@ -214,7 +195,7 @@ slots:
     mappings:
     - type: custom
 
-  #3.1) read order:
+  #orders - read order:
   keep:
     type: bool
     influence_conversation: False
@@ -249,6 +230,7 @@ slots:
         - inform_pieces
         - deny
         - completed
+        - ask_reset
       conditions:
         - active_loop: read_order_form
           requested_slot: keep
@@ -260,7 +242,7 @@ slots:
     mappings:
     - type: custom
 
-  #3.3) suggest_order:
+  #orders - suggest_order:
   found:
     type: bool
     influence_conversation: True
@@ -288,6 +270,7 @@ slots:
         - inform_pieces
         - deny
         - completed
+        - ask_reset
       conditions:
         - active_loop: suggest_order_form
           requested_slot: add_sugg
@@ -432,6 +415,10 @@ responses:
   - text: "Alla prossima!"
   - text: "A presto!"
 
+  utter_restart:
+  - text: "Mi resetto. Sono pronta a ricominciare! Dammi un comando."
+  - text: "Mi riavvio. Rilancia un comando per iniziare!"
+
   #products:
   utter_ask_p_code:
   - text: "Dimmi il prodotto!"
@@ -452,11 +439,6 @@ responses:
   - text: "Ok, sono pronta a gestire il magazzino."
   - text: "Eccomi, sono dentro il magazzino!"
   - text: "Bene, sono entrata nel magazzino."
-
-  utter_ask_which_view:
-  - text: "Vuoi la vista completa o il recap?"
-  - text: "Ti invio la vista completa del magazzino o il recap?"
-  - text: "Quale vista vuoi, quella completa o il recap?"
 
   utter_ask_variation:
   - text: "Quanti pezzi aggiungo o tolgo?"
@@ -544,6 +526,16 @@ responses:
   - text: "Ok! Ti registro l'ultimo ordine che abbiamo chiuso come consegnato, aggiugerò i prodotti alle tue giacenze."
   - text: "Ok! Sto per registrarti l'ultimo ordine che abbiamo chiuso come consegnato, ti aggiugerò i prodotti alle giacenze."
 
+  #redirect:
+  utter_redirect_warehouse:
+  - text: "Chiedimi di aprire il magazzino. Potrò risponderti subito dopo!"
+
+  utter_redirect_prod:
+  - text: "Chiedimi di cercare un prodotto. Potrò risponderti subito dopo!"
+
+  utter_redirect_supplier:
+  - text: "Chiedimi di cercare un produttore. Potrò risponderti subito dopo!"
+
 
 #AGENT'S CUSTOM ACTIONS:
 actions:
@@ -552,8 +544,7 @@ actions:
   #custom actions:
   #gen:
   - action_reset_all_slots
-  - action_reset_ord_slots
-  - action_reset_recap
+  - action_reset_form_slots
   - action_utter_greet
   - action_guide_user
   #prod info:
@@ -567,7 +558,7 @@ actions:
   - action_utter_nogluten
   - action_utter_nosugar
   #orders:
-  - action_check_wh
+  - action_check_quantity
   - action_add_to_list
   - action_get_ordlist
   - action_get_newlist

@@ -287,7 +287,7 @@ def disambiguate_supplier(tracker, dispatcher):
         return {"supplier": supplier}
 
 
-#Stock info: update quantity of a product in DB:
+#Variations: update quantity of a product in DB:
 def update_warehouse(dispatcher, slots):
     #check lower boundary:
     if slots['variation'] == 'decrease':

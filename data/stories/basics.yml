@@ -4,7 +4,7 @@ stories:
 #BASICS:
 # - chatbot info
 
-#basics -> chatbot info:
+#basics:
 - story: basics
   steps:
   - intent: greet
@@ -15,20 +15,12 @@ stories:
   - action: action_guide_user
   - intent: thanks
   - action: utter_welcome
-
-#after a task:
-- story: clarify what else to do
-  steps:
-  - action: utter_ask_more
-  - intent: affirm
-  - action: utter_ask_what
-
-- story: done enough
-  steps:
-  - action: utter_ask_more
   - or:
+    - intent: inform_text
+    - intent: inform_ordinal
+  - action: action_guide_user
+  - or:
+    - intent: affirm
     - intent: deny
     - intent: completed
   - action: utter_ok
-  - action: utter_available
-  - action: action_reset_all_slots

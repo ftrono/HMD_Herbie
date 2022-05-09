@@ -14,6 +14,8 @@ stories:
   - slot_was_set:
     - pending_delivery: True
   - intent: affirm
+  - slot_was_set:
+    - affirmed: True
   - action: utter_explain_delivered
   - action: find_supplier_form #find supplier
   - active_loop: find_supplier_form
@@ -32,6 +34,8 @@ stories:
   - slot_was_set:
     - pending_delivery: True
   - intent: deny
+  - slot_was_set:
+    - affirmed: False
   - action: utter_ok
   - action: utter_ask_what
   - checkpoint: wh_opened
@@ -40,9 +44,9 @@ stories:
   steps:
   - intent: ask_open_warehouse
   - action: action_reset_all_slots
-  - action: action_proactive_check #if pending_delvery == False, the action already utters 'ask_what'
+  - action: action_proactive_check #if pending_delvery == null, the action already utters 'ask_what'
   - slot_was_set:
-    - pending_delivery: False
+    - pending_delivery: null
   - checkpoint: wh_opened
 
 
@@ -53,13 +57,8 @@ stories:
   - intent: ask_guidance #ask guidance - warehouse
   - action: action_guide_user
   - action: utter_ask_what
-  - intent: ask_get_view #send supplier view
-  - action: utter_ask_which_view #complete or recap (managed by custom action)
-  - or:
-    - intent: ask_recap
-    - intent: ask_completa
+  - intent: ask_get_view #send view
   - action: action_send_view
-  - action: action_reset_recap
   - action: utter_ask_more
   - intent: ask_delivered
   - action: utter_explain_delivered
@@ -72,20 +71,15 @@ stories:
   - action: action_reset_all_slots
   - action: utter_available
 
-#SUBTASK 2) Various + variations:
+#SUBTASK 2) Various + ask variations:
 - story: wh opened - various -> user asks variations
   steps:
   - checkpoint: wh_opened
   - intent: ask_guidance #ask guidance - warehouse
   - action: action_guide_user
   - action: utter_ask_what
-  - intent: ask_get_view #send supplier view
-  - action: utter_ask_which_view #complete or recap (managed by custom action)
-  - or:
-    - intent: ask_recap
-    - intent: ask_completa
+  - intent: ask_get_view #send view
   - action: action_send_view
-  - action: action_reset_recap
   - action: utter_ask_more
   - intent: ask_variations
   - action: utter_guidance_vars #variations form (must be interrupted by default)
@@ -97,13 +91,6 @@ stories:
   - action: action_reset_all_slots
   - action: utter_done
   - action: utter_available
-
-#after a task:
-- story: warehouse - clarify what else to do
-  steps:
-  - action: utter_ask_more
-  - intent: affirm
-  - action: utter_ask_what
 
 #END:
 - story: warehouse -> done enough

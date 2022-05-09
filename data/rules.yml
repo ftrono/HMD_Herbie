@@ -13,15 +13,21 @@ rules:
   - intent: thanks
   - action: utter_welcome
 
-#DB fail -> reset all:
+#"ask_reset" -> reset & restart:
+- rule: reset
+  steps:
+  - intent: ask_reset
+  - action: action_restart
+
+#DB fail -> reset & restart:
 - rule: DB fail
   condition:
   - slot_was_set:
     - fail: True
   steps:
-  - action: action_reset_all_slots
+  - action: action_restart
 
-#forced intent mappings:
+  #forced intent mappings:
 - rule: inform prod
   steps:
   - action: utter_ask_p_code

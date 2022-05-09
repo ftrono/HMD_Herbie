@@ -17,7 +17,6 @@ nlu:
     - ho finito
     - completato
     - ho completato
-    - è tutto
     - detto tutto
     - fatto
     - ho fatto
@@ -61,18 +60,17 @@ nlu:
     - no grazie
     - nono
     - sbagliato
-    - non hai capito
     - no rimuovilo
+    - rimuovi
     - no toglilo
+    - togli
     - no questo no
     - questo non lo voglio
     - toglilo dalla lista
     - no ignora
     - no questo ignoralo
     - no salta
-    - non leggere
-    - no non leggere
-    - no vai avanti
+    - salta
 
 - intent: bot_challenge
   examples: |
@@ -104,8 +102,19 @@ nlu:
     - come posso parlarti?
     - cosa capisci?
 
+- intent: ask_reset
+  examples: |
+    - riparti
+    - resetta tutto
+    - resetta
+    - ricominciamo
+    - annulla tutto
+    - ferma tutto
+    - ricomincia
+    - riavvia
+    - riavviati
 
-#main commands:
+#MAIN COMMANDS:
 - intent: ask_find_product
   examples: |
     - cerca un prodotto
@@ -174,22 +183,6 @@ nlu:
     - apri gestione magazzino
 
 #1) WAREHOUSE:
-- intent: ask_completa
-  examples: |
-    - completa
-    - la vista completa
-    - voglio la vista completa
-    - mandami la completa
-    - invia la vista completa
-
-- intent: ask_recap
-  examples: |
-    - recap
-    - il recap
-    - voglio il recap
-    - mandami il recap
-    - invia il recap
-
 - intent: ask_delivered
   examples: |
     - mi è stato consegnato un ordine
@@ -272,6 +265,9 @@ nlu:
     - nome bustine
     - nome compresse
     - nome altro buste blister
+    - aboca
+    - flufast
+    - fior di loto
 
 - intent: inform_ordinal
   examples: |
@@ -290,7 +286,7 @@ nlu:
     - il terzo della lista
     - l'ultimo di questi
 
-- intent: ask_stock_info
+- intent: ask_quantity
   examples: |
     - quanti pezzi abbiamo?
     - quanti pezzi ci sono in magazzino?
@@ -301,15 +297,10 @@ nlu:
     - mi controlli la giacenza?
     - mi dici la giacenza?
     - controllami la quantità
-
-- intent: ask_add_to_order
-  examples: |
-    - me lo segni come da ordinare?
-    - segnamelo da ordinare
-    - ricordami di ordinarlo prossima volta
-    - ti ricordi di metterlo in lista?
-    - mettimelo in lista ordini
-    - segnalo per il prossimo ordine
+    - aggiungilo all'ordine
+    - aggiungilo alla lista ordini
+    - segnalo come da ordinare
+    - segnalo nella lista ordini
 
 - intent: ask_prodinfo
   examples: |
@@ -481,27 +472,25 @@ nlu:
 #ask send DB view:
 - intent: ask_get_view
   examples: |
-    - mi invieresti la lista ordini?
-    - mi invii la lista via Telegram?
-    - puoi inviarmi la lista via Telegram bot?
-    - inviami la lista su Telegram
-    - mandami la lista da stampare
-    - mandami il pdf
-    - inviami il file Excel
-    - inviami le giacenze
+    - inviami la vista delle giacenze
     - inviami la vista del magazzino
-    - inviami la vista dei prodotti via Telegram
-    - mandami la vista da stampare
-    - inviami l'Excel dei prodotto
-    - inviami il pdf dei prodotti
-    - mandami la vista del magazzino
-    - mandami le giacenze del produttore
-    - inviami la lista dei prodotti
-    - quanto valgono le giacenze?
-    - qual è il valore delle giacenze?
-    - a quanto ammontano le giacenze?
-    - valore delle giacenze?
-    - valore del magazzino?
-    - mi dici il valore del magazzino?
-    - mi dici il valore delle giacenze di questo prodotto?
-    - mi dici il valore delle giacenze di questo fornitore?
+    - mi invii la lista prodotti
+    - inviami la vista dei prodotti
+    - inviami le giacenze
+    - mandami le giacenze
+    - inviami il pdf delle giacenze
+    - mandami l'excel delle giacenze
+    - inviami l'excel del magazzino
+    - mandami il pdf del magazzino
+
+- intent: ask_get_view_ord
+  examples: |
+    - mi invieresti la lista ordini?
+    - inviami la lista ordine
+    - inviamela su Telegram
+    - inviamela per messaggio
+    - inviami la vista per messaggio
+    - inviami la lista in pdf
+    - inviami l'excel della lista
+    - mandami l'ordine in pdf
+    - inviami l'excel dell'ordine

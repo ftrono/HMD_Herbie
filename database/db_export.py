@@ -31,17 +31,6 @@ def get_view_prodotti(supplier=None):
         dlog.error(f"Unable to perform get view Prodotti for supplier: {supplier if supplier else 'all'}. {e}")
     return FullList
 
-#get Recap view from DB:
-def get_view_recap():
-    Recap = pd.DataFrame()
-    try:
-        conn, cursor = db_connect()
-        query = f"SELECT produttori.produttore, categorie.categoria, SUM(prodotti.quantita) AS quantita, SUM(prodotti.valoretotale) AS valoretotale, produttori.scontomedio, categorie.aliquota FROM {SCHEMA}.produttori INNER JOIN {SCHEMA}.prodotti ON prodotti.produttore = produttori.produttore INNER JOIN {SCHEMA}.categorie ON prodotti.categoria = categorie.categoria GROUP BY produttori.produttore, categorie.categoria ORDER BY produttori.produttore, categorie.categoria"
-        Recap = pd.read_sql(query, conn)
-        db_disconnect(conn, cursor)
-    except psycopg2.Error as e:
-        dlog.error(f"Unable to perform get view Recap from schema {SCHEMA}. {e}")
-    return Recap
 
 #get Order List view from DB:
 def get_view_listaordine(codiceord):

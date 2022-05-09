@@ -19,60 +19,14 @@ stories:
   - action: utter_ask_what
   - checkpoint: product_found
 
-#SUBTASK 1) ask stock info:
-- story: ask stock info - 1.a) sufficient stock
-  steps:
-  - checkpoint: product_found
-  - intent: ask_stock_info
-  - action: action_check_wh
-  - slot_was_set:
-    - need_order: False
-  - action: utter_ask_more
-  - checkpoint: product_found
 
-- story: ask stock info - 1.b) need to order
-  steps:
-  - checkpoint: product_found
-  - intent: ask_stock_info
-  - action: action_check_wh
-  - slot_was_set:
-    - need_order: True
-  - checkpoint: need_to_order
-
-- story: ask stock info - 1.b.a) need to order -> don't order
-  steps:
-  - checkpoint: need_to_order
-  - action: utter_ask_add_to_order
-  - or:
-    - intent: affirm
-    - intent: inform_pieces
-  - slot_was_set:
-    - add_to_order: True
-  - action: action_add_to_list
-  - action: utter_ask_more
-  - checkpoint: product_found
-
-- story: ask stock info - 1.b.b) need to order -> don't order
-  steps:
-  - checkpoint: need_to_order
-  - action: utter_ask_add_to_order
-  - intent: deny
-  - slot_was_set:
-    - add_to_order: False
-  - action: utter_ok
-  - action: utter_ask_more
-  - checkpoint: product_found
-
-#SUBTASKS 2) ask product info - various:
-- story: ask prodinfo - various
+#SUBTASKS 1) ask product info - various:
+- story: product - various
   steps:
   - checkpoint: product_found
   - intent: ask_guidance #ask guidance - product
   - action: action_guide_user
   - action: utter_ask_what
-  - intent: ask_add_to_order
-  - action: action_add_to_list
-  - action: utter_ask_more
   - intent: ask_prodinfo #ask prod info
   - action: action_utter_prodinfo
   - action: utter_ask_more
@@ -107,12 +61,38 @@ stories:
   - action: utter_available
   - action: action_reset_all_slots
 
-#after a task:
-- story: product - clarify what else to do
+
+#SUBTASK 2) ask quantity:
+- story: product - ask quantity
   steps:
-  - action: utter_ask_more
-  - intent: affirm
+  - checkpoint: product_found
+  - intent: ask_guidance #ask guidance - product
+  - action: action_guide_user
   - action: utter_ask_what
+  - intent: ask_quantity
+  - action: action_check_quantity
+  - checkpoint: ask_order
+
+- story: ask quantity -> order
+  steps:
+  - checkpoint: ask_order
+  - intent: affirm
+  - slot_was_set:
+    - affirmed: True
+  - action: action_add_to_list
+  - action: utter_ask_more
+  - checkpoint: product_found
+
+- story: ask quantity -> don't order
+  steps:
+  - checkpoint: ask_order
+  - intent: deny
+  - slot_was_set:
+    - affirmed: False
+  - action: utter_ok
+  - action: utter_ask_more
+  - checkpoint: product_found
+
 
 #END:
 - story: product -> done enough

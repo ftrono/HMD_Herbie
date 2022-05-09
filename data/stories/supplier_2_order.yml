@@ -42,7 +42,7 @@ stories:
 - story: create order - 2.a) read - full
   steps:
   - checkpoint: start_read_order
-  - action: action_reset_ord_slots
+  - action: action_reset_form_slots
   - action: utter_guidance_read #read form
   - action: read_order_form
   - active_loop: read_order_form
@@ -52,7 +52,7 @@ stories:
 - story: create order - 2.b) read - stopped
   steps:
   - checkpoint: start_read_order
-  - action: action_reset_ord_slots
+  - action: action_reset_form_slots
   - action: utter_guidance_read #read form
   - action: read_order_form
   - active_loop: read_order_form
@@ -70,7 +70,7 @@ stories:
   - action: action_get_suggestion_list
   - slot_was_set:
     - found: True
-  - action: action_reset_ord_slots
+  - action: action_reset_form_slots
   - action: suggest_order_form
   - active_loop: suggest_order_form
   - active_loop: null
@@ -84,7 +84,7 @@ stories:
   - action: action_get_suggestion_list
   - slot_was_set:
     - found: True
-  - action: action_reset_ord_slots
+  - action: action_reset_form_slots
   - action: suggest_order_form
   - active_loop: suggest_order_form
   - intent: completed
@@ -112,7 +112,7 @@ stories:
 - story: create order - 4.a) write - yes (must then be stopped by default)
   steps:
   - checkpoint: start_write_order
-  - action: action_reset_ord_slots
+  - action: action_reset_form_slots
   - action: utter_ask_write
   - intent: affirm
   - action: utter_guidance_write #write form
@@ -127,7 +127,7 @@ stories:
 - story: create order - 4.b) write - no
   steps:
   - checkpoint: start_write_order
-  - action: action_reset_ord_slots
+  - action: action_reset_form_slots
   - action: utter_ask_write
   - intent: deny
   - action: utter_done
@@ -142,7 +142,7 @@ stories:
   - intent: deny
   - action: utter_ok
   - action: utter_ask_more
-  - intent: ask_get_view #send ord list
+  - intent: ask_get_view_ord #send ord list
   - action: action_send_view
   - action: utter_ask_more
   - intent: ask_tot_ordcost #ask total ord cost

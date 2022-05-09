@@ -1,8 +1,7 @@
 from typing import Any, Text, Dict, List
-from rasa_sdk import Tracker, Action, Action, FormValidationAction, ValidationAction
+from rasa_sdk import Tracker, Action, Action, FormValidationAction
 from rasa_sdk.executor import CollectingDispatcher
-from rasa_sdk.types import DomainDict
-from rasa_sdk.events import SlotSet, AllSlotsReset, FollowupAction
+from rasa_sdk.events import SlotSet
 from globals import *
 from database.db_tools import db_connect, db_disconnect
 import database.db_interactor as db_interactor
@@ -29,33 +28,21 @@ class ActionResetAllSlots(Action):
         return slots_set
 
 
-#Create Order -> reset recurrent slots for order preparation:
-class ActionResetOrdSlots(Action):
+#Form Reset -> reset recurrent slots for forms:
+class ActionResetFormSlots(Action):
     def name(self) -> Text:
-            return "action_reset_ord_slots"
+            return "action_reset_form_slots"
 
     def run(self, dispatcher: CollectingDispatcher,
         tracker: Tracker,
         domain: Dict[Text, Any]
         ) -> List[Dict[Text, Any]]:
 
-        to_delete = ['p_code', 'pieces', 'keep', 'add_sugg']
+        to_delete = ['p_code', 'pieces', 'keep', 'add_sugg', 'variation']
         slots_set = []
         for sname in to_delete:
             slots_set.append(SlotSet(sname, None))
         return slots_set
-
-#Create Order -> reset recurrent slots for order preparation:
-class ActionResetRecap(Action):
-    def name(self) -> Text:
-            return "action_reset_recap"
-
-    def run(self, dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any]
-        ) -> List[Dict[Text, Any]]:
-
-        return [SlotSet('recap', None)]
 
 
 #adapt greet depending on the time of the day:
@@ -266,10 +253,10 @@ class ActionUtterNoSugar(Action):
         return []
 
 
-#Stock Info -> check pieces in DB and return need_order T/F:
-class ActionCheckWH(Action):
+#Quantities -> check pieces in DB:
+class ActionCheckQuantity(Action):
     def name(self) -> Text:
-            return "action_check_wh"
+            return "action_check_quantity"
 
     def run(self, dispatcher: CollectingDispatcher,
         tracker: Tracker,
@@ -277,31 +264,30 @@ class ActionCheckWH(Action):
         ) -> List[Dict[Text, Any]]:
 
         p_code = tracker.get_slot("p_code")
-        elog.info(f"CHECKING: {p_code}")
         if p_code != None:
             try:
                 pieces = int(tracker.get_slot("cur_quantity"))
-                if pieces > THRESHOLD_TO_ORD:
-                    message = f"Hai {pieces} pezzi in magazzino."
-                    dispatcher.utter_message(text=message)
-                    return [SlotSet('need_order', False)]
-                else:
-                    if pieces == 0:
-                        message = f"Non hai più pezzi rimasti in magazzino!"
-                    elif pieces == 1:
-                        message = f"Hai un solo pezzo rimasto in magazzino."
-                    else:
-                        message = f"Hai solo {pieces} pezzi rimasti in magazzino."
-                    dispatcher.utter_message(text=message)
-                    return [SlotSet('need_order', True)]
             except:
                 elog.info("DB connection error.")
                 message = "C'è stato un problema con il mio database, ti chiedo scusa."
                 dispatcher.utter_message(text=message)
-            return [SlotSet('fail', True)]
+                return [SlotSet('fail', True)]
+            if pieces > THRESHOLD_TO_ORD:
+                message = f"Hai {pieces} pezzi in magazzino."
+                dispatcher.utter_message(text=message)
+            else:
+                if pieces == 0:
+                    message = f"Non hai più pezzi rimasti in magazzino. Potrebbe servirti presto!"
+                elif pieces == 1:
+                    message = f"Hai un solo pezzo rimasto in magazzino. Potrebbe servirti presto!"
+                else:
+                    message = f"Hai solo {pieces} pezzi rimasti in magazzino. Potrebbe servirti presto!"
+                dispatcher.utter_message(text=message)
+            dispatcher.utter_message(response='utter_ask_add_to_order')
+        return []
 
 
-#Stock Info -> add product to the next order list:
+#Quantities -> add product to the next order list:
 class ActionAddToList(Action):
     def name(self) -> Text:
             return "action_add_to_list"
@@ -313,21 +299,14 @@ class ActionAddToList(Action):
 
         err = False
         slots = tracker.current_slot_values()
-        #store number of pieces to add, if said, and prepare message for later:
-        if slots['pieces'] == None or slots['pieces'] == str(1):
-            slots['pieces'] = 1
-            message = "Segnato nella prossima lista ordini!"
-        else:
-            message = f"Segnàti {slots['pieces']} pezzi nella prossima lista ordini!"
-        elog.info(f"Pieces: {slots['pieces']}")
-
         #add to order list in DB:
         try:
             conn, cursor = db_connect()
             #get an open order list (existing or new):
             ord_code, _ = orders.get_open_order(conn, cursor, slots['supplier'])
             #add product to list:
-            ret = db_interactor.edit_ord_list(conn, cursor, ord_code, slots['p_code'], slots['pieces'], write_mode=True)
+            ret = db_interactor.edit_ord_list(conn, cursor, ord_code, slots['p_code'], pieces=1, write_mode=True)
+            db_disconnect(conn, cursor)
         except:
             err = True
 
@@ -335,11 +314,12 @@ class ActionAddToList(Action):
             elog.info("DB connection error.")
             message = "C'è stato un problema con il mio database, ti chiedo scusa."
             dispatcher.utter_message(text=message)
-            return [SlotSet('pieces', None), SlotSet('add_to_order', None), SlotSet('fail', True)]
+            return [SlotSet('fail', True)]
         else:
             #product added:
+            message = "Segnato nella prossima lista ordini!"
             dispatcher.utter_message(text=message)
-        return [SlotSet('pieces', None), SlotSet('add_to_order', None)]
+        return []
 
 
 #SUPPLIER / ORDERS:
@@ -536,9 +516,9 @@ class ActionMarkDefinitive(Action):
                 message = f"{message}Quando l'ordine ti verrà consegnato, chiedimi di aprire il magazzino, ti inserirò i prodotti arrivati in automatico."
             else:
                 message = f"C'è stato un problema col mio magazzino, ti chiedo scusa!"
+                return [SlotSet('fail', True)]
         dispatcher.utter_message(text=message)
-        slots_set = commons.convert_to_slotset(slots)
-        return slots_set
+        return []
 
 
 #Warehouse -> Check if there are closed orders. Else, utter default ask_what:
@@ -561,7 +541,7 @@ class ActionProactiveCheck(Action):
         else:
             #general ask_what:
             dispatcher.utter_message(response='utter_ask_what')
-            return [SlotSet('warehouse', True), SlotSet('pending_delivery', False)]
+            return [SlotSet('warehouse', True), SlotSet('pending_delivery', None)]
 
 
 #Warehouse -> Register closed order as delivered and update warehouse:
@@ -581,7 +561,7 @@ class ActionRegisterDelivered(Action):
             return []
         else:
             #1) update wh:
-            ord_code, tot_pieces = db_interactor.register_delivered(slots['supplier'])
+            ord_code, tot_pieces, edited_date = db_interactor.register_delivered(slots['supplier'])
             if ord_code == -1:
                 message = f"Non ho trovato ordini chiusi per {slots['supplier']}."
             else:
@@ -595,12 +575,13 @@ class ActionRegisterDelivered(Action):
                     sent_confirm = "Non sono riuscita a inviarti la lista ordine completa via Telegram."
                 #check success:
                 if ret_del == 0:
-                    message = f"Fatto, ti ho registrato l'ultimo ordine chiuso per {slots['supplier']} come consegnato! Ti ho aggiornato le giacenze di ogni prodotto in lista nel magazzino, hai {tot_pieces} nuovi pezzi in totale. {sent_confirm}"
+                    message = f"Fatto, ti ho registrato l'ultimo ordine per {slots['supplier']}, chiuso {commons.readable_date(edited_date)}, come consegnato! Ti ho aggiornato le giacenze di ogni prodotto in lista nel magazzino, hai {tot_pieces} nuovi pezzi in totale. {sent_confirm}"
                 else:
                     elog.error(f"Order list {ord_code} stored to Prodotti table but not deleted from StoricoOrdini e ListeOrdini.")
                     message = f"C'è stato un problema, ti chiedo scusa!"
+                    return [SlotSet('fail', True)]
             dispatcher.utter_message(text=message)
-            return [SlotSet('supplier', None)]
+            return []
 
 
 #Views -> Send view via tBot:
@@ -616,20 +597,13 @@ class ActionSendView(Action):
         #disambiguate current case based on the slots populated:
         codiceord = tracker.get_slot("ord_code")
         supplier = tracker.get_slot("supplier")
-        recap = tracker.get_slot("recap")
-        warehouse = tracker.get_slot("warehouse")
         #priority order:
         if codiceord and supplier:
             _, message = views.get_vista(caller='lista', filter=codiceord)
         elif supplier:
             _, message = views.get_vista(caller='prodotti', filter=supplier)
-        elif recap == True:
-            _, message = views.get_vista(caller='recap')
-        elif warehouse == True:
-            _, message = views.get_vista(caller='prodotti')
         else:
-            #cannot start:
-            message = f"Usa uno di questi comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'apri il magazzino'. Potrò risponderti subito dopo."
+            _, message = views.get_vista(caller='prodotti')
         dispatcher.utter_message(text=message)
         return []
 

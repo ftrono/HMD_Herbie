@@ -37,6 +37,8 @@ stories:
   - intent: ask_make_definitive #make definitive - deny
   - action: utter_ask_definitive
   - intent: deny
+  - slot_was_set:
+    - affirmed: False
   - action: utter_ok
   - action: utter_ask_more
   - intent: ask_get_view #send ord list
@@ -64,6 +66,8 @@ stories:
   - intent: ask_make_definitive #make definitive
   - action: utter_ask_definitive
   - intent: affirm
+  - slot_was_set:
+    - affirmed: True
   - action: action_mark_definitive
   - action: utter_available
   - action: action_reset_all_slots
@@ -141,13 +145,6 @@ stories:
   - action: utter_ask_read
   - intent: deny
   - checkpoint: start_suggest_order
-
-#after a task:
-- story: supplier - clarify what else to do
-  steps:
-  - action: utter_ask_more
-  - intent: affirm
-  - action: utter_ask_what
 
 #END:
 - story: supplier -> done enough

@@ -276,12 +276,12 @@ def register_delivered(supplier):
     try:
         #get latest closed ord_list for supplier:
         conn, cursor = db_connect()
-        ord_code, _, ord_list, num_prods = get_json_ordlist(conn, supplier, closed=True)
+        ord_code, latest_date, ord_list, num_prods = get_json_ordlist(conn, supplier, closed=True)
         if num_prods == 0:
             #empty list
             dlog.info(f"mark_delivered(): empty match.")
             db_disconnect(conn, cursor)
-            return -1, 0
+            return -1, 0, ""
         else:
             #unpack JSON string to DataFrame:
             OrdList = json.loads(ord_list)
@@ -296,7 +296,7 @@ def register_delivered(supplier):
         conn.commit()
         db_disconnect(conn, cursor)
         dlog.info(f"Success: registered delivery of ord_list code {ord_code}.")
-        return ord_code, tot_pieces
+        return ord_code, tot_pieces, latest_date
     except Exception as e:
         dlog.error(f"Unable to register delivery of ord_list code {supplier}. {e}")
-        return -1, 0
+        return -1, 0, ""
