@@ -12,7 +12,7 @@ def get_chat_IDs():
         ids = FullList['chatid'].tolist()
         db_disconnect(conn, cursor)
     except psycopg2.Error as e:
-        dlog.error(f"Unable to extract chatID list for schema: {SCHEMA}. {e}")
+        dlog.error(f"get_chat_IDs(): Unable to extract chatID list for schema: {SCHEMA}. {e}")
     return ids
 
 
@@ -28,7 +28,7 @@ def get_view_prodotti(supplier=None):
         FullList = pd.read_sql(query, conn)
         db_disconnect(conn, cursor)
     except psycopg2.Error as e:
-        dlog.error(f"Unable to perform get view Prodotti for supplier: {supplier if supplier else 'all'}. {e}")
+        dlog.error(f"get_view_prodotti(): Unable to perform get view Prodotti for supplier: {supplier if supplier else 'all'}. {e}")
     return FullList
 
 
@@ -41,5 +41,5 @@ def get_view_listaordine(codiceord):
         OrdList = pd.read_sql(query, conn)
         db_disconnect(conn, cursor)
     except psycopg2.Error as e:
-        dlog.error(f"Unable to perform get view Lista Ordine for codiceord: {codiceord}. {e}")
+        dlog.error(f"get_view_listaordine(): Unable to perform get view Lista Ordine for codiceord: {codiceord}. {e}")
     return OrdList

@@ -73,7 +73,7 @@ def create_view_prodotti(filename, supplier=None):
             writer.save()
         return 0
     except Exception:
-        elog.exception(f"Export error for xslx Prodotti for schema {SCHEMA}. {Exception}")
+        elog.exception(f"create_view_prodotti(): Export error for xslx Prodotti for schema {SCHEMA}. {Exception}")
         return -1
 
 
@@ -148,7 +148,7 @@ def create_view_listaordine(codiceord):
             writer.save()
         return 0, supplier, filename
     except Exception:
-        elog.exception(f"Export error for xslx ListaOrdine {codiceord} for schema {SCHEMA}. {Exception}")
+        elog.exception(f"create_view_listaordine(): Export error for xslx ListaOrdine {codiceord} for schema {SCHEMA}. {Exception}")
         return -1, None, ""
 
 
@@ -177,13 +177,13 @@ def get_vista(caller, filter=None):
                 ret = 0
             except Exception as e:
                 message = f"Non ho trovato dati."
-                elog.error(f"get_vista() exception. {e}")
+                elog.error(f"get_vista(): {e}")
                 ret = -1
         else:
             message = f"Non ho trovato viste corrispondenti."
             ret = -1
     except Exception as e:
         message = f"C'è stato un problema, ti chiedo scusa!"
-        elog.error(f"get_vista() exception. {e}")
+        elog.error(f"get_vista(): {e}")
         ret = -1
     return ret, message

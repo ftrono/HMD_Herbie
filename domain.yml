@@ -490,8 +490,8 @@ responses:
 
   #guidance:
   utter_guidance:
-  - text: "Memorizza questi 3 comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'apri il magazzino'. Ti guiderò io in tutto!"
-  - text: "Usa questi 3 comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'apri il magazzino'. Ti guiderò io!"
+  - text: "Chiedimi di trovare un prodotto, un fornitore, di aggiornarti le giacenze o di inviarti la vista prodotti. Ti guiderò io in tutto!"
+  - text: "Memorizza questi comandi: 'trova un prodotto', 'trova un fornitore', 'aggiorna il magazzino' oppure 'inviami la vista prodotti'. Ti guiderò io!"
 
   utter_guidance_vars:
   - text: "Ok! Allora, per ogni prodotto, dimmi prima il nome, poi ti chiederò la variazione dei pezzi: dovrai dirmi, ad esempio, 'aggiungi 5 pezzi' oppure 'rimuovi 5 pezzi'. Quando hai finito, dimmi 'ho completato'. Iniziamo!"
@@ -510,28 +510,21 @@ responses:
   - text: "Dimmi, uno alla volta, i prodotti di {supplier} che vuoi ordinare. Quando hai finito, dimmi 'ho completato'. Iniziamo!"
 
   utter_ask_suggest_ord:
-  - text: "Posso cercarti i prodotti di {supplier} in esaurimento nel tuo magazzino. Vuoi che te li suggerisca?"
-  - text: "Vuoi che ti suggerisca i prodotti di {supplier} in esaurimento nel tuo magazzino?"
+  - text: "Posso cercarti i prodotti del fornitore in esaurimento nel tuo magazzino. Vuoi che te li suggerisca?"
+  - text: "Vuoi che ti suggerisca i prodotti del fornitore in esaurimento nel tuo magazzino?"
 
   utter_order_ready:
-  - text: "Il tuo ordine per {supplier} è pronto!"
-  - text: "La lista ordini per {supplier} è pronta!"
+  - text: "Il tuo ordine è pronto!"
+  - text: "La lista ordini è pronta!"
 
   utter_ask_definitive:
-  - text: "Posso confermarti l'ordine come definitivo? Non potrai più modificarlo."
-  - text: "Possiamo confermare l'ordine come definitivo? Non potrai più modificarlo."
-  - text: "Posso chiudere l'ordine in definitiva? Non potrai più modificarlo."
+  - text: "Posso confermarti l'ordine per {supplier} come definitivo? Non potrai più modificarlo."
+  - text: "Possiamo confermare l'ordine per {supplier} come definitivo? Non potrai più modificarlo."
+  - text: "Posso chiudere l'ordine per {supplier} in definitiva? Non potrai più modificarlo."
 
   utter_init_delivered:
   - text: "Registriamo la consegna di un ordine."
   - text: "Ti registro la consegna di un ordine."
-
-  #redirect:
-  utter_redirect_prod:
-  - text: "Chiedimi di cercare un prodotto. Potrò risponderti subito dopo!"
-
-  utter_redirect_supplier:
-  - text: "Chiedimi di cercare un produttore. Potrò risponderti subito dopo!"
 
 
 #AGENT'S CUSTOM ACTIONS:

@@ -29,7 +29,7 @@ def match_product(p_text, supplier=None):
         Prodotti = pd.read_sql(query, conn)
         db_disconnect(conn, cursor)
     except Exception as e:
-        dlog.error(f"DB query error for 'p_text'. {e}")
+        dlog.error(f"match_product(): DB query error for 'p_text'. {e}")
         return Prodotti
     
     #analyze string similarity for each name:
@@ -74,7 +74,7 @@ def match_supplier(s_text):
         db_disconnect(conn, cursor)
     except Exception as e:
         suppliers = []
-        dlog.error(f"DB query error for 'supplier'. {e}")
+        dlog.error(f"match_supplier(): DB query error for 'supplier'. {e}")
         return suppliers
     
     #analyze string similarity for each name:
@@ -111,14 +111,14 @@ def update_pieces(utts):
         if changes != 0:
             conn.commit()
             db_disconnect(conn, cursor)
-            dlog.info(f"Success: {utts['variation']} {utts['pieces']} pieces to product code {utts['p_code']}.")
+            dlog.info(f"update_pieces(): Success: {utts['variation']} {utts['pieces']} pieces to product code {utts['p_code']}.")
             return 0
         else:
             db_disconnect(conn, cursor)
-            dlog.error(f"DB: No match for p_code {utts['p_code']}.")
+            dlog.error(f"update_pieces(): No match for p_code {utts['p_code']}.")
             return -1
     except Exception as e:
-        dlog.error(f"Unable to perform operation {utts['variation']} to product code {utts['p_code']}. {e}")
+        dlog.error(f"update_pieces(): Unable to perform operation {utts['variation']} to product code {utts['p_code']}. {e}")
         return -1
 
 
@@ -135,10 +135,10 @@ def delete_ordlist(ord_code, conn=None, cursor=None):
         conn.commit()
         if reconnect == True:
             db_disconnect(conn, cursor)
-        dlog.info(f"Success: deleted ord_list code {ord_code} from both tables listeordini and storicoordini.")
+        dlog.info(f"delete_ordlist(): Success: deleted ord_list code {ord_code} from both tables listeordini and storicoordini.")
         return 0
     except Exception as e:
-        dlog.error(f"Unable to delete ord_list code {ord_code}. {e}")
+        dlog.error(f"delete_ordlist(): Unable to delete ord_list code {ord_code}. {e}")
         return -1
 
 
@@ -165,7 +165,7 @@ def get_json_ordlist(conn, supplier, closed=False):
                 full_list = FullList.to_dict()
                 full_list = json.dumps(full_list)
     except Exception as e:
-        dlog.error(f"Unable to perform get_json_ordlist for supplier {supplier}. {e}")
+        dlog.error(f"get_json_ordlist(): Unable to perform get_json_ordlist for supplier {supplier}. {e}")
     return latest_code, latest_date, full_list, num_prods
 
 
@@ -181,9 +181,9 @@ def get_new_ordlist(conn, cursor, supplier):
         query = f"INSERT INTO {SCHEMA}.storicoordini (codiceord, produttore, datamodifica) VALUES ({latest_code}, '{supplier}', '{latest_date}')"
         cursor.execute(query)
         conn.commit()
-        dlog.info(f"Success: created list ord_code {latest_code} into table storicoordini.")
+        dlog.info(f"get_new_ordlist(): Success: created list ord_code {latest_code} into table storicoordini.")
     except Exception as e:
-        dlog.error(f"Unable to perform get_new_ordlist for supplier {supplier}. {e}")
+        dlog.error(f"get_new_ordlist(): Unable to perform get_new_ordlist for supplier {supplier}. {e}")
     return latest_code
 
 
@@ -215,10 +215,10 @@ def edit_ord_list(conn, cursor, ord_code, p_code, pieces, write_mode=False):
         query = f"UPDATE {SCHEMA}.storicoordini SET datamodifica = '{latest_date}' WHERE codiceord = {ord_code}"
         cursor.execute(query)
         conn.commit()
-        dlog.info(f"Success: updated list ord_code {ord_code} into table listeordini.")
+        dlog.info(f"edit_ord_list(): Success: updated list ord_code {ord_code} into table listeordini.")
         return 0
     except Exception as e:
-        dlog.error(f"Unable to edit ord_list {ord_code} for product {p_code}. {e}")
+        dlog.error(f"edit_ord_list(): Unable to edit ord_list {ord_code} for product {p_code}. {e}")
         return -1
 
 
@@ -236,7 +236,7 @@ def get_suggestion_list(conn, supplier, ord_code):
             full_list = FullList.to_dict()
             full_list = json.dumps(full_list)
     except Exception as e:
-        dlog.error(f"Unable to perform get_suggestion_list for supplier {supplier}. {e}")
+        dlog.error(f"get_suggestion_list(): Unable to perform get_suggestion_list for supplier {supplier}. {e}")
     return full_list, num_prods
 
 
@@ -248,10 +248,10 @@ def mark_definitive(ord_code):
         cursor.execute(query)
         conn.commit()
         db_disconnect(conn, cursor)
-        dlog.info(f"Success: marked ord_list code {ord_code} as definitive.")
+        dlog.info(f"mark_definitive(): Success: marked ord_list code {ord_code} as definitive.")
         return 0
     except Exception as e:
-        dlog.error(f"Unable to mark ord_list code {ord_code} as definitive. {e}")
+        dlog.error(f"mark_definitive(): Unable to mark ord_list code {ord_code} as definitive. {e}")
         return -1
 
 
@@ -266,7 +266,7 @@ def check_closed():
             num_closed = len(Orders.index)
         db_disconnect(conn, cursor)
     except Exception as e:
-        dlog.error(f"Unable to check for closed orders. {e}")
+        dlog.error(f"check_closed(): Unable to check for closed orders. {e}")
     return num_closed
 
 #mark an order list as definitive:
@@ -284,8 +284,8 @@ def register_delivered(closed_code, closed_list):
             cursor.execute(query)
         conn.commit()
         db_disconnect(conn, cursor)
-        dlog.info(f"Success: registered delivery of ord_list code {closed_code}.")
+        dlog.info(f"register_delivered(): Success: registered delivery of ord_list code {closed_code}.")
         return 0
     except Exception as e:
-        dlog.error(f"Unable to register delivery of ord_list code {closed_code}. {e}")
+        dlog.error(f"register_delivered(): Unable to register delivery of ord_list code {closed_code}. {e}")
         return -1

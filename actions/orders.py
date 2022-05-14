@@ -115,9 +115,9 @@ def update_ord_list(dispatcher, slots):
 
     #2) if error:
     if err == True or ret == -1:
-        elog.info("DB connection error.")
         message = "C'è stato un problema con il mio database, ti chiedo scusa. Riproviamo!"
         dispatcher.utter_message(text=message)
+        elog.error("update_ord_list(): DB interaction error.")
 
     else:
         #3) utter update message:
@@ -151,9 +151,9 @@ def write_ord_list(dispatcher, slots, next_slot, update_json=False):
     
     #2) if error:
     if err == True or ret == -1:
-        elog.info("DB connection error.")
         message = "C'è stato un problema con il mio database, ti chiedo scusa. Riprova da capo!"
         dispatcher.utter_message(text=message)
+        elog.error("write_ord_list(): DB interaction error.")
         #reset:
         slots = commons.reset_and_goto(slots, del_slots=['p_code', 'p_name', 'pieces', 'add_sugg'], req_slot=next_slot)
         return slots

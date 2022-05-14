@@ -260,7 +260,7 @@ def disambiguate_prod(tracker, dispatcher, supplier=None, pieces=None):
 def disambiguate_supplier(tracker, dispatcher):
     #s_text -> the intent text is temporarily saved by Rasa into "supplier" slot before validation:
     supplier = tracker.get_slot("supplier").lower()
-    elog.info(supplier)
+    elog.info(f"{supplier}")
 
     #db extraction:
     results = db_interactor.match_supplier(supplier)
