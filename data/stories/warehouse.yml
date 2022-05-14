@@ -2,86 +2,132 @@ version: "3.0"
 stories:
 
 #WAREHOUSE:
+# - basics (chit-chat)
 # - update inventory
+# - register deliveries
 # - send views
 
-#ENTRY POINTS:
-- story: ask open warehouse - a) delivery received
+#0) basics (chit-chat):
+- story: basics
   steps:
-  - intent: ask_open_warehouse
-  - action: action_reset_all_slots
+  - intent: greet
+  - action: action_utter_greet
+  - intent: bot_challenge
+  - action: utter_iamabot
+  - intent: thanks
+  - action: utter_welcome
+  - or:
+    - intent: inform_text
+    - intent: inform_ordinal
+  - action: action_guide_user
+  - or:
+    - intent: affirm
+    - intent: deny
+    - intent: completed
+  - action: utter_ok
+
+#1) Various: ask view, ask delivered:
+- story: warehouse - various -> user asks delivered
+  steps:
+  - intent: ask_guidance #ask guidance - warehouse
+  - action: action_guide_user
+  - action: utter_ask_what
+  - intent: ask_get_view #send view (default: products)
+  - action: action_send_view
+  - action: utter_ask_what
+  - intent: ask_delivered #ask register delivered
+  - checkpoint: delivered
+
+#2) Variations + Proactive register delivered:
+- story: ask variations - a) delivery received -> open register delivery instead
+  steps:
+  - intent: ask_variations
   - action: action_proactive_check #first thing: check if delivery pending
   - slot_was_set:
     - pending_delivery: True
   - intent: affirm
   - slot_was_set:
     - affirmed: True
-  - action: utter_explain_delivered
-  - action: find_supplier_form #find supplier
-  - active_loop: find_supplier_form
-  - slot_was_set:
-    - requested_slot: null
-  - active_loop: null
-  - action: action_register_delivered
-  - action: action_reset_all_slots
-  - action: utter_available
+  - checkpoint: delivered
 
-- story: ask open warehouse - b) no delivery received
+- story: ask variations - b) no delivery received -> open vars form
   steps:
-  - intent: ask_open_warehouse
-  - action: action_reset_all_slots
+  - intent: ask_variations
   - action: action_proactive_check #first thing: check if delivery pending
   - slot_was_set:
     - pending_delivery: True
   - intent: deny
   - slot_was_set:
     - affirmed: False
-  - action: utter_ok
-  - action: utter_ask_what
-  - checkpoint: wh_opened
+  - checkpoint: variations
 
-- story: ask open warehouse - c) no pending deliveries
+- story: ask variations - c) no pending deliveries -> open vars form
   steps:
-  - intent: ask_open_warehouse
-  - action: action_reset_all_slots
-  - action: action_proactive_check #if pending_delvery == null, the action already utters 'ask_what'
+  - intent: ask_variations
+  - action: action_proactive_check #if pending_delivery == null, the action redirects to variations form
   - slot_was_set:
     - pending_delivery: null
-  - checkpoint: wh_opened
+  - checkpoint: variations
 
-
-#SUBTASK 1) Various + Delivered:
-- story: wh opened - various -> user asks delivered
+#PATH DELIVERED:
+- story: delivered - a) complete registration
   steps:
-  - checkpoint: wh_opened
-  - intent: ask_guidance #ask guidance - warehouse
-  - action: action_guide_user
-  - action: utter_ask_what
-  - intent: ask_get_view #send view
-  - action: action_send_view
-  - action: utter_ask_more
-  - intent: ask_delivered
-  - action: utter_explain_delivered
+  - checkpoint: delivered
+  - action: utter_init_delivered
   - action: find_supplier_form #find supplier
   - active_loop: find_supplier_form
   - slot_was_set:
     - requested_slot: null
   - active_loop: null
+  - action: action_confirm_delivered
+  - slot_was_set:
+    - found: True #a list was found
+  - intent: affirm
+  - slot_was_set:
+    - affirmed: True
   - action: action_register_delivered
   - action: action_reset_all_slots
   - action: utter_available
 
-#SUBTASK 2) Various + ask variations:
-- story: wh opened - various -> user asks variations
+- story: delivered - b) don't register
   steps:
-  - checkpoint: wh_opened
-  - intent: ask_guidance #ask guidance - warehouse
-  - action: action_guide_user
-  - action: utter_ask_what
-  - intent: ask_get_view #send view
-  - action: action_send_view
-  - action: utter_ask_more
-  - intent: ask_variations
+  - checkpoint: delivered
+  - action: utter_init_delivered
+  - action: find_supplier_form #find supplier
+  - active_loop: find_supplier_form
+  - slot_was_set:
+    - requested_slot: null
+  - active_loop: null
+  - action: action_confirm_delivered
+  - slot_was_set:
+    - found: True #a list was found
+  - intent: deny
+  - slot_was_set:
+    - affirmed: False
+  - action: action_reset_all_slots
+  - action: utter_ok
+  - action: utter_available
+
+- story: delivered - c) not found
+  steps:
+  - checkpoint: delivered
+  - action: utter_init_delivered
+  - action: find_supplier_form #find supplier
+  - active_loop: find_supplier_form
+  - slot_was_set:
+    - requested_slot: null
+  - active_loop: null
+  - action: action_confirm_delivered
+  - slot_was_set:
+    - found: null
+  - action: action_reset_all_slots
+  - action: utter_available
+
+#PATH VARIATIONS:
+- story: variations form - full
+  steps:
+  - checkpoint: variations
+  - action: action_reset_form_slots
   - action: utter_guidance_vars #variations form (must be interrupted by default)
   - action: variations_form
   - active_loop: variations_form
@@ -95,7 +141,6 @@ stories:
 #END:
 - story: warehouse -> done enough
   steps:
-  - checkpoint: wh_opened
   - or:
     - intent: deny
     - intent: completed

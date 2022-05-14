@@ -71,6 +71,8 @@ nlu:
     - no questo ignoralo
     - no salta
     - salta
+    - niente
+    - nulla
 
 - intent: bot_challenge
   examples: |
@@ -165,23 +167,6 @@ nlu:
     - ricerca fornitore
     - ricerca azienda
 
-- intent: ask_open_warehouse
-  examples: |
-    - apri il magazzino
-    - apriamo il magazzino
-    - gestisci il magazzino
-    - entra nel magazzino
-    - entriamo nel magazzino
-    - apri la parte magazzino
-    - aggiorna il magazzino
-    - aggiorniamo il magazzino
-    - devo aggiornare i dati al magazzino
-    - puoi aggiornarmi i dati al magazzino?
-    - mi aggiorneresti i dati al magazzino?
-    - mi aggiorneresti le giacenze prodotti?
-    - entra in gestione magazzino
-    - apri gestione magazzino
-
 #1) WAREHOUSE:
 - intent: ask_delivered
   examples: |
@@ -195,6 +180,8 @@ nlu:
   examples: |
     - aggiorniamo le giacenze
     - aggiorna le giacenze
+    - aggiorna il magazzino
+    - aggiorniamo il magazzino
     - aiutami ad aggiornare le giacenze
     - aggiorniamo le giacenze dei prodotti
     - aggiorniamo i pezzi venduti

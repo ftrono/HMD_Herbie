@@ -269,34 +269,23 @@ def check_closed():
         dlog.error(f"Unable to check for closed orders. {e}")
     return num_closed
 
-
 #mark an order list as definitive:
-def register_delivered(supplier):
-    tot_pieces = 0
+def register_delivered(closed_code, closed_list):
     try:
-        #get latest closed ord_list for supplier:
+        #unpack JSON string to DataFrame:
+        OrdList = json.loads(closed_list)
+        OrdList = pd.DataFrame(OrdList)
+        OrdList.reset_index(drop=True, inplace=True)
+        #update prod quantity in warehouse (var = ordered pieces):
         conn, cursor = db_connect()
-        ord_code, latest_date, ord_list, num_prods = get_json_ordlist(conn, supplier, closed=True)
-        if num_prods == 0:
-            #empty list
-            dlog.info(f"mark_delivered(): empty match.")
-            db_disconnect(conn, cursor)
-            return -1, 0, ""
-        else:
-            #unpack JSON string to DataFrame:
-            OrdList = json.loads(ord_list)
-            OrdList = pd.DataFrame(OrdList)
-            OrdList.reset_index(drop=True, inplace=True)
-            for ind in OrdList.index:
-                #update prod quantity in warehouse (var = ordered pieces):
-                pieces = OrdList['quantita'].iloc[ind]
-                query = f"UPDATE {SCHEMA}.prodotti SET quantita = quantita + {pieces} WHERE codiceprod = {OrdList['codiceprod'].iloc[ind]}"
-                tot_pieces = tot_pieces + pieces
-                cursor.execute(query)
+        for ind in OrdList.index:
+            pieces = OrdList['quantita'].iloc[ind]
+            query = f"UPDATE {SCHEMA}.prodotti SET quantita = quantita + {pieces} WHERE codiceprod = {OrdList['codiceprod'].iloc[ind]}"
+            cursor.execute(query)
         conn.commit()
         db_disconnect(conn, cursor)
-        dlog.info(f"Success: registered delivery of ord_list code {ord_code}.")
-        return ord_code, tot_pieces, latest_date
+        dlog.info(f"Success: registered delivery of ord_list code {closed_code}.")
+        return 0
     except Exception as e:
-        dlog.error(f"Unable to register delivery of ord_list code {supplier}. {e}")
-        return -1, 0, ""
+        dlog.error(f"Unable to register delivery of ord_list code {closed_code}. {e}")
+        return -1

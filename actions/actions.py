@@ -1,7 +1,7 @@
 from typing import Any, Text, Dict, List
 from rasa_sdk import Tracker, Action, Action, FormValidationAction
 from rasa_sdk.executor import CollectingDispatcher
-from rasa_sdk.events import SlotSet
+from rasa_sdk.events import SlotSet, FollowupAction
 from globals import *
 from database.db_tools import db_connect, db_disconnect
 import database.db_interactor as db_interactor
@@ -73,7 +73,6 @@ class ActionGuideUser(Action):
         #disambiguate current case based on the slots populated:
         p_code = tracker.get_slot("p_code")
         supplier = tracker.get_slot("supplier")
-        warehouse = tracker.get_slot("warehouse")
         if p_code:
             #utter guidance for conv "product":
             message = "Puoi chiedermi le quantità disponibili in magazzino, oppure di darti informazioni sul prodotto, come prezzo di listino, categoria e aliquota IVA, se è un dispositivo medico, se contiene glutine, lattosio o zucchero, o se è vegano."
@@ -81,10 +80,6 @@ class ActionGuideUser(Action):
         elif supplier:
             #utter guidance for conv "supplier":
             message = "Puoi chiedermi di cercarti i prodotti in esaurimento, o di inviarti la vista delle giacenze. Puoi anche chiedermi di preparare o di continuare un ordine, di trovarti o confermare l'ultima lista ordini e di inviartela via Bot."
-            dispatcher.utter_message(text=message)
-        elif warehouse:
-            #utter guidance for conv "warehouse":
-            message = "Puoi chiedermi di inviarti la vista delle giacenze via Bot, oppure di aggiornarti le giacenze dicendomi i prodotti entrati e usciti. Puoi anche dirmi se ti è stato consegnato un ordine che avevamo creato insieme."
             dispatcher.utter_message(text=message)
         else:
             #utter general guidance on main commands:
@@ -513,7 +508,7 @@ class ActionMarkDefinitive(Action):
                 if ret == 0:
                     message = f"{message}Ti ho inviato la lista pronta via Telegram! "
                 #final guidance:
-                message = f"{message}Quando l'ordine ti verrà consegnato, chiedimi di aprire il magazzino, ti inserirò i prodotti arrivati in automatico."
+                message = f"{message}Quando l'ordine ti verrà consegnato, chiedimi di registrarti la consegna, ti inserirò i prodotti arrivati in automatico."
             else:
                 message = f"C'è stato un problema col mio magazzino, ti chiedo scusa!"
                 return [SlotSet('fail', True)]
@@ -537,11 +532,42 @@ class ActionProactiveCheck(Action):
             #proactive ask for open order:
             message = f"Ti è stato consegnato un ordine?"
             dispatcher.utter_message(text=message)
-            return [SlotSet('warehouse', True), SlotSet('pending_delivery', True)]
+            return [SlotSet('pending_delivery', True)]
         else:
-            #general ask_what:
-            dispatcher.utter_message(response='utter_ask_what')
-            return [SlotSet('warehouse', True), SlotSet('pending_delivery', None)]
+            #go on:
+            return [SlotSet('pending_delivery', None)]
+
+
+#Warehouse -> Ask confirm register delivered:
+class ActionConfirmDelivered(Action):
+    def name(self) -> Text:
+            return "action_confirm_delivered"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        slots = tracker.current_slot_values()
+        #get latest closed order for the supplier:
+        try:
+            conn, cursor = db_connect()
+            closed_code, closed_date, closed_list, num_prods = db_interactor.get_json_ordlist(conn, slots['supplier'], closed=True)
+            db_disconnect(conn, cursor)
+            if closed_code == None:
+                message = f"Non ho trovato ordini chiusi per {slots['supplier']}."
+                dispatcher.utter_message(text=message)
+                return [SlotSet('found', None)]
+            else:
+                tot_pieces = "un pezzo" if num_prods == 1 else f"{num_prods} pezzi"
+                message = f"Abbiamo chiuso la lista {commons.readable_date(closed_date)}, contiene {tot_pieces} in totale: ti aggiornerò le quantità in magazzino di ogni prodotto in lista. Confermi?"
+                dispatcher.utter_message(text=message)
+                return [SlotSet('found', True), SlotSet('closed_code', closed_code), SlotSet('closed_list', closed_list)]
+        except Exception as e:
+            elog.error(f"action_confirm_delivered(): Unable to check DB. {e}")
+            message = f"C'è stato un problema, ti chiedo scusa!"
+            dispatcher.utter_message(text=message)
+            return [SlotSet('fail', True)]
 
 
 #Warehouse -> Register closed order as delivered and update warehouse:
@@ -555,33 +581,27 @@ class ActionRegisterDelivered(Action):
         ) -> List[Dict[Text, Any]]:
 
         slots = tracker.current_slot_values()
-        if slots['warehouse'] == None or slots['supplier'] == None:
-            message = f"Chiedimi di aprire il magazzino, potrò risponderti subito dopo."
-            dispatcher.utter_message(text=message)
-            return []
-        else:
-            #1) update wh:
-            ord_code, tot_pieces, edited_date = db_interactor.register_delivered(slots['supplier'])
-            if ord_code == -1:
-                message = f"Non ho trovato ordini chiusi per {slots['supplier']}."
+        #1) send list via Bot and delete closed list from DB:
+        ret_send, _ = views.get_vista(caller='lista', filter=slots['closed_code'])
+        ret_del = db_interactor.delete_ordlist(slots['closed_code'])
+        if ret_del == 0:
+            #2) update wh:
+            ret_upd = db_interactor.register_delivered(slots['closed_code'], slots['closed_list'])
+            if ret_upd == 0:
+                message = f"Registrato! Ti ho aggiornato le quantità di ogni prodotto in lista nel magazzino."
+                message = f"{message} Ti ho inviato l'aggiornamento su Telegram come dettaglio." if ret_send == 0 else ""
+                dispatcher.utter_message(text=message)
+                return [SlotSet('closed_code', None), SlotSet('closed_list', None)]
             else:
-                #2) send list via Bot and delete closed list from DB:
-                ret_send, _ = views.get_vista(caller='lista', filter=ord_code)
-                ret_del = db_interactor.delete_ordlist(ord_code)
-                #confirmation of View sent:
-                if ret_send == 0:
-                    sent_confirm = "Ti ho inviato la lista ordine completa via Telegram!"
-                else:
-                    sent_confirm = "Non sono riuscita a inviarti la lista ordine completa via Telegram."
-                #check success:
-                if ret_del == 0:
-                    message = f"Fatto, ti ho registrato l'ultimo ordine per {slots['supplier']}, chiuso {commons.readable_date(edited_date)}, come consegnato! Ti ho aggiornato le giacenze di ogni prodotto in lista nel magazzino, hai {tot_pieces} nuovi pezzi in totale. {sent_confirm}"
-                else:
-                    elog.error(f"Order list {ord_code} stored to Prodotti table but not deleted from StoricoOrdini e ListeOrdini.")
-                    message = f"C'è stato un problema, ti chiedo scusa!"
-                    return [SlotSet('fail', True)]
+                message = f"C'è stato un problema, ti chiedo scusa! Chiedimi di aggiornare le giacenze, dovremo aggiornare le quantità un prodotto alla volta."
+                dispatcher.utter_message(text=message)
+                elog.error(f"action_register_delivered(): DB error. Closed list deleted but wh not updated.")
+                return [SlotSet('fail', True)]
+        else:
+            message = f"C'è stato un problema, ti chiedo scusa!"
             dispatcher.utter_message(text=message)
-            return []
+            elog.error(f"action_register_delivered(): DB error. Closed list not deleted.")
+            return [SlotSet('fail', True)]
 
 
 #Views -> Send view via tBot:

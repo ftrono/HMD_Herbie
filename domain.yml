@@ -19,7 +19,6 @@ intents:
   #main commands:
   - ask_find_product
   - ask_find_supplier
-  - ask_open_warehouse
   #warehouse:
   - ask_delivered
   - ask_variations
@@ -58,12 +57,6 @@ slots:
     - type: custom
   
   #warehouse:
-  warehouse:
-    type: bool
-    influence_conversation: False
-    mappings:
-    - type: custom
-  
   pending_delivery:
     type: bool
     influence_conversation: True
@@ -190,6 +183,20 @@ slots:
     - type: custom
 
   ord_list:
+    type: text
+    influence_conversation: False
+    mappings:
+    - type: custom
+  
+  #orders - delivered:
+  closed_code:
+    type: float
+    influence_conversation: False
+    min_value: 0
+    mappings:
+    - type: custom
+
+  closed_list:
     type: text
     influence_conversation: False
     mappings:
@@ -433,13 +440,6 @@ responses:
   - text: "Lo aggiungiamo alla lista ordine?"
 
   #warehouse:
-  utter_opened_warehouse:
-  - text: "Ok, ho aperto il mio magazzino."
-  - text: "Ok, sono nel magazzino."
-  - text: "Ok, sono pronta a gestire il magazzino."
-  - text: "Eccomi, sono dentro il magazzino!"
-  - text: "Bene, sono entrata nel magazzino."
-
   utter_ask_variation:
   - text: "Quanti pezzi aggiungo o tolgo?"
   - text: "Variazione dei pezzi?"
@@ -494,8 +494,8 @@ responses:
   - text: "Usa questi 3 comandi: 'trova un prodotto'; 'trova un fornitore'; oppure 'apri il magazzino'. Ti guiderò io!"
 
   utter_guidance_vars:
-  - text: "Ok! Per ogni prodotto, dimmi prima il nome, poi ti chiederò la variazione dei pezzi: dovrai dirmi, ad esempio, 'aggiungi 5 pezzi' oppure 'rimuovi 5 pezzi'. Quando hai finito, dimmi 'ho completato'. Iniziamo!"
-  - text: "Certo! Per ogni prodotto, dimmi prima il nome, poi ti chiederò la variazione della quantità: dovrai dirmi, ad esempio, 'aggiungi 5 pezzi' oppure 'togli 5 pezzi'. Quando hai finito, dimmi 'ho completato'. Iniziamo!"
+  - text: "Ok! Allora, per ogni prodotto, dimmi prima il nome, poi ti chiederò la variazione dei pezzi: dovrai dirmi, ad esempio, 'aggiungi 5 pezzi' oppure 'rimuovi 5 pezzi'. Quando hai finito, dimmi 'ho completato'. Iniziamo!"
+  - text: "Ok! Allora, per ogni prodotto, dimmi prima il nome, poi ti chiederò la variazione della quantità: dovrai dirmi, ad esempio, 'aggiungi 5 pezzi' oppure 'togli 5 pezzi'. Quando hai finito, dimmi 'ho completato'. Iniziamo!"
 
   utter_guidance_read:
   - text: "Ok, ti leggo i miei appunti. Dimmi se tenere o togliere ogni prodotto. Se vuoi cambiare il numero di pezzi, dimmi direttamente il nuovo quantitativo da ordinare. Iniziamo!"
@@ -518,13 +518,13 @@ responses:
   - text: "La lista ordini per {supplier} è pronta!"
 
   utter_ask_definitive:
-  - text: "Posso confermarti l'ordine come definitivo? Non potrai più modificarlo, rimarrà in attesa della consegna."
-  - text: "Possiamo confermare l'ordine come definitivo? Non potrai più modificarlo, rimarrà solo in attesa della consegna."
-  - text: "Posso chiudere l'ordine in definitiva? Non potrai più modificarlo, resterà in attesa della consegna."
+  - text: "Posso confermarti l'ordine come definitivo? Non potrai più modificarlo."
+  - text: "Possiamo confermare l'ordine come definitivo? Non potrai più modificarlo."
+  - text: "Posso chiudere l'ordine in definitiva? Non potrai più modificarlo."
 
-  utter_explain_delivered:
-  - text: "Ok! Ti registro l'ultimo ordine che abbiamo chiuso come consegnato, aggiugerò i prodotti alle tue giacenze."
-  - text: "Ok! Sto per registrarti l'ultimo ordine che abbiamo chiuso come consegnato, ti aggiugerò i prodotti alle giacenze."
+  utter_init_delivered:
+  - text: "Ok! Registriamo la consegna di un ordine."
+  - text: "Ok! Ti registro la consegna di un ordine."
 
   #redirect:
   utter_redirect_warehouse:
@@ -569,6 +569,7 @@ actions:
   - action_mark_definitive
   - action_proactive_check
   - action_send_view
+  - action_confirm_delivered
   - action_register_delivered
   #forms validation:
   - validate_find_prod_form
