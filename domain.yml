@@ -523,13 +523,10 @@ responses:
   - text: "Posso chiudere l'ordine in definitiva? Non potrai più modificarlo."
 
   utter_init_delivered:
-  - text: "Ok! Registriamo la consegna di un ordine."
-  - text: "Ok! Ti registro la consegna di un ordine."
+  - text: "Registriamo la consegna di un ordine."
+  - text: "Ti registro la consegna di un ordine."
 
   #redirect:
-  utter_redirect_warehouse:
-  - text: "Chiedimi di aprire il magazzino. Potrò risponderti subito dopo!"
-
   utter_redirect_prod:
   - text: "Chiedimi di cercare un prodotto. Potrò risponderti subito dopo!"
 

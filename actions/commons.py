@@ -282,7 +282,7 @@ def disambiguate_supplier(tracker, dispatcher):
     #ok: unique:
     else:
         supplier = results[0]
-        message = f"Ok, {supplier}!"
+        message = f"Produttore {supplier}!"
         dispatcher.utter_message(text=message)
         return {"supplier": supplier}
 

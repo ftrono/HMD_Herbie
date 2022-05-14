@@ -19,6 +19,8 @@ stories:
   - or:
     - intent: inform_text
     - intent: inform_ordinal
+    - intent: inform_pieces
+    - intent: inform_decr_pieces
   - action: action_guide_user
   - or:
     - intent: affirm
