@@ -185,8 +185,14 @@ def disambiguate_prod(tracker, dispatcher, supplier=None, pieces=None):
         #get the reference row and proceed to edit info / add info:
         if pos != -1:
             pos = pos-1
-        Matches = Matches.iloc[[pos]]
-        Matches.reset_index(drop=True, inplace=True)
+        try:
+            Matches = Matches.iloc[[pos]]
+            Matches.reset_index(drop=True, inplace=True)
+        except:
+            message = "Mmm, non ho capito bene. Riprova!"
+            dispatcher.utter_message(text=message)
+            slots = {"p_code": None, "matches": None}
+            return slots
 
     #b) else -> extract from DB:
     else:
@@ -205,7 +211,8 @@ def disambiguate_prod(tracker, dispatcher, supplier=None, pieces=None):
             message = f"Ecco cosa ho trovato:"
             for ind in Matches.index:
                 message = f"{message}\nDi {Matches['produttore'].iloc[ind]}, {Matches['nome'].iloc[ind]}."
-            message = f"{message} Puoi dirmi se è uno di questi o riprovare."
+            alternatives = f", il secondo o il terzo" if len(Matches.index) == 3 else f" o il secondo"
+            message = f"{message}\nPuoi dirmi se è il primo{alternatives} o riprovare."
             dispatcher.utter_message(text=message)
             #pack matches list to JSON:
             matches = Matches.to_dict()
@@ -262,29 +269,63 @@ def disambiguate_supplier(tracker, dispatcher):
     supplier = tracker.get_slot("supplier").lower()
     elog.info(f"{supplier}")
 
-    #db extraction:
-    results = db_interactor.match_supplier(supplier)
+    #fallback a: no info:
+    if supplier == None:
+        message = f"Mmm, mi manca qualche informazione. Dimmi produttore e nome del prodotto, o anche solo il nome!"
+        dispatcher.utter_message(text=message)
+        slots = {"p_code": None}
+        return slots
     
-    #fallback: not found:
-    if results == []:
-        message = f"Non ho trovato nessun produttore con questo nome!"
-        dispatcher.utter_message(text=message)
-        return {"supplier": None}
+    #check if user uttered an ordinal:
+    matches = tracker.get_slot("matches")
+    pos = check_intent(tracker, dispatcher, supplier)
+    #a) if yes:
+    if matches != None and pos != 0:
+        #unpack JSON string to DataFrame:
+        results = json.loads(matches)
+        #get the reference row and proceed to edit info / add info:
+        if pos != -1:
+            pos = pos-1
+        try:
+            results = [results[pos]]
+        except:
+            message = "Mmm, non ho capito bene. Riprova!"
+            dispatcher.utter_message(text=message)
+            slots = {"supplier": None, "matches": None}
+            return slots
 
-    #fallback: multiple found:
-    elif len(results) > 1:
-        message = f"Ecco cosa ho trovato:\n"
-        for supplier in results:
-            message = f"{message}{supplier}\n"
-        dispatcher.utter_message(text=message)
-        return {"supplier": None}
-
-    #ok: unique:
+    #b) else -> extract from DB:
     else:
-        supplier = results[0]
-        message = f"Produttore {supplier}!"
-        dispatcher.utter_message(text=message)
-        return {"supplier": supplier}
+        #db extraction:
+        results = db_interactor.match_supplier(supplier)
+        
+        #fallback: not found:
+        if results == []:
+            message = f"Non ho trovato nessun produttore con questo nome!"
+            dispatcher.utter_message(text=message)
+            slots = {"supplier": None, "matches": None}
+            return slots
+
+        #fallback: multiple found:
+        elif len(results) > 1:
+            message = f"Ecco cosa ho trovato:\n"
+            for supplier in results:
+                message = f"{message}{supplier}\n"
+            alternatives = f", il secondo o il terzo" if len(results) == 3 else f" o il secondo"
+            message = f"{message}\nPuoi dirmi se è il primo{alternatives} o riprovare."
+            dispatcher.utter_message(text=message)
+            #pack matches list to JSON:
+            matches = json.dumps(results)
+            #ret slots:
+            slots = {"supplier": None, "matches": matches}
+            return slots
+
+    #common success: match found:
+    supplier = results[0]
+    message = f"Produttore {supplier}!"
+    dispatcher.utter_message(text=message)
+    slots = {"supplier": supplier, "matches": None}
+    return slots
 
 
 #Variations: update quantity of a product in DB:
