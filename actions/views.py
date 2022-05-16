@@ -11,7 +11,7 @@ from globals import *
 #EXPORT:
 #view Prodotti:
 def create_view_prodotti(filename, supplier=None):
-    headers = {'Codice': 'codiceprod', 'Produttore': 'produttore', 'Nome': 'nome', 'Categoria': 'categoria', 'Quantita': 'quantita', 'Prezzo Pubblico €': 'prezzo', 'Sconto Medio %': 'scontomedio', 'IVA %': 'aliquota', 'Costo Acquisto €': 'costoacquisto', 'Costo Giacenze €': 'costototale', 'Valore Giacenze €': 'valoretotale', 'Disp Medico': 'dispmedico', 'DispMedico': 'dispmedico', ' Vegano ': 'vegano', 'Senza Glutine': 'senzaglutine', 'Senza Lattosio': 'senzalattosio', 'Senza Zucchero': 'senzazucchero'}
+    headers = {'Codice': 'codiceprod', 'Produttore': 'produttore', 'Nome': 'nome', 'Categoria': 'categoria', 'Quantita': 'quantita', 'Prezzo Pubblico €': 'prezzo', 'Sconto Medio %': 'scontomedio', 'IVA %': 'aliquota', 'Costo Acquisto €': 'costoacquisto', 'Costo Giacenze €': 'costototale', 'Valore Giacenze €': 'valoretotale', 'Disp Medico': 'dispmedico', ' Vegano ': 'vegano', 'Senza Lattosio': 'senzalattosio', 'Senza Glutine': 'senzaglutine', 'Senza Zucchero': 'senzazucchero'}
     #export table to pdf:
     try:
         Prodotti = db_export.get_view_prodotti(supplier)
@@ -126,10 +126,11 @@ def create_view_listaordine(codiceord):
             Vista['Valore Totale €'].iloc[-1] = sum(temp_totprice)
             Vista.reset_index(drop=True, inplace=True)
             supplier = Vista['Produttore'].iloc[0]
+            codedate = str(codiceord) if len(str(codiceord)) < 8 else str(codiceord)[:8]
 
             #2) export:
             #load Pandas Excel exporter:
-            filename = f'./actions/data_cache/{SCHEMA}.lista_{supplier}_{codiceord}.xlsx'
+            filename = f'./actions/data_cache/{SCHEMA}.lista_{supplier}_{codedate}.xlsx'
             writer = pd.ExcelWriter(filename)
             Vista.to_excel(writer, sheet_name=SCHEMA, index=False, na_rep='')
             workbook  = writer.book
