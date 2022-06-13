@@ -363,7 +363,7 @@ responses:
   - text: "Nulla!"
   - text: "Figurati!"
   - text: "Ma di nulla!"
-  - text: "Ma figùrati!"
+  - text: "Ma figurati!"
 
   utter_ready:
   - text: "Sono pronta!"

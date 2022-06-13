@@ -169,10 +169,12 @@ def get_vista(caller, filter=None):
         if ret == 0:
             #send file to user:
             try:
-                xlsx = open(filename, 'rb')
                 ids = db_export.get_chat_IDs()
+                elog.info(f"{ids}")
                 for chat_id in ids:
-                    TBOT.sendDocument(chat_id, xlsx)
+                    xlsx = open(filename, 'rb')
+                    TBOT.sendDocument(chat_id=chat_id, document=xlsx)
+                    xlsx.close()
                 os.remove(filename)
                 message = f"Ti ho inviato {filetype} su Telegram, pronta per la stampa. Dai un'occhiata!"
                 ret = 0

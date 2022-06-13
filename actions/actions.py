@@ -75,11 +75,11 @@ class ActionGuideUser(Action):
         supplier = tracker.get_slot("supplier")
         if p_code:
             #utter guidance for conv "product":
-            message = f"Puoi chiedermi le quantità disponibili in magazzino, oppure di darti informazioni sul prodotto, come prezzo di listino, categoria e aliquota IVA, se è un dispositivo medico, se contiene glutine, lattosio o zucchero, o se è vegano."
+            message = f"Puoi chiedermi le quantità disponibili in magazzino, oppure di darti informazioni sul prodotto, come prezzo di listino, categoria e aliquota IVA, se è un dispositivo medico, se contiene glutine, lattosio o zucchero, o se è vegano. "
             dispatcher.utter_message(text=message)
         elif supplier:
             #utter guidance for conv "supplier":
-            message = f"Puoi chiedermi di cercarti i prodotti in esaurimento di {supplier}, inviarti la vista delle sue giacenze, aiutarti a preparare o continuare un ordine, registrare una consegna, trovarti o confermare l'ultima lista ordini o inviartela via Bot."
+            message = f"Puoi chiedermi di cercarti i prodotti in esaurimento di {supplier}, inviarti la vista delle sue giacenze, aiutarti a preparare o continuare un ordine, registrare una consegna, trovarti o confermare l'ultima lista ordini o inviartela via Bot. "
             dispatcher.utter_message(text=message)
         else:
             #utter general guidance on main commands:
@@ -596,7 +596,7 @@ class ActionConfirmDelivered(Action):
                     dispatcher.utter_message(text=message)
                     return [SlotSet('found', None)]
                 else:
-                    tot_pieces = "un pezzo" if num_prods == 1 else f"{num_prods} pezzi"
+                    tot_pieces = "un prodotto" if num_prods == 1 else f"{num_prods} prodotti"
                     message = f"Abbiamo chiuso la lista {commons.readable_date(closed_date)}, contiene {tot_pieces} in totale: ti aggiornerò le quantità in magazzino di ogni prodotto in lista. Confermi?"
                     dispatcher.utter_message(text=message)
                     return [SlotSet('found', True), SlotSet('closed_code', closed_code), SlotSet('closed_list', closed_list)]
