@@ -1,0 +1,26 @@
+[
+  {
+    "text": "1",
+    "intent": "inform_ordinal",
+    "intent_prediction": {
+      "name": "inform_pieces",
+      "confidence": 0.5294632911682129
+    }
+  },
+  {
+    "text": "2",
+    "intent": "inform_ordinal",
+    "intent_prediction": {
+      "name": "inform_pieces",
+      "confidence": 0.5294632911682129
+    }
+  },
+  {
+    "text": "3",
+    "intent": "inform_ordinal",
+    "intent_prediction": {
+      "name": "inform_pieces",
+      "confidence": 0.5294632911682129
+    }
+  }
+]
