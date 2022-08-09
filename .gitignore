@@ -4,5 +4,3 @@ __pycache__
 logs/*
 local_credentials.ini
 actions/data_cache
-results
-tests
