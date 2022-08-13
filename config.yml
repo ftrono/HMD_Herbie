@@ -8,9 +8,11 @@ language: it
 
 # See https://rasa.com/docs/rasa/tuning-your-model for more information.
 pipeline:
-  #language model to load:
-  - name: SpacyNLP
-    model: "it_core_news_sm"
+  # #language model to load:
+  # - name: SpacyNLP
+  #   model: "it_core_news_sm"
+  # - name: SpacyTokenizer
+  # - name: SpacyFeaturizer
   - name: WhitespaceTokenizer
   - name: RegexFeaturizer
   - name: LexicalSyntacticFeaturizer
@@ -37,6 +39,6 @@ policies:
     max_history: 10
     epochs: 50
     constrain_similarities: true
-  - name: UnexpecTEDIntentPolicy
-    max_history: 10
-    epochs: 50
+  # - name: UnexpecTEDIntentPolicy
+  #   max_history: 10
+  #   epochs: 50

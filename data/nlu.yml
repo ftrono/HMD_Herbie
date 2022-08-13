@@ -53,6 +53,9 @@ nlu:
     - si tienilo
     - sì lo voglio
     - sì questo sì
+    - va bene
+    - va benissimo
+    - perfetto
 
 - intent: deny
   examples: |
@@ -103,6 +106,10 @@ nlu:
     - cosa vuoi che ti dica?
     - come posso parlarti?
     - cosa capisci?
+    - come va?
+    - come stai?
+    - tutto bene?
+    - che mi dici?
 
 - intent: ask_reset
   examples: |

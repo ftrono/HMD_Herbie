@@ -1,6 +1,5 @@
 __pycache__
 .rasa
 */__pycache__
-logs/*
 local_credentials.ini
 actions/data_cache

@@ -7,10 +7,10 @@ stories:
   - intent: bot_challenge
   - action: utter_iamabot
   - intent: ask_guidance
-  - action: action_guide_user  # predicted: action_unlikely_intent
+  - action: action_guide_user
   - action: utter_ask_what
   - intent: ask_find_product
-  - action: action_reset_all_slots  # predicted: action_unlikely_intent
+  - action: action_reset_all_slots
   - action: utter_ready
   - action: find_prod_form
   - active_loop: find_prod_form
@@ -47,29 +47,29 @@ stories:
   - active_loop: null
   - action: utter_ask_what
   - intent: ask_price
-  - action: action_utter_price  # predicted: action_unlikely_intent
+  - action: action_utter_price
   - action: utter_ask_more
   - intent: ask_vegan
-  - action: action_utter_vegan  # predicted: action_unlikely_intent
+  - action: action_utter_vegan
   - action: utter_ask_more
   - intent: ask_prodinfo
-  - action: action_utter_prodinfo  # predicted: action_unlikely_intent
+  - action: action_utter_prodinfo
   - action: utter_ask_more
   - intent: ask_quantity
-  - action: action_check_quantity  # predicted: action_unlikely_intent
+  - action: action_check_quantity
   - intent: affirm
   - slot_was_set:
     - affirmed: true
   - action: action_add_to_list
   - action: utter_ask_more
   - intent: ask_dispmedico
-  - action: action_utter_dispmedico  # predicted: action_unlikely_intent
+  - action: action_utter_dispmedico
   - action: utter_ask_more
   - intent: ask_nosugar
   - action: action_utter_nosugar
   - action: utter_ask_more
   - intent: ask_cat_vat
-  - action: action_utter_cat_vat  # predicted: action_unlikely_intent
+  - action: action_utter_cat_vat
   - action: utter_ask_more
   - intent: completed
   - action: utter_ok
@@ -144,7 +144,7 @@ stories:
   - intent: greet
   - action: action_utter_greet
   - intent: ask_find_supplier
-  - action: action_reset_all_slots  # predicted: action_unlikely_intent
+  - action: action_reset_all_slots
   - action: utter_ready
   - action: find_supplier_form
   - active_loop: find_supplier_form
@@ -349,7 +349,7 @@ stories:
   - active_loop: null
   - action: utter_ask_what
   - intent: ask_latest_list
-  - action: action_get_ordlist  # predicted: action_unlikely_intent
+  - action: action_get_ordlist
   - slot_was_set:
     - ord_code: 20220808192211
   - slot_was_set:
@@ -457,13 +457,13 @@ stories:
   - action: utter_ok
   - action: utter_ask_more
   - intent: ask_get_view_ord
-  - action: action_send_view  # predicted: action_unlikely_intent
+  - action: action_send_view
   - action: utter_ask_more
   - intent: ask_tot_ordcost
   - action: action_utter_tot_ordcost
   - action: utter_ask_more
   - intent: ask_make_definitive
-  - action: utter_ask_definitive  # predicted: action_unlikely_intent
+  - action: utter_ask_definitive
   - intent: affirm
   - slot_was_set:
     - affirmed: true
@@ -539,7 +539,7 @@ stories:
   - intent: greet
   - action: action_utter_greet
   - intent: ask_get_view
-  - action: action_send_view  # predicted: action_unlikely_intent
+  - action: action_send_view
   - action: utter_ask_more  # predicted: action_default_fallback
   - intent: deny
   - action: utter_available  # predicted: utter_ok
