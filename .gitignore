@@ -3,3 +3,4 @@ __pycache__
 */__pycache__
 local_credentials.ini
 actions/data_cache
+logs/*
