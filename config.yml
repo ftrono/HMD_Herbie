@@ -8,12 +8,11 @@ language: it
 
 # See https://rasa.com/docs/rasa/tuning-your-model for more information.
 pipeline:
-  # #language model to load:
-  # - name: SpacyNLP
-  #   model: "it_core_news_sm"
-  # - name: SpacyTokenizer
-  # - name: SpacyFeaturizer
-  - name: WhitespaceTokenizer
+  #language model to load:
+  - name: SpacyNLP
+    model: "it_core_news_sm"
+  - name: SpacyTokenizer
+  - name: SpacyFeaturizer
   - name: RegexFeaturizer
   - name: LexicalSyntacticFeaturizer
   - name: CountVectorsFeaturizer

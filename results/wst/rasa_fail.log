@@ -1,0 +1,26 @@
+rasa test --fail-on-prediction-errors
+
+2022-08-14 17:20:05 INFO     rasa.core.processor  - Loading model models/20220814-163425-wst.tar.gz...
+Processed story blocks: 100%|██████████████████████████████████████████████████████| 6/6 [00:00<00:00, 75.28it/s, # trackers=1]
+2022-08-14 17:21:12 INFO     rasa.core.test  - Evaluating 6 stories
+Progress:
+  0%|                                                                                                    | 0/6 [00:00<?, ?it/s]
+WrongPredictionException: NLU model predicted a wrong intent or entities. Failed Story: 
+
+version: "3.0"
+stories:
+- story: test product conv
+  steps:
+  - intent: greet
+  - action: action_utter_greet
+  - intent: bot_challenge
+  - action: utter_iamabot
+  - intent: ask_guidance
+  - action: action_guide_user
+  - action: utter_ask_what
+  - intent: ask_find_product
+  - action: action_reset_all_slots
+  - action: utter_ready
+  - action: find_prod_form
+  - active_loop: find_prod_form
+  - intent: inform_text  # predicted: nlu_fallback: biokap shampoo rinforzante anticaduta

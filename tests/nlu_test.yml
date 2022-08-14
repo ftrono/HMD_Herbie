@@ -1,0 +1,207 @@
+version: "3.0"
+nlu:
+
+#general:
+- intent: greet
+  examples: |
+    - buonasera
+    - hey ciao
+    - buon pomeriggio
+
+- intent: completed
+  examples: |
+    - ok finito
+    - fatto herbie
+    - ok ho fatto
+
+- intent: thanks
+  examples: |
+    - perfetto grazie
+    - ottimo grazie
+    - grazie 1000
+
+- intent: affirm
+  examples: |
+    - sì ok
+    - conferma
+    - sì certo
+
+- intent: deny
+  examples: |
+    - no non voglio
+    - non ancora
+    - no non lo mettere
+
+- intent: bot_challenge
+  examples: |
+    - chi sei?
+    - sei herbie?
+    - dimmi il tuo nome
+
+- intent: ask_guidance
+  examples: |
+    - come funziona questa cosa?
+    - come posso fare?
+    - cosa devo fare?
+
+- intent: ask_reset
+  examples: |
+    - ripartiamo
+    - fermati
+    - rifacciamo da capo
+
+#MAIN COMMANDS:
+- intent: ask_find_product
+  examples: |
+    - mi trovi un prodotto?
+    - mi puoi cercare un prodotto per favore?
+    - apri un prodotto nel database
+
+- intent: ask_find_supplier
+  examples: |
+    - devi cercarmi un produttore
+    - mi cerchi un fornitore
+    - apri un fornitore nel database
+
+#1) WAREHOUSE:
+- intent: ask_delivered
+  examples: |
+    - è arrivato il postino
+    - ho ricevuto una consegna
+    - mi hanno consegnato pacchi herbie
+
+- intent: ask_variations
+  examples: |
+    - herbie aggiorniamo le giacenze
+    - herbie aggiornami il magazzino prodotti
+    - ti leggo i movimenti di oggi
+
+- intent: inform_pieces
+  examples: |
+    - metti 5
+    - ordina 12
+    - 10 grazie
+
+- intent: inform_decr_pieces
+  examples: |
+    - togli 3
+    - togline 1
+    - meno 5 pezzi
+
+#2) PRODUCT:
+- intent: inform_text
+  examples: |
+    - quinoa bianca bio
+    - shampoo ristrutturante
+    - finestra sul cielo
+
+- intent: inform_ordinal
+  examples: |
+    - prendi il primo
+    - quest'ultimo
+    - è il secondo
+
+- intent: ask_quantity
+  examples: |
+    - guarda quanti pezzi ho
+    - dimmi quanti pezzi sono rimasti
+    - dimmi le giacenze
+
+- intent: ask_prodinfo
+  examples: |
+    - mi leggi le informazioni
+    - leggimi i dettagli
+    - mi dici le caratteristiche principali
+
+- intent: ask_price
+  examples: |
+    - dimmi il costo
+    - mi dici quanto costa?
+    - dimmi il prezzo di listino
+
+- intent: ask_cat_vat
+  examples: |
+    - dimmi l'aliquota iva
+    - che categoria è?
+    - quale iva si applica?
+
+- intent: ask_dispmedico
+  examples: |
+    - controlla se è un dispositivo medico
+    - dimmi se è dispositivo medico
+    - sai se è un dispositivo medico?
+
+- intent: ask_compatibility
+  examples: |
+    - c'è lattosio o zucchero?
+    - contiene glutine o lattosio?
+    - possibili allergie?
+
+- intent: ask_vegan
+  examples: |
+    - dimmi se è per vegani
+    - questo è vegano?
+    - è adatto ad un vegano?
+
+- intent: ask_nolactose
+  examples: |
+    - c'è latte?
+    - dimmi se è senza lattosio?
+    - guarda se contiene lattosio
+
+- intent: ask_nogluten
+  examples: |
+    - mi dici se è senza glutine?
+    - leggi se c'è glutine
+    - guarda se contiene glutine
+
+- intent: ask_nosugar
+  examples: |
+    - puoi dirmi se ha zucchero?
+    - vedi se c'è zucchero
+    - guarda se è senza zucchero
+
+#3) SUPPLIER:
+- intent: inform_need_order
+  examples: |
+    - devo compilare un ordine
+    - herbie iniziamo a fare un ordine
+    - aiutami a compilare un ordine
+
+- intent: ask_latest_list
+  examples: |
+    - mi apri l'ultima lista ordine
+    - riprendi l'ultima lista
+    - trova la lista aperta
+
+- intent: ask_running_outs
+  examples: |
+    - dimmi quali prodotti si sono esauriti
+    - elencami i prodotti che si stanno per finire
+    - elenca le giacenze in esaurimento
+
+- intent: ask_tot_ordcost
+  examples: |
+    - dimmi il totale dell'ordine
+    - qual è il costo totale?
+    - mi puoi dire il totale?
+
+- intent: ask_make_definitive
+  examples: |
+    - conferma l'ordine herbie
+    - segnalo definitivo
+    - chiudiamo la lista ordine
+
+#COMMON:
+#ask send DB view:
+- intent: ask_get_view
+  examples: |
+    - inviami il magazzino in pdf
+    - mandami l'estrazione delle giacenze
+    - mandami il file con la vista del magazzino
+
+- intent: ask_get_view_ord
+  examples: |
+    - mandami la lista
+    - girami la lista ordini
+    - mandami il file con la lista ordine

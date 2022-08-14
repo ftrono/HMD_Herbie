@@ -28,7 +28,7 @@ stories:
   - action: find_prod_form
   - active_loop: find_prod_form
   - user: |
-      biokap shampoo rinforzante anticaduta 200 ml
+      biokap shampoo rinforzante anticaduta
     intent: inform_text
   - slot_was_set:
     - p_code: '8030243026224'

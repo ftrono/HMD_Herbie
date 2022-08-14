@@ -26,6 +26,7 @@ nlu:
   examples: |
     - grazie
     - grazie mille
+    - grazie 1000
     - ti ringrazio
     - ottimo grazie
     - fatto grazie
@@ -56,6 +57,7 @@ nlu:
     - va bene
     - va benissimo
     - perfetto
+    - ok
 
 - intent: deny
   examples: |
@@ -254,14 +256,45 @@ nlu:
 #2) PRODUCT:
 - intent: inform_text
   examples: |
-    - nome
-    - nome fiale
-    - nome bustine
-    - nome compresse
-    - nome altro buste blister
-    - aboca
+    - shampoo
+    - balsamo
+    - sciroppo
+    - fiale
+    - bustine
+    - compresse
+    - blister
+    - capsule
+    - tavolette
+    - pediatrico
+    - bambini
+    - junior
+    - senior
+    - tintura
+    - caramelle
+    - integrale
+    - biologico
+    - bio
+    - forte
+    - frollini
+    - tisana
+    - tè
+    - tazza
+    - lampada
+    - grammi
+    - ml
+    - miele
+    - olio
+    - balsamo
     - flufast
+    - aboca
     - fior di loto
+    - esi
+    - finestra sul cielo
+    - biosline
+    - leone
+    - sanotint
+    - pharma
+    - specchiasol
 
 - intent: inform_ordinal
   examples: |
@@ -306,6 +339,8 @@ nlu:
     - parlami del prodotto
     - che prodotto è?
     - cos'ha il prodotto?
+    - leggi le caratteristiche
+    - dimmi le informazioni principali
 
 - intent: ask_price
   examples: |
@@ -448,11 +483,13 @@ nlu:
 
 - intent: ask_tot_ordcost
   examples: |
-    - quanto costa l'ordine?
+    - dimmi il costo totale
+    - dimmi il totale
     - a quanto ammonta l'ordine?
     - a quanto stiamo?
-    - quanto vale l'ordine?
     - costo totale dell'ordine?
+    - costo totale?
+    - l'importo totale?
 
 - intent: ask_make_definitive
   examples: |
@@ -461,6 +498,8 @@ nlu:
     - puoi confermare l'ordine
     - confermiamo l'ordine
     - è definitivo
+    - chiudi l'ordine
+    - chiudi la lista
 
 #COMMON:
 #ask send DB view:

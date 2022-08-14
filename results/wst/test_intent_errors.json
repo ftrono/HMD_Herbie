@@ -1,0 +1,90 @@
+[
+  {
+    "text": "buonasera",
+    "intent": "greet",
+    "intent_prediction": {
+      "name": "inform_text",
+      "confidence": 0.829881489276886
+    }
+  },
+  {
+    "text": "ok finito",
+    "intent": "completed",
+    "intent_prediction": {
+      "name": "affirm",
+      "confidence": 0.440579354763031
+    }
+  },
+  {
+    "text": "perfetto grazie",
+    "intent": "thanks",
+    "intent_prediction": {
+      "name": "affirm",
+      "confidence": 0.9379176497459412
+    }
+  },
+  {
+    "text": "conferma",
+    "intent": "affirm",
+    "intent_prediction": {
+      "name": "ask_make_definitive",
+      "confidence": 0.849053680896759
+    }
+  },
+  {
+    "text": "sei herbie?",
+    "intent": "bot_challenge",
+    "intent_prediction": {
+      "name": "greet",
+      "confidence": 0.6588752269744873
+    }
+  },
+  {
+    "text": "rifacciamo da capo",
+    "intent": "ask_reset",
+    "intent_prediction": {
+      "name": "ask_guidance",
+      "confidence": 0.19348374009132385
+    }
+  },
+  {
+    "text": "10 grazie",
+    "intent": "inform_pieces",
+    "intent_prediction": {
+      "name": "thanks",
+      "confidence": 0.9580322504043579
+    }
+  },
+  {
+    "text": "dimmi le giacenze",
+    "intent": "ask_quantity",
+    "intent_prediction": {
+      "name": "ask_get_view",
+      "confidence": 0.1916113793849945
+    }
+  },
+  {
+    "text": "dimmi il costo",
+    "intent": "ask_price",
+    "intent_prediction": {
+      "name": "ask_tot_ordcost",
+      "confidence": 0.7093006372451782
+    }
+  },
+  {
+    "text": "segnalo definitivo",
+    "intent": "ask_make_definitive",
+    "intent_prediction": {
+      "name": "ask_quantity",
+      "confidence": 0.587407648563385
+    }
+  },
+  {
+    "text": "girami la lista ordini",
+    "intent": "ask_get_view_ord",
+    "intent_prediction": {
+      "name": "ask_latest_list",
+      "confidence": 0.517822265625
+    }
+  }
+]

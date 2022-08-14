@@ -113,7 +113,7 @@ stories:
     - fail: null
   - action: write_order_form
   - user: |
-      stelline di grano saraceno
+      stelline di grano bio
     intent: inform_text
   - slot_was_set:
     - p_code: '8016323016170'
