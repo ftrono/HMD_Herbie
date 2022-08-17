@@ -40,6 +40,7 @@ stories:
     intent: affirm
   - slot_was_set:
     - affirmed: true
+  - action: action_check_suppl
   - action: action_reset_form_slots
   - slot_was_set:
     - p_code: null
@@ -71,6 +72,7 @@ stories:
     - keep: false
   - action: read_order_form
   - active_loop: null
+  - action: action_check_suppl
   - action: utter_ask_suggest_ord
   - user: |
       sì grazie
@@ -80,6 +82,7 @@ stories:
   - action: action_get_suggestion_list
   - slot_was_set:
     - found: false
+  - action: action_check_suppl
   - action: action_reset_form_slots
   - slot_was_set:
     - p_code: null

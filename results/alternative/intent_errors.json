@@ -1,0 +1,114 @@
+[
+  {
+    "text": "buonasera",
+    "intent": "greet",
+    "intent_prediction": {
+      "name": "inform_text",
+      "confidence": 0.8799799084663391
+    }
+  },
+  {
+    "text": "buon pomeriggio",
+    "intent": "greet",
+    "intent_prediction": {
+      "name": "ask_cat_vat",
+      "confidence": 0.19996239244937897
+    }
+  },
+  {
+    "text": "ok finito",
+    "intent": "completed",
+    "intent_prediction": {
+      "name": "affirm",
+      "confidence": 0.7251625657081604
+    }
+  },
+  {
+    "text": "fatto herbie",
+    "intent": "completed",
+    "intent_prediction": {
+      "name": "greet",
+      "confidence": 0.8909828662872314
+    }
+  },
+  {
+    "text": "conferma",
+    "intent": "affirm",
+    "intent_prediction": {
+      "name": "ask_make_definitive",
+      "confidence": 0.6074463129043579
+    }
+  },
+  {
+    "text": "sei herbie?",
+    "intent": "bot_challenge",
+    "intent_prediction": {
+      "name": "greet",
+      "confidence": 0.32684168219566345
+    }
+  },
+  {
+    "text": "rifacciamo da capo",
+    "intent": "ask_reset",
+    "intent_prediction": {
+      "name": "ask_guidance",
+      "confidence": 0.2761353552341461
+    }
+  },
+  {
+    "text": "mi hanno consegnato pacchi herbie",
+    "intent": "ask_delivered",
+    "intent_prediction": {
+      "name": "ask_prodinfo",
+      "confidence": 0.3793349862098694
+    }
+  },
+  {
+    "text": "10 grazie",
+    "intent": "inform_pieces",
+    "intent_prediction": {
+      "name": "thanks",
+      "confidence": 0.9264967441558838
+    }
+  },
+  {
+    "text": "dimmi il costo",
+    "intent": "ask_price",
+    "intent_prediction": {
+      "name": "ask_tot_ordcost",
+      "confidence": 0.5441893339157104
+    }
+  },
+  {
+    "text": "possibili allergie?",
+    "intent": "ask_compatibility",
+    "intent_prediction": {
+      "name": "thanks",
+      "confidence": 0.2890430986881256
+    }
+  },
+  {
+    "text": "riprendi l'ultima lista",
+    "intent": "ask_latest_list",
+    "intent_prediction": {
+      "name": "inform_need_order",
+      "confidence": 0.6595752239227295
+    }
+  },
+  {
+    "text": "segnalo come definitivo",
+    "intent": "ask_make_definitive",
+    "intent_prediction": {
+      "name": "bot_challenge",
+      "confidence": 0.19207076728343964
+    }
+  },
+  {
+    "text": "mi giri la lista ordini",
+    "intent": "ask_get_view_ord",
+    "intent_prediction": {
+      "name": "ask_latest_list",
+      "confidence": 0.4429241120815277
+    }
+  }
+]

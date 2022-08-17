@@ -9,6 +9,7 @@ stories:
   steps:
   - checkpoint: supplier_found
   - intent: inform_need_order
+  - action: action_check_suppl
   - action: utter_ready_to_order
   - action: action_get_ordlist
   - slot_was_set:
@@ -19,6 +20,7 @@ stories:
   steps:
   - checkpoint: supplier_found
   - intent: inform_need_order
+  - action: action_check_suppl
   - action: utter_ready_to_order
   - action: action_get_ordlist
   - slot_was_set:
@@ -31,6 +33,7 @@ stories:
   steps:
   - checkpoint: supplier_found
   - intent: inform_need_order
+  - action: action_check_suppl
   - action: utter_ready_to_order
   - action: action_get_ordlist
   - slot_was_set:
@@ -42,6 +45,7 @@ stories:
 - story: create order - 2.a) read - full
   steps:
   - checkpoint: start_read_order
+  - action: action_check_suppl
   - action: action_reset_form_slots
   - action: utter_guidance_read #read form
   - action: read_order_form
@@ -52,6 +56,7 @@ stories:
 - story: create order - 2.b) read - stopped
   steps:
   - checkpoint: start_read_order
+  - action: action_check_suppl
   - action: action_reset_form_slots
   - action: utter_guidance_read #read form
   - action: read_order_form
@@ -65,6 +70,7 @@ stories:
 - story: create order - 3.a) suggest_order - full
   steps:
   - checkpoint: start_suggest_order
+  - action: action_check_suppl
   - action: utter_ask_suggest_ord
   - intent: affirm
   - action: action_get_suggestion_list
@@ -79,6 +85,7 @@ stories:
 - story: create order - 3.b) suggest_order - stopped
   steps:
   - checkpoint: start_suggest_order
+  - action: action_check_suppl
   - action: utter_ask_suggest_ord
   - intent: affirm
   - action: action_get_suggestion_list
@@ -95,6 +102,7 @@ stories:
 - story: create order - 3.c) suggest_order - not found
   steps:
   - checkpoint: start_suggest_order
+  - action: action_check_suppl
   - action: utter_ask_suggest_ord
   - intent: affirm
   - action: action_get_suggestion_list
@@ -105,6 +113,7 @@ stories:
 - story: create order - 3.d) suggest_order - don't suggest
   steps:
   - checkpoint: start_suggest_order
+  - action: action_check_suppl
   - action: utter_ask_suggest_ord
   - intent: deny
   - checkpoint: start_write_order
@@ -112,6 +121,7 @@ stories:
 - story: create order - 4.a) write - yes (must then be stopped by default)
   steps:
   - checkpoint: start_write_order
+  - action: action_check_suppl
   - action: action_reset_form_slots
   - action: utter_ask_write
   - intent: affirm
@@ -127,6 +137,7 @@ stories:
 - story: create order - 4.b) write - no
   steps:
   - checkpoint: start_write_order
+  - action: action_check_suppl
   - action: action_reset_form_slots
   - action: utter_ask_write
   - intent: deny

@@ -189,7 +189,7 @@ nlu:
 - intent: ask_make_definitive
   examples: |
     - conferma l'ordine herbie
-    - segnalo definitivo
+    - segnalo come definitivo
     - chiudiamo la lista ordine
 
 #COMMON:
@@ -203,5 +203,5 @@ nlu:
 - intent: ask_get_view_ord
   examples: |
     - mandami la lista
-    - girami la lista ordini
+    - mi giri la lista ordini
     - mandami il file con la lista ordine

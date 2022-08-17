@@ -1,0 +1,74 @@
+[
+  {
+    "text": "buon pomeriggio",
+    "intent": "greet",
+    "intent_prediction": {
+      "name": "ask_reset",
+      "confidence": 0.24365945160388947
+    }
+  },
+  {
+    "text": "fatto herbie",
+    "intent": "completed",
+    "intent_prediction": {
+      "name": "greet",
+      "confidence": 0.6421089768409729
+    }
+  },
+  {
+    "text": "perfetto grazie",
+    "intent": "thanks",
+    "intent_prediction": {
+      "name": "affirm",
+      "confidence": 0.5446186661720276
+    }
+  },
+  {
+    "text": "conferma",
+    "intent": "affirm",
+    "intent_prediction": {
+      "name": "ask_make_definitive",
+      "confidence": 0.8468334674835205
+    }
+  },
+  {
+    "text": "rifacciamo da capo",
+    "intent": "ask_reset",
+    "intent_prediction": {
+      "name": "ask_guidance",
+      "confidence": 0.16272960603237152
+    }
+  },
+  {
+    "text": "10 grazie",
+    "intent": "inform_pieces",
+    "intent_prediction": {
+      "name": "thanks",
+      "confidence": 0.9632353782653809
+    }
+  },
+  {
+    "text": "dimmi il costo",
+    "intent": "ask_price",
+    "intent_prediction": {
+      "name": "ask_tot_ordcost",
+      "confidence": 0.3904895782470703
+    }
+  },
+  {
+    "text": "riprendi l'ultima lista",
+    "intent": "ask_latest_list",
+    "intent_prediction": {
+      "name": "inform_need_order",
+      "confidence": 0.3919140696525574
+    }
+  },
+  {
+    "text": "mi giri la lista ordini",
+    "intent": "ask_get_view_ord",
+    "intent_prediction": {
+      "name": "ask_latest_list",
+      "confidence": 0.37807193398475647
+    }
+  }
+]

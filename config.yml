@@ -12,7 +12,6 @@ pipeline:
   - name: SpacyNLP
     model: "it_core_news_sm"
   - name: SpacyTokenizer
-  - name: SpacyFeaturizer
   - name: RegexFeaturizer
   - name: LexicalSyntacticFeaturizer
   - name: CountVectorsFeaturizer

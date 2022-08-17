@@ -550,6 +550,7 @@ actions:
   #orders:
   - action_check_quantity
   - action_add_to_list
+  - action_check_suppl
   - action_get_ordlist
   - action_get_newlist
   - action_get_suggestion_list

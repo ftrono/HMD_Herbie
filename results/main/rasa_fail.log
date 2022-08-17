@@ -1,0 +1,21 @@
+ftrono@GENERALE-PC2:~/GitHub/HMD_Herbie$ rasa test --fail-on-prediction-errors
+2022-08-17 18:04:20 INFO     rasa.core.processor  - Loading model models/20220817-124059-fundamental-wingman.tar.gz...
+2022-08-17 18:04:21 INFO     rasa.nlu.utils.spacy_utils  - Trying to load SpaCy model with name 'it_core_news_sm'.
+2022-08-17 18:04:23 INFO     rasa.nlu.utils.spacy_utils  - Trying to load SpaCy model with name 'it_core_news_sm'.
+Processed story blocks: 100%|██████████████████████████████████████████████| 6/6 [00:00<00:00, 134.34it/s, # trackers=1]
+2022-08-17 18:04:48 INFO     rasa.core.test  - Evaluating 6 stories
+Progress:
+  0%|                                                                                             | 0/6 [00:00<?, ?it/s]
+WrongPredictionException: Model predicted a wrong action. Failed Story: 
+
+version: "3.0"
+stories:
+- story: test product conv
+  steps:
+  - intent: greet
+  - action: action_utter_greet
+  - intent: bot_challenge
+  - action: utter_iamabot
+  - intent: ask_guidance
+  - action: action_guide_user
+  - action: utter_ask_what  # predicted: action_listen

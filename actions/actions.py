@@ -335,6 +335,25 @@ class ActionAddToList(Action):
 
 
 #SUPPLIER / ORDERS:
+#Check if a supplier has already been stored to the slot:
+class ActionCheckSuppl(Action):
+    def name(self) -> Text:
+            return "action_check_suppl"
+
+    def run(self, dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+        ) -> List[Dict[Text, Any]]:
+
+        supplier = tracker.get_slot("supplier")
+        elog.info(f"action_check_suppl(): supplier {supplier}.")
+        if supplier == None:
+            message = "Chiedimi di trovare un produttore. Potrò risponderti subito dopo!"
+            dispatcher.utter_message(text=message)
+            return [FollowupAction('action_listen')]
+        else:
+            return []
+
 #Create Order -> get latest order list from DB or create a new one:
 class ActionGetOrdList(Action):
     def name(self) -> Text:
@@ -346,6 +365,7 @@ class ActionGetOrdList(Action):
         ) -> List[Dict[Text, Any]]:
 
         supplier = tracker.get_slot("supplier")
+        elog.info(f"action_get_ordlist(): {supplier}.")
         if supplier == None:
             message = "Chiedimi di trovare un produttore. Potrò risponderti subito dopo!"
             dispatcher.utter_message(text=message)
