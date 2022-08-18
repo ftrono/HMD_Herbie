@@ -1,0 +1,60 @@
+ftrono@GENERALE-PC2:~/GitHub/HMD_Herbie$ rasa shell
+2022-08-18 11:48:39 INFO     root  - Starting Rasa server on http://0.0.0.0:5005
+2022-08-18 11:48:41 INFO     rasa.core.processor  - Loading model models/20220817-124059-main.tar.gz...
+2022-08-18 11:48:41 INFO     rasa.nlu.utils.spacy_utils  - Trying to load SpaCy model with name 'it_core_news_sm'.
+2022-08-18 11:48:44 INFO     rasa.nlu.utils.spacy_utils  - Trying to load SpaCy model with name 'it_core_news_sm'.
+2022-08-18 11:49:07 INFO     root  - Rasa server is up and running.
+Bot loaded. Type a message and press enter (use '/stop' to exit): 
+Your input ->  ciao                                                                                                      
+Buongiorno!
+Your input ->  cerca un produttore                                                                                       
+Subito!
+Qual è il produttore?
+Your input ->  fior di loto                                                                                              
+Produttore fior di loto!
+Vuoi chiedermi qualcosa?
+Your input ->  mi trovi l'ultima lista ordini?                                                                           
+Ti ho trovato l'ultima lista aperta di fior di loto, modificata per ultimo oggi, con un prodotto.
+Dimmi cosa posso fare!
+Your input ->  leggi la lista                                                                                            
+Sono pronta ad aiutarti con l'ordine!
+Ti rileggo la lista?
+Your input ->  sì grazie                                                                                                 
+Ok, ti leggo i miei appunti. Dimmi se tenere o togliere ogni prodotto. Se vuoi cambiare il numero di pezzi, dimmi direttamente il nuovo quantitativo da ordinare. Iniziamo!
+stelline di grano saraceno bio 250 grammi: in magazzino hai 12 pezzi, abbiamo segnato 5 pezzi in lista.
+Ti va bene?
+Your input ->  sì tienilo                                                                                                
+Ok, tengo così!
+Ho esaurito la lista da leggere!
+Posso cercarti i prodotti del fornitore in esaurimento nel tuo magazzino. Vuoi che te li suggerisca?
+Your input ->  sì grazie                                                                                                 
+Non ho trovato altri prodotti di fior di loto con meno di 5 pezzi!
+Vuoi dettarmi tu dei prodotti da aggiungere alla lista?
+Your input ->  sì                                                                                                        
+Dimmi, uno alla volta, i prodotti di fior di loto che vuoi ordinare. Quando hai finito, dimmi 'ho completato'. Iniziamo!
+Dimmi il prodotto!
+Your input ->  quinoa bianca bio                                                                                         
+Ok, di fior di loto, quinoa bianca bio. Hai 9 pezzi.
+Quanti pezzi ordino?
+Your input ->  facciamo 2 pezzi                                                                                          
+2 pezzi segnàti!
+Successivo.
+Dimmi il prodotto!
+Your input ->  ho completato                                                                                             
+Fatto!
+Il tuo ordine è pronto!
+Il costo totale stimato per l'ordine è 15 Euro e 8.
+Posso confermarti l'ordine per fior di loto come definitivo? Non potrai più modificarlo.
+Your input ->  no                                                                                                        
+Ricevuto!
+Può servirti altro?
+Your input ->  inviami la vista ordine                                                                                   
+Ti ho inviato la lista ordine per fior di loto su Telegram, pronta per la stampa. Dai un'occhiata!
+Posso fare qualcos'altro?
+Your input ->  confermami l'ordine                                                                                       
+Possiamo confermare l'ordine per fior di loto come definitivo? Non potrai più modificarlo.
+Your input ->  sì conferma                                                                                               
+Ok, ti ho confermato l'ordine per fior di loto come definitivo. Ti ho inviato la lista pronta via Telegram! Quando l'ordine ti verrà consegnato, chiedimi di registrarti la consegna, ti inserirò i prodotti arrivati in automatico.
+Se ti serve altro mi trovi qui.
+Your input ->  grazie                                                                                                    
+Ma di nulla!

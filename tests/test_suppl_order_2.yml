@@ -34,6 +34,14 @@ stories:
     - ord_list: '{"codiceprod": {"0": 8016323045088, "1": 8016323016170}, "nome": {"0": "frollini di riso con nocciole bio 200 grammi", "1": "stelline di grano saraceno bio 250 grammi"}, "quantita": {"0": 5, "1": 3}, "giacenza": {"0": 8, "1": 12}}'
   - slot_was_set:
     - new_list: false
+  - action: utter_ask_what
+  - user: |
+      leggi la lista
+    intent: inform_need_order
+  - action: action_check_suppl
+  - action: utter_ready_to_order
+  - slot_was_set:
+    - new_list: False
   - action: utter_ask_read
   - user: |
       sì grazie

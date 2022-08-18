@@ -19,7 +19,9 @@ stories:
   - user: |
       no grazie
     intent: deny
+  - action: utter_ok
   - action: utter_available
+  - action: action_reset_all_slots
 
 
 #register delivery:

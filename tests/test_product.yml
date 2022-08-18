@@ -19,7 +19,6 @@ stories:
       come funzioni?
     intent: ask_guidance
   - action: action_guide_user
-  - action: utter_ask_what
   - user: |
       mi trovi un prodotto?
     intent: ask_find_product
