@@ -2,6 +2,7 @@ import os, psycopg2, logging, configparser, time, json, pytz
 from datetime import datetime, date
 import pandas as pd
 import telegram
+from fuzzywuzzy import fuzz
 
 #GLOBAL IMPORTS, PARAMETERS & INSTANTIATIONS:
 

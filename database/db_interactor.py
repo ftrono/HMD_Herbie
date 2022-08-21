@@ -1,4 +1,3 @@
-from fuzzywuzzy import fuzz
 from globals import *
 from database.db_tools import db_connect, db_disconnect
 
