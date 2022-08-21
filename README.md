@@ -1,6 +1,10 @@
 # HMD_Herbie
 Repo for *Herbie*, my final project for the Human-Machine Dialogue course 2021-22 at University of Trento.
 
+<img src="./report/Herbie_icon.png" alt="drawing" width="200"/>
+
+---
+
 ## Software requirements
 Herbie has been developed in an **[Ubuntu](https://ubuntu.com/) 20.04 LTS** environment.
 
@@ -56,7 +60,8 @@ HMD_Herbie
 │   ├── 20220817-124059-main.tar.gz         #final model, trained using the chosen pipeline ("main" pipeline)
 │   └── setfolder.ini
 ├── report
-│   └── 221723_Report_HMD_Herbie.pdf        #project report
+│   ├── 221723_Report_HMD_Herbie.pdf        #project report
+|   └── Herbie_icon.png                     #Herbie icon
 ├── results                                 #results of intrinsic evaluation
 │   ├── core                                #results of rasa test core
 │   │   ├── failed_test_stories.yml
