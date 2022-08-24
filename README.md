@@ -1,6 +1,8 @@
 # HMD_Herbie
 Repo for *Herbie*, my final project for the Human-Machine Dialogue course 2021-22 at University of Trento.
 
+The demo videos can be found in this YouTube [playlist](https://youtube.com/playlist?list=PLGwHqTQjI-2jbNqkYMIFJd--Elyg_0yfa).
+
 <img src="./report/Herbie_icon.png" alt="drawing" width="200"/>
 
 ---
