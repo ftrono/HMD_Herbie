@@ -3,6 +3,8 @@ Repo for *Herbie*, my final project for the Human-Machine Dialogue course 2021-2
 
 The demo videos can be found in this YouTube [playlist](https://youtube.com/playlist?list=PLGwHqTQjI-2jbNqkYMIFJd--Elyg_0yfa).
 
+The repo for the companion Telegram Bot is available at this [link](https://github.com/ftrono/Herbie_Tbot).
+
 <img src="./report/Herbie_icon.png" alt="drawing" width="200"/>
 
 ---
