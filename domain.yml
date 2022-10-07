@@ -295,12 +295,6 @@ slots:
     mappings:
     - type: custom
   
-  discount:
-    type: float
-    influence_conversation: False
-    mappings:
-    - type: custom
-  
   vat:
     type: float
     influence_conversation: False

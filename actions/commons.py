@@ -227,8 +227,8 @@ def disambiguate_prod(tracker, dispatcher, supplier=None, pieces=None):
     p_name = Matches['nome'].iloc[0]
     quantity = Matches['quantita'].iloc[0]
 
-    #purchase cost:
-    cost = Matches['prezzo'].iloc[0] - (Matches['prezzo'].iloc[0] * (Matches['scontomedio'].iloc[0]/100))
+    #purchase cost +VAT:
+    cost = Matches['costo'].iloc[0]
     cost = cost + (cost * (Matches['aliquota'].iloc[0]/100))
     tot_cost = cost * quantity
 
@@ -240,7 +240,6 @@ def disambiguate_prod(tracker, dispatcher, supplier=None, pieces=None):
         "cur_quantity": str(quantity), 
         "category": Matches['categoria'].iloc[0], 
         "price": str(Matches['prezzo'].iloc[0]), 
-        "discount": str(Matches['scontomedio'].iloc[0]), 
         "vat": str(int(Matches['aliquota'].iloc[0])), 
         "cost": str(cost),
         "tot_cost": str(tot_cost), 

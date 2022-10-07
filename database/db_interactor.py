@@ -21,10 +21,10 @@ def match_product(p_text, supplier=None):
     #extract data from DB:
     suppstr = ""
     if supplier:
-        suppstr = f"WHERE prodotti.produttore = '{supplier}'"
+        suppstr = f"WHERE produttore = '{supplier}'"
     try:
         conn, cursor = db_connect()
-        query = f"SELECT prodotti.*, produttori.scontomedio, categorie.aliquota FROM {SCHEMA}.prodotti INNER JOIN {SCHEMA}.produttori ON prodotti.produttore = produttori.produttore INNER JOIN {SCHEMA}.categorie ON prodotti.categoria = categorie.categoria {suppstr}"
+        query = f"SELECT * FROM {SCHEMA}.prodotti {suppstr}"
         Prodotti = pd.read_sql(query, conn)
         db_disconnect(conn, cursor)
     except Exception as e:
@@ -67,7 +67,7 @@ def match_supplier(s_text):
     #extract data from DB:
     try:
         conn, cursor = db_connect()
-        query = f"SELECT produttore FROM {SCHEMA}.produttori"
+        query = f"SELECT DISTINCT produttore FROM {SCHEMA}.prodotti"
         suppliers = pd.read_sql(query, conn)
         suppliers = suppliers['produttore'].to_list()
         db_disconnect(conn, cursor)

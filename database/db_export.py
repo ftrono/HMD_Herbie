@@ -23,8 +23,8 @@ def get_view_prodotti(supplier=None):
     try:
         conn, cursor = db_connect()
         if supplier:
-            suppstr = f"WHERE prodotti.produttore = '{supplier}'"
-        query = f"SELECT prodotti.*, produttori.scontomedio, categorie.aliquota FROM {SCHEMA}.prodotti INNER JOIN {SCHEMA}.produttori ON prodotti.produttore = produttori.produttore INNER JOIN {SCHEMA}.categorie ON prodotti.categoria = categorie.categoria {suppstr} ORDER BY prodotti.produttore, prodotti.categoria, prodotti.nome"
+            suppstr = f"WHERE produttore = '{supplier}'"
+        query = f"SELECT prodotti.* FROM {SCHEMA}.prodotti {suppstr} ORDER BY produttore, categoria, nome"
         FullList = pd.read_sql(query, conn)
         db_disconnect(conn, cursor)
     except psycopg2.Error as e:
@@ -37,7 +37,7 @@ def get_view_listaordine(codiceord):
     OrdList = pd.DataFrame()
     try:
         conn, cursor = db_connect()
-        query = f"SELECT listeordini.codiceprod, prodotti.produttore, prodotti.nome, prodotti.categoria, listeordini.quantita, prodotti.prezzo, produttori.scontomedio, categorie.aliquota FROM {SCHEMA}.listeordini INNER JOIN {SCHEMA}.prodotti ON listeordini.codiceprod = prodotti.codiceprod INNER JOIN {SCHEMA}.produttori ON prodotti.produttore = produttori.produttore INNER JOIN {SCHEMA}.categorie ON prodotti.categoria = categorie.categoria WHERE listeordini.codiceord = {codiceord} ORDER BY prodotti.produttore, prodotti.categoria, prodotti.nome"
+        query = f"SELECT listeordini.codiceprod, prodotti.produttore, prodotti.nome, prodotti.categoria, listeordini.quantita, prodotti.prezzo, prodotti.costo, prodotti.aliquota FROM {SCHEMA}.listeordini INNER JOIN {SCHEMA}.prodotti ON listeordini.codiceprod = prodotti.codiceprod WHERE listeordini.codiceord = {codiceord} ORDER BY prodotti.produttore, prodotti.categoria, prodotti.nome"
         OrdList = pd.read_sql(query, conn)
         db_disconnect(conn, cursor)
     except psycopg2.Error as e:

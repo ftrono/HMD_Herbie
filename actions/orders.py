@@ -191,9 +191,8 @@ def tot_ord_cost(codiceord):
     if OrdList.empty == False:
         tot_costs = []
         for ind in OrdList.index:
-            #unit costs:
-            discount = OrdList['prezzo'].iloc[ind] * (OrdList['scontomedio'].iloc[ind]/100)
-            cost = OrdList['prezzo'].iloc[ind] - discount
+            #unit costs +VAT:
+            cost = OrdList['costo'].iloc[ind]
             cost = cost + (cost * (OrdList['aliquota'].iloc[ind]/100))
             #total cost:
             totcost = cost * OrdList['quantita'].iloc[ind]

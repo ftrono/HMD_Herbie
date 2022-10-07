@@ -79,7 +79,7 @@ class ActionGuideUser(Action):
             dispatcher.utter_message(text=message)
         elif supplier:
             #utter guidance for conv "supplier":
-            message = f"Puoi chiedermi di cercarti i prodotti in esaurimento di {supplier}, inviarti la vista delle sue giacenze, aiutarti a preparare o continuare un ordine, registrare una consegna, trovarti o confermare l'ultima lista ordini o inviartela via Bot. "
+            message = f"Puoi chiedermi di cercarti i prodotti in esaurimento di {supplier}, inviarti la vista delle sue giacenze, aiutarti a preparare o continuare un ordine, registrare una consegna, trovarti o confermare l'ultima lista ordini o inviarla via Telegram. "
             dispatcher.utter_message(text=message)
         else:
             #utter general guidance on main commands:
